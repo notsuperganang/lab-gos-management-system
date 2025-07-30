@@ -1,0 +1,129 @@
+# Laravel Environment Files
+.env
+.env.backup
+.env.production
+.env.local
+.env.development
+.env.testing
+
+# Application
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+/storage/app/*
+!/storage/app/.gitkeep
+!/storage/app/public/
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/testing/*
+!/storage/framework/testing/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/pail
+
+# Database
+*.sqlite
+*.sqlite3
+database/database.sqlite
+/database/*.sqlite
+
+# Compiled Assets
+/public/build
+/public/hot
+/public/storage
+/public/mix-manifest.json
+
+# Dependencies
+/vendor
+/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE & Editor Files
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.phpactor.json
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing & Coverage
+.phpunit.result.cache
+/.phpunit.cache
+/phpunit.xml
+/coverage/
+/.phpunit.cache
+
+# Temporary Files
+*.log
+*.tmp
+*.temp
+.cache
+
+# Package Manager
+/auth.json
+package-lock.json.bak
+yarn.lock.bak
+
+# Project Specific - Lab GOS
+/public/assets/uploads/*
+!/public/assets/uploads/.gitkeep
+/storage/app/templates/*
+!/storage/app/templates/.gitkeep
+/storage/app/sop/*
+!/storage/app/sop/.gitkeep
+/storage/app/forms/*
+!/storage/app/forms/.gitkeep
+/storage/app/uploads/*
+!/storage/app/uploads/.gitkeep
+
+# Development Tools
+Homestead.json
+Homestead.yaml
+/.vagrant
+.phpunit.cache
+
+# Local Development
+.env.local.php
+.env.php
+.env.*.php
+
+# Security
+*.key
+*.pem
+/storage/*.key
+
+# Backup Files
+*.bak
+*.backup
+*.orig
+
+# Documentation Build
+/docs/_build/
+/docs/.doctrees/
+
+# Docker
+docker-compose.override.yml
+/.docker
+
+# Miscellaneous
+*.pid
+*.seed
+*.pid.lock

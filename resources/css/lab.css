@@ -1,0 +1,27 @@
+:root {
+    /* Palet Warna Laboratorium GOS berdasarkan identitas USK */
+    --color-primary: #1E40AF;      /* Biru Fisika USK */
+    --color-secondary: #FDB813;    /* Emas USK */
+    --color-white: #FFFFFF;        /* Putih Bersih */
+    --color-text: #212529;         /* Hitam Teks */
+    --color-light-gray: #E9ECEF;   /* Abu-abu Muda */
+    
+    /* Variasi warna untuk komponen */
+    --color-primary-light: #3B82F6;
+    --color-primary-dark: #1E3A8A;
+    --color-secondary-light: #FDE047;
+    --color-secondary-dark: #F59E0B;
+    
+    /* Status colors */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    --color-info: #3B82F6;
+}
+
+/* Base styling dengan warna lab */
+.lab-primary { background-color: var(--color-primary); }
+.lab-secondary { background-color: var(--color-secondary); }
+.lab-text-primary { color: var(--color-primary); }
+.lab-text-secondary { color: var(--color-secondary); }
+.lab-border-primary { border-color: var(--color-primary); }
