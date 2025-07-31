@@ -127,3 +127,6 @@ docker-compose.override.yml
 *.pid
 *.seed
 *.pid.lock
+
+#Claude
+CLAUDE.md

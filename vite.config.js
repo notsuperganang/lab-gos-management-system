@@ -8,4 +8,20 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    resolve: {
+        alias: {
+            '@': '/resources/js',
+        },
+    },
+    optimizeDeps: {
+        include: ['alpinejs', '@alpinejs/intersect']
+    },
+    build: {
+        rollupOptions: {
+            external: [],
+            output: {
+                globals: {}
+            }
+        }
+    }
 });

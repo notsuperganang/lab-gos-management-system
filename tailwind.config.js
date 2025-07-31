@@ -14,11 +14,11 @@ export default {
     theme: {
         extend: {
             colors: {
-                            'lab-primary': '#1E40AF',
-                            'lab-secondary': '#FDB813',
-                            'lab-text': '#212529',
-                            'lab-gray': '#E9ECEF',
-                        },
+                primary: '#1E40AF',
+                secondary: '#FDB813', 
+                'text-dark': '#212529',
+                'light-gray': '#E9ECEF',
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
