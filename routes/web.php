@@ -16,9 +16,20 @@ Route::get('/artikel', function () {
     return view('public.artikel');
 })->name('artikel');
 
-Route::get('/fasilitas', function () {
-    return view('public.fasilitas');
-})->name('fasilitas');
+// Tracking routes
+Route::prefix('tracking')->name('tracking.')->group(function () {
+    Route::get('/peminjaman-alat', function () {
+        return view('public.tracking.peminjaman-alat');
+    })->name('peminjaman-alat');
+    
+    Route::get('/kunjungan', function () {
+        return view('public.tracking.kunjungan');
+    })->name('kunjungan');
+    
+    Route::get('/pengujian', function () {
+        return view('public.tracking.pengujian');
+    })->name('pengujian');
+});
 
 // Layanan routes
 Route::prefix('layanan')->name('layanan.')->group(function () {
