@@ -31,6 +31,10 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
         return view('public.layanan.form-peminjaman');
     })->name('form-peminjaman');
     
+    Route::get('/peminjaman-alat/tracking/{requestId}', function ($requestId) {
+        return view('public.layanan.tracking-peminjaman', ['requestId' => $requestId]);
+    })->name('peminjaman-alat.tracking');
+
     // Peminjaman alat menuju ke katalog alat
     Route::get('/peminjaman-alat', function () {
         return view('public.layanan.katalog-alat');

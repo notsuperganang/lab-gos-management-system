@@ -470,11 +470,14 @@
                         
                         console.log('Form submitted:', submitData);
                         
-                        // Show success message or redirect
-                        alert('Permohonan peminjaman berhasil dikirim! Anda akan mendapat konfirmasi melalui email.');
-                        
-                        // Redirect to success page or home
-                        // window.location.href = '/layanan/peminjaman-alat/success';
+                        const newRequestId = 'REQ-' + Date.now();
+
+                        console.log('Form submitted:', submitData);
+                        console.log('Generated Request ID:', newRequestId);
+
+                        alert('Permohonan peminjaman berhasil dikirim! Anda akan diarahkan ke halaman tracking.');
+
+                        window.location.href = `/layanan/peminjaman-alat/tracking/${newRequestId}`;
                         
                     } catch (error) {
                         console.error('Error submitting form:', error);
