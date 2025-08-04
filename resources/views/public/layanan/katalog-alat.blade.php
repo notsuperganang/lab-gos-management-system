@@ -144,10 +144,7 @@
                 },
                 
                 proceedToForm() {
-                    // Di sini bisa redirect ke halaman form peminjaman
-                    console.log('Proceed to form with items:', this.selectedItems);
-                    this.showDetailModal = false;
-                    // window.location.href = '/layanan/peminjaman-alat/form';
+                    window.location.href = '/layanan/peminjaman-alat/form';
                 }
             }">
 

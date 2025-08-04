@@ -26,6 +26,10 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     Route::get('/', function () {
         return redirect()->route('home');
     })->name('index');
+
+    Route::get('/peminjaman-alat/form', function () {
+        return view('public.layanan.form-peminjaman');
+    })->name('form-peminjaman');
     
     // Peminjaman alat menuju ke katalog alat
     Route::get('/peminjaman-alat', function () {
