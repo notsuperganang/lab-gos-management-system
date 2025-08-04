@@ -78,6 +78,9 @@
             
             <!-- Filter & Equipment Section -->
             <div x-data="{
+                // Modal state
+                showDetailModal: false,
+                
                 // Filter states
                 searchQuery: '',
                 selectedCategory: 'semua',
@@ -130,6 +133,21 @@
                         'maintenance': 'text-red-600 bg-red-100'
                     };
                     return colors[status] || 'text-gray-600 bg-gray-100';
+                },
+                
+                // New methods for modal
+                updateQuantity(itemId, newQuantity) {
+                    const itemIndex = this.selectedItems.findIndex(item => item.id === itemId);
+                    if (itemIndex !== -1) {
+                        this.selectedItems[itemIndex].quantity = newQuantity;
+                    }
+                },
+                
+                proceedToForm() {
+                    // Di sini bisa redirect ke halaman form peminjaman
+                    console.log('Proceed to form with items:', this.selectedItems);
+                    this.showDetailModal = false;
+                    // window.location.href = '/layanan/peminjaman-alat/form';
                 }
             }">
 
@@ -146,10 +164,12 @@
                                 <p class="text-blue-100">Total: <span x-text="selectedItems.length"></span> item</p>
                             </div>
                             <div class="flex space-x-2">
-                                <button class="bg-secondary text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition-colors duration-300">
+                                <button @click="showDetailModal = true" 
+                                        class="bg-secondary text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition-all duration-300 transform hover:scale-105">
                                     <i class="fas fa-list mr-2"></i>Lihat Detail
                                 </button>
-                                <button class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-colors duration-300">
+                                <button @click="proceedToForm()" 
+                                        class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all duration-300 transform hover:scale-105">
                                     <i class="fas fa-arrow-right mr-2"></i>Lanjut
                                 </button>
                             </div>
@@ -328,11 +348,191 @@
                             <p class="font-semibold">Item Terpilih</p>
                             <p class="text-sm text-blue-200" x-text="`${selectedItems.length} alat`"></p>
                         </div>
-                        <button class="bg-secondary text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition-colors duration-300">
-                            <i class="fas fa-arrow-right mr-2"></i>Lanjut
+                        <button @click="showDetailModal = true" 
+                                class="bg-secondary text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-arrow-right mr-2"></i>Detail
                         </button>
                     </div>
                 </div>
+
+                <!-- Detail Pinjaman Modal -->
+                <div x-show="showDetailModal" 
+                     x-transition:enter="transition ease-out duration-500"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-300"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-50 overflow-y-auto"
+                     style="display: none;"
+                     @keydown.escape.window="showDetailModal = false">
+                    
+                    <!-- Background Blur Overlay -->
+                    <div class="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-50 transition-all duration-500"></div>
+                    
+                    <!-- Modal Container -->
+                    <div class="min-h-screen px-4 text-center">
+                        <!-- Centering trick -->
+                        <span class="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
+                        
+                        <!-- Modal Content -->
+                        <div x-show="showDetailModal"
+                             x-transition:enter="transition ease-out duration-500"
+                             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-300"
+                             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                             class="inline-block w-full max-w-4xl my-8 text-left align-middle transition-all transform bg-white shadow-2xl rounded-3xl overflow-hidden">
+                            
+                            <!-- Modal Header -->
+                            <div class="bg-gradient-to-r from-primary to-blue-600 px-8 py-6 text-white relative overflow-hidden">
+                                <!-- Background Pattern -->
+                                <div class="absolute top-0 right-0 w-32 h-32 bg-secondary bg-opacity-20 rounded-full -translate-y-16 translate-x-16"></div>
+                                                                
+                                <div class="relative z-10 flex items-center justify-between">
+                                    <div>
+                                        <h2 class="text-2xl md:text-3xl font-bold mb-2 flex items-center">
+                                            <i class="fas fa-shopping-cart mr-3 text-secondary"></i>
+                                            Detail Peminjaman
+                                        </h2>
+                                        <p class="text-blue-200">
+                                            Review alat yang akan dipinjam dan atur quantity
+                                        </p>
+                                    </div>
+                                    <button @click="showDetailModal = false" 
+                                            class="w-10 h-10 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:rotate-90">
+                                        <i class="fas fa-times text-white"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal Body -->
+                            <div class="max-h-96 overflow-y-auto p-8">
+                                <!-- Empty State -->
+                                <div x-show="selectedItems.length === 0" class="text-center py-12">
+                                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <i class="fas fa-box-open text-gray-400 text-3xl"></i>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-600 mb-2">Belum Ada Alat Dipilih</h3>
+                                    <p class="text-gray-500 mb-6">Kembali ke katalog untuk memilih peralatan yang dibutuhkan</p>
+                                    <button @click="showDetailModal = false" 
+                                            class="bg-primary hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                                        <i class="fas fa-arrow-left mr-2"></i>Kembali ke Katalog
+                                    </button>
+                                </div>
+                                
+                                <!-- Items List -->
+                                <div x-show="selectedItems.length > 0" class="space-y-4">
+                                    <template x-for="(item, index) in selectedItems" :key="item.id">
+                                        <div class="group bg-gray-50 hover:bg-gray-100 rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.02] border border-gray-200 hover:border-primary hover:shadow-lg">
+                                            <div class="flex items-center space-x-8">
+                                                <!-- Item Number -->
+                                                <div class="flex-shrink-0">
+                                                    <div class="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
+                                                        <span x-text="index + 1"></span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Item Info -->
+                                                <div class="flex-1">
+                                                    <h4 class="text-lg font-bold text-gray-800 mb-1 group-hover:text-primary transition-colors duration-300" 
+                                                        x-text="item.name"></h4>
+                                                    <p class="text-gray-600 text-sm mb-2" x-text="item.specs"></p>
+                                                    <div class="flex items-center space-x-4">
+                                                        <span class="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-600 capitalize" 
+                                                              x-text="item.category"></span>
+                                                        <span class="text-xs text-green-600 font-medium">
+                                                            <i class="fas fa-check-circle mr-1"></i>
+                                                            Tersedia: <span x-text="item.available"></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Quantity Controls -->
+                                                <div class="flex items-center space-x-3">
+                                                    <button @click="updateQuantity(item.id, Math.max(1, item.quantity - 1))"
+                                                            :disabled="item.quantity <= 1"
+                                                            :class="item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-500 hover:text-white'"
+                                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+                                                        <i class="fas fa-minus text-xs"></i>
+                                                    </button>
+                                                    
+                                                    <div class="w-16 text-center">
+                                                        <span class="text-lg font-bold text-gray-800" x-text="item.quantity"></span>
+                                                        <p class="text-xs text-gray-500">qty</p>
+                                                    </div>
+                                                    
+                                                    <button @click="updateQuantity(item.id, Math.min(item.available, item.quantity + 1))"
+                                                            :disabled="item.quantity >= item.available"
+                                                            :class="item.quantity >= item.available ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500 hover:text-white'"
+                                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+                                                        <i class="fas fa-plus text-xs"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Remove Button -->
+                                                <div class="flex-shrink-0">
+                                                    <button @click="removeFromSelection(item.id)"
+                                                            class="w-10 h-10 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 group-hover:rotate-12">
+                                                        <i class="fas fa-trash text-sm"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Progress Bar -->
+                                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                                <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                                    <span>Quantity yang dipilih</span>
+                                                    <span x-text="`${item.quantity}/${item.available} tersedia`"></span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-gradient-to-r from-primary to-blue-600 h-2 rounded-full transition-all duration-500"
+                                                         :style="`width: ${(item.quantity / item.available) * 100}%`"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal Footer -->
+                            <div x-show="selectedItems.length > 0" class="bg-gray-50 px-8 py-6 border-t border-gray-200">
+                                <!-- Summary -->
+                                <div class="mb-6 p-4 bg-white rounded-xl border border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 mb-1">Ringkasan Peminjaman</h4>
+                                            <p class="text-gray-600 text-sm">Total item yang akan dipinjam</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-2xl font-bold text-primary" x-text="selectedItems.length"></div>
+                                            <div class="text-sm text-gray-500">
+                                                <span x-text="selectedItems.reduce((sum, item) => sum + item.quantity, 0)"></span> unit
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="flex flex-col sm:flex-row gap-4">
+                                    <button @click="showDetailModal = false" 
+                                            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+                                        <i class="fas fa-arrow-left mr-2"></i>
+                                        Kembali ke Katalog
+                                    </button>
+                                    
+                                    <button @click="proceedToForm()" 
+                                            class="flex-1 bg-gradient-to-r from-secondary to-yellow-500 hover:from-yellow-500 hover:to-secondary text-gray-800 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center shadow-lg hover:shadow-xl">
+                                        <i class="fas fa-arrow-right mr-2"></i>
+                                        Lanjut ke Form Peminjaman
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>

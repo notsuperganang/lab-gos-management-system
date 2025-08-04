@@ -31,7 +31,7 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     Route::get('/peminjaman-alat', function () {
         return view('public.layanan.katalog-alat');
     })->name('peminjaman-alat');
-    
+
     Route::get('/kunjungan', function () {
         return view('public.layanan.kunjungan');
     })->name('kunjungan');
