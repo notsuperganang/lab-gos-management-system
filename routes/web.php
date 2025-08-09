@@ -55,6 +55,11 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
         return view('public.layanan.kunjungan');
     })->name('kunjungan');
     
+    // Kunjungan tracking route (with dynamic visit ID)
+    Route::get('/kunjungan/confirmation/{visitId}', function ($visitId) {
+        return view('public.layanan.tracking-kunjungan', ['visitId' => $visitId]);
+    })->name('kunjungan.confirmation');
+    
     Route::get('/pengujian', function () {
         return view('public.layanan.pengujian');
     })->name('pengujian');

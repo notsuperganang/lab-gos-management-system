@@ -111,18 +111,18 @@
             <div x-data="formKunjungan()" class="bg-white rounded-3xl shadow-2xl overflow-hidden">
 
                 <!-- Form Header -->
-                <div class="bg-gradient-to-r from-secondary to-yellow-500 px-8 py-8 text-gray-800 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-20 rounded-full -translate-y-16 translate-x-16"></div>
-                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-primary bg-opacity-20 rounded-full translate-y-12 -translate-x-12"></div>
+                <div class="bg-gradient-to-r from-primary to-blue-600 px-8 py-8 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-secondary bg-opacity-20 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-white bg-opacity-10 rounded-full translate-y-12 -translate-x-12"></div>
 
                     <div class="relative z-10 text-center">
-                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-file-alt text-gray-800 text-2xl"></i>
+                        <div class="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <i class="fas fa-users text-gray-800 text-2xl"></i>
                         </div>
                         <h2 class="text-2xl md:text-3xl font-bold mb-2">
-                            FORM PENGAJUAN KUNJUNGAN
+                            FORM KUNJUNGAN LABORATORIUM
                         </h2>
-                        <p class="text-gray-700">
+                        <p class="text-blue-200">
                             Laboratorium Gelombang, Optik dan Spektroskopi<br>
                             Departemen Fisika FMIPA Universitas Syiah Kuala
                         </p>
@@ -132,260 +132,251 @@
                 <!-- Form Body -->
                 <form @submit.prevent="submitForm" class="p-8 space-y-8">
 
-                    <!-- Section 1: Data Instansi -->
+                    <!-- Section 1: Contact Information -->
                     <div x-data="{ animated: false }"
                          x-scroll-animate="animated = true"
                          :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                          class="transition-all duration-1000 ease-out">
 
-                        <!-- Formal Letter Header -->
-                        <div class="bg-white border border-gray-200 rounded-2xl p-8 mb-6">
-                            <div class="text-center mb-8">
-                                <h3 class="text-lg font-bold text-gray-800 mb-4 uppercase">
-                                    FORM PERMOHONAN IZIN KUNJUNGAN LABORATORIUM<br>
-                                    UNTUK INSTANSI/SEKOLAH DI LUAR LINGKUNGAN<br>
-                                    UNIVERSITAS SYIAH KUALA
-                                </h3>
-                            </div>
-
-                            <div class="mb-6">
-                                <p class="text-gray-700 mb-2">Kepada Yth.</p>
-                                <p class="text-gray-700 mb-1">Sdr. Ketua Departemen Fisika</p>
-                                <p class="text-gray-700 mb-1">Fakultas MIPA USK</p>
-                                <p class="text-gray-700 mb-4">Darussalam, Banda Aceh</p>
-
-                                <p class="text-gray-700 mb-4"><strong>Perihal: Izin Melaksanakan Kunjungan Laboratorium</strong></p>
-
-                                <p class="text-gray-700 mb-4">Dengan hormat,</p>
-
-                                <p class="text-gray-700 mb-6 leading-relaxed">
-                                    Bersama ini disampaikan bahwa instansi/sekolah kami merencanakan akan melakukan kunjungan
-                                    ke laboratorium saudara. Sehubungan dengan hal tersebut, maka saya mengharapkan kepada
-                                    saudara untuk memberikan izin kunjungan yang bersangkutan untuk dapat menggunakan fasilitas
-                                    laboratorium yang saudara pimpin.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-2xl p-6">
+                        <div class="bg-gray-50 rounded-2xl p-6 border-l-4 border-primary">
                             <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                                <i class="fas fa-building mr-3 text-primary"></i>
-                                Data Instansi & Penanggung Jawab
+                                <i class="fas fa-user mr-3 text-primary"></i>
+                                Data Kontak & Penanggung Jawab
                             </h3>
 
-                            <div class="space-y-6">
-                                <!-- Data format sesuai form resmi -->
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">1) Nama Instansi</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <input type="text"
-                                               x-model="formData.institutionName"
-                                               placeholder="Nama lengkap instansi/sekolah"
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                               required>
-                                    </div>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <!-- Full Name -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Nama Lengkap <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           x-model="formData.fullName"
+                                           placeholder="Nama lengkap penanggung jawab"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 bg-white"
+                                           required>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">2) Alamat Instansi</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <input type="text"
-                                               x-model="formData.institutionAddress"
-                                               placeholder="Alamat lengkap instansi"
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                               required>
-                                    </div>
+                                <!-- Email -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Email <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="email"
+                                           x-model="formData.email"
+                                           placeholder="email@domain.com"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 bg-white"
+                                           required>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">3) Penanggung Jawab</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <input type="text"
-                                               x-model="formData.contactName"
-                                               placeholder="Nama penanggung jawab kunjungan"
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                               required>
-                                    </div>
+                                <!-- Phone Number -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Nomor Telepon/WhatsApp <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="tel"
+                                           x-model="formData.phone"
+                                           placeholder="08xxxxxxxxx"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 bg-white"
+                                           required>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">4) Jabatan/NIP</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <input type="text"
-                                               x-model="formData.contactPosition"
-                                               placeholder="Jabatan dan NIP (jika ada)"
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                               required>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">5) No. HP/WA</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <input type="tel"
-                                               x-model="formData.contactPhone"
-                                               placeholder="Nomor WhatsApp yang dapat dihubungi"
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                               required>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">6) Email</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <input type="email"
-                                               x-model="formData.contactEmail"
-                                               placeholder="email@domain.com"
-                                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                               required>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">7) Rencana Kunjungan</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <div class="space-y-3">
-                                            <input type="date"
-                                                   x-model="formData.visitDate"
-                                                   :min="getMinDate()"
-                                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                                   required>
-                                            <select x-model="formData.visitTime"
-                                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                                    required>
-                                                <option value="">Pilih waktu kunjungan</option>
-                                                <option value="08:00-11:00">Pagi (08:00 - 11:00)</option>
-                                                <option value="13:00-16:00">Siang (13:00 - 16:00)</option>
-                                            </select>
-                                            <p class="text-xs text-gray-500">Tanggal dimulainya kunjungan sampai dengan selesai (minimal H+3)</p>
-                                        </div>
-                                    </div>
+                                <!-- Institution -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Instansi/Organisasi <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           x-model="formData.institution"
+                                           placeholder="Nama instansi atau organisasi"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300 bg-white"
+                                           required>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 2: Detail Kunjungan -->
+                    <!-- Section 2: Visit Information -->
                     <div x-data="{ animated: false }"
                          x-scroll-animate="animated = true"
                          :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                          class="transition-all duration-1000 ease-out"
                          style="transition-delay: 0.2s;">
 
-                        <div class="bg-gray-50 rounded-2xl p-6">
+                        <div class="bg-gray-50 rounded-2xl p-6 border-l-4 border-secondary">
                             <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                                <i class="fas fa-info-circle mr-3 text-green-600"></i>
-                                Detail Kunjungan
+                                <i class="fas fa-calendar mr-3 text-secondary"></i>
+                                Informasi Kunjungan
                             </h3>
 
-                            <div class="space-y-6">
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">8) Jumlah Pengunjung</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <div class="flex items-center space-x-3">
-                                            <input type="number"
-                                                   x-model.number="formData.visitorCount"
-                                                   min="1"
-                                                   max="25"
-                                                   class="w-32 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                                   required>
-                                            <span class="text-gray-600">orang (maksimal 25 orang)</span>
-                                        </div>
-                                    </div>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <!-- Visit Purpose -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tujuan Kunjungan <span class="text-red-500">*</span>
+                                    </label>
+                                    <select x-model="formData.purpose"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white"
+                                            required>
+                                        <option value="">Pilih tujuan kunjungan</option>
+                                        <option value="study-visit">Kunjungan Studi</option>
+                                        <option value="research">Penelitian</option>
+                                        <option value="learning">Pembelajaran</option>
+                                        <option value="internship">Magang</option>
+                                        <option value="others">Lainnya</option>
+                                    </select>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">9) Tujuan Kunjungan</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <textarea x-model="formData.purpose"
-                                                  rows="4"
-                                                  placeholder="Jelaskan tujuan dan agenda kunjungan laboratorium..."
-                                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300"
-                                                  required></textarea>
-                                    </div>
+                                <!-- Visit Date -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Tanggal Kunjungan <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="date"
+                                           x-model="formData.visitDate"
+                                           :min="getMinDate()"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white"
+                                           required>
+                                    <p class="text-xs text-gray-500 mt-1">Minimal H+3 dari hari ini</p>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                                    <div class="md:col-span-2">
-                                        <label class="text-sm font-medium text-gray-700">10) Fasilitas yang Ingin Dikunjungi</label>
-                                    </div>
-                                    <div class="md:col-span-1 text-center">:</div>
-                                    <div class="md:col-span-9">
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <template x-for="facility in availableFacilities" :key="facility.id">
-                                                <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                                                    <input type="checkbox"
-                                                           :value="facility.id"
-                                                           x-model="formData.facilities"
-                                                           class="w-4 h-4 text-secondary border-gray-300 rounded focus:ring-secondary">
-                                                    <span class="text-sm text-gray-700" x-text="facility.name"></span>
-                                                </label>
-                                            </template>
-                                        </div>
-                                    </div>
+                                <!-- Visit Time -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Waktu Kunjungan <span class="text-red-500">*</span>
+                                    </label>
+                                    <select x-model="formData.visitTime"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white"
+                                            required>
+                                        <option value="">Pilih waktu kunjungan</option>
+                                        <option value="morning">Pagi (08:00 - 11:00)</option>
+                                        <option value="afternoon">Siang (13:00 - 16:00)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Number of Participants -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Jumlah Peserta <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number"
+                                           x-model.number="formData.participants"
+                                           min="1"
+                                           max="25"
+                                           placeholder="Maksimal 25 orang"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white"
+                                           required>
+                                    <p class="text-xs text-gray-500 mt-1">Maksimal 25 orang per kunjungan</p>
                                 </div>
                             </div>
 
-                            <!-- Penutup Formal -->
-                            <div class="mt-8 pt-6 border-t border-gray-200">
-                                <p class="text-gray-700 leading-relaxed mb-6">
-                                    Sebagai informasi kami sampaikan bahwa peserta kunjungan akan mematuhi semua peraturan yang
-                                    telah ditetapkan oleh laboratorium saudara dan segala sesuatu yang menyebabkan kerugian akan menjadi
-                                    tanggung jawab instansi yang bersangkutan.
-                                </p>
+                            <!-- Additional Notes -->
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Catatan Tambahan <span class="text-gray-500">(Opsional)</span>
+                                </label>
+                                <textarea x-model="formData.additionalNotes"
+                                          rows="4"
+                                          placeholder="Informasi tambahan tentang kunjungan, kebutuhan khusus, atau agenda yang ingin disampaikan..."
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
 
-                                <p class="text-gray-700 mb-8">
-                                    Demikian permohonan ini kami sampaikan, atas perhatian dan kerjasamanya diucapkan terima kasih.
-                                </p>
+                    <!-- Section 3: Document Upload -->
+                    <div x-data="{ animated: false }"
+                         x-scroll-animate="animated = true"
+                         :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                         class="transition-all duration-1000 ease-out"
+                         style="transition-delay: 0.4s;">
 
-                                <!-- Signature Section -->
-                                <div class="flex justify-end">
-                                    <div class="text-center">
-                                        <p class="text-gray-700 mb-1">Darussalam, <span x-text="getCurrentDate()"></span></p>
-                                        <p class="text-gray-700 mb-12">Pimpinan Instansi,</p>
+                        <div class="bg-gray-50 rounded-2xl p-6 border-l-4 border-green-500">
+                            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                                <i class="fas fa-upload mr-3 text-green-500"></i>
+                                Upload Dokumen Resmi
+                            </h3>
 
-                                        <div class="border-b border-gray-400 w-48 mb-2"></div>
-                                        <p class="text-gray-700 text-sm">Nama & Tanda Tangan</p>
-                                        <p class="text-gray-700 text-sm">NIP. (jika ada)</p>
+                            <!-- File Upload Area -->
+                            <div x-data="fileUpload()">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Surat Permohonan Resmi dari Instansi <span class="text-red-500">*</span>
+                                    </label>
+                                    <p class="text-sm text-gray-600 mb-4">
+                                        Upload surat resmi dari instansi yang meminta izin kunjungan laboratorium
+                                    </p>
+                                </div>
+
+                                <!-- Drag & Drop Area -->
+                                <div @dragover.prevent @dragenter.prevent @drop.prevent="handleFileDrop($event)"
+                                     @click="$refs.fileInput.click()"
+                                     :class="isDragging ? 'border-primary bg-primary bg-opacity-5' : 'border-gray-300 hover:border-primary hover:bg-gray-50'"
+                                     class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300">
+                                    
+                                    <div x-show="!uploadedFile">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                        <p class="text-lg font-medium text-gray-700 mb-2">
+                                            Klik untuk pilih file atau drag & drop di sini
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            Format yang diterima: PDF, DOC, DOCX (Maksimal 5MB)
+                                        </p>
+                                    </div>
+
+                                    <!-- File Preview -->
+                                    <div x-show="uploadedFile" class="flex items-center justify-center space-x-4">
+                                        <div class="bg-green-100 p-3 rounded-lg">
+                                            <i class="fas fa-file-alt text-green-600 text-2xl"></i>
+                                        </div>
+                                        <div class="text-left">
+                                            <p class="font-medium text-gray-800" x-text="uploadedFile?.name"></p>
+                                            <p class="text-sm text-gray-500" x-text="formatFileSize(uploadedFile?.size)"></p>
+                                        </div>
+                                        <button type="button" @click.stop="removeFile()" 
+                                                class="text-red-500 hover:text-red-700 transition-colors duration-200">
+                                            <i class="fas fa-times-circle text-xl"></i>
+                                        </button>
+                                    </div>
+
+                                    <input type="file" x-ref="fileInput" @change="handleFileSelect($event)" 
+                                           accept=".pdf,.doc,.docx" class="hidden" required>
+                                </div>
+
+                                <!-- File Validation Error -->
+                                <div x-show="fileError" x-transition
+                                     class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p class="text-red-600 text-sm flex items-center">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        <span x-text="fileError"></span>
+                                    </p>
+                                </div>
+
+                                <!-- Upload Requirements -->
+                                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex items-start space-x-3">
+                                        <i class="fas fa-info-circle text-blue-500 text-lg mt-0.5"></i>
+                                        <div>
+                                            <h4 class="font-medium text-blue-800 mb-2">Persyaratan Dokumen:</h4>
+                                            <ul class="text-sm text-blue-700 space-y-1">
+                                                <li>• Surat harus menggunakan kop resmi instansi</li>
+                                                <li>• Mencantumkan tujuan dan agenda kunjungan</li>
+                                                <li>• Ditandatangani oleh pimpinan instansi</li>
+                                                <li>• Format file: PDF, DOC, atau DOCX</li>
+                                                <li>• Ukuran maksimal: 5MB</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 3: Ketentuan -->
+                    <!-- Terms and Agreement -->
                     <div x-data="{ animated: false }"
                          x-scroll-animate="animated = true"
                          :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                          class="transition-all duration-1000 ease-out"
-                         style="transition-delay: 0.4s;">
+                         style="transition-delay: 0.6s;">
 
                         <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
                             <div class="flex items-start space-x-3">
@@ -407,8 +398,8 @@
                                                class="w-5 h-5 text-secondary border-gray-300 rounded focus:ring-secondary focus:ring-2 mt-1"
                                                required>
                                         <span class="ml-3 text-sm font-medium text-yellow-800">
-                                            Saya selaku pimpinan instansi menyetujui dan akan memastikan semua peserta
-                                            kunjungan mematuhi ketentuan dan peraturan laboratorium yang telah ditetapkan
+                                            Saya menyetujui dan akan memastikan semua peserta kunjungan mematuhi 
+                                            ketentuan dan peraturan laboratorium yang telah ditetapkan
                                         </span>
                                     </label>
                                 </div>
@@ -453,37 +444,16 @@
                 submitting: false,
 
                 formData: {
-                    institutionName: '',
-                    institutionAddress: '',
-                    contactName: '',
-                    contactPosition: '',
-                    contactEmail: '',
-                    contactPhone: '',
-                    visitorCount: 1,
+                    fullName: '',
+                    email: '',
+                    phone: '',
+                    institution: '',
+                    purpose: '',
                     visitDate: '',
                     visitTime: '',
-                    purpose: '',
-                    facilities: [],
+                    participants: 1,
+                    additionalNotes: '',
                     agreement: false
-                },
-
-                availableFacilities: [
-                    { id: 'spektroskopi', name: 'Lab Spektroskopi' },
-                    { id: 'optik', name: 'Lab Optik' },
-                    { id: 'gelombang', name: 'Lab Gelombang' },
-                    { id: 'preparasi', name: 'Ruang Preparasi' },
-                    { id: 'meeting', name: 'Ruang Meeting' },
-                    { id: 'perpustakaan', name: 'Perpustakaan Lab' }
-                ],
-
-                getCurrentDate() {
-                    const today = new Date();
-                    const options = {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    };
-                    return today.toLocaleDateString('id-ID', options);
                 },
 
                 getMinDate() {
@@ -494,9 +464,8 @@
 
                 isFormValid() {
                     const requiredFields = [
-                        'institutionName', 'institutionAddress', 'contactName',
-                        'contactPosition', 'contactEmail', 'contactPhone',
-                        'visitDate', 'visitTime', 'purpose'
+                        'fullName', 'email', 'phone', 'institution',
+                        'purpose', 'visitDate', 'visitTime'
                     ];
 
                     const fieldsValid = requiredFields.every(field =>
@@ -504,8 +473,8 @@
                     );
 
                     return fieldsValid &&
-                           this.formData.visitorCount >= 1 &&
-                           this.formData.visitorCount <= 25 &&
+                           this.formData.participants >= 1 &&
+                           this.formData.participants <= 25 &&
                            this.formData.agreement;
                 },
 
@@ -527,10 +496,10 @@
                             visitId: visitId,
                             formData: this.formData,
                             submittedAt: new Date().toISOString(),
-                            formalLetter: true // Indicator that this generates formal letter
+                            status: 'submitted'
                         };
 
-                        console.log('Formal visit request submitted:', submitData);
+                        console.log('Visit request submitted:', submitData);
 
                         // Redirect to confirmation page
                         window.location.href = `/layanan/kunjungan/confirmation/${visitId}`;
@@ -541,6 +510,65 @@
                     } finally {
                         this.submitting = false;
                     }
+                }
+            }
+        }
+
+        function fileUpload() {
+            return {
+                uploadedFile: null,
+                isDragging: false,
+                fileError: '',
+
+                handleFileDrop(event) {
+                    this.isDragging = false;
+                    const files = event.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.validateAndSetFile(files[0]);
+                    }
+                },
+
+                handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.validateAndSetFile(file);
+                    }
+                },
+
+                validateAndSetFile(file) {
+                    this.fileError = '';
+
+                    // Check file type
+                    const allowedTypes = ['.pdf', '.doc', '.docx'];
+                    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                    
+                    if (!allowedTypes.includes(fileExtension)) {
+                        this.fileError = 'Format file tidak didukung. Gunakan format PDF, DOC, atau DOCX.';
+                        return;
+                    }
+
+                    // Check file size (5MB = 5 * 1024 * 1024 bytes)
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.fileError = 'Ukuran file terlalu besar. Maksimal 5MB.';
+                        return;
+                    }
+
+                    this.uploadedFile = file;
+                },
+
+                removeFile() {
+                    this.uploadedFile = null;
+                    this.fileError = '';
+                    // Reset file input
+                    this.$refs.fileInput.value = '';
+                },
+
+                formatFileSize(bytes) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
                 }
             }
         }
