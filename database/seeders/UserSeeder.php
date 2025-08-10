@@ -32,31 +32,31 @@ class UserSeeder extends Seeder
                 'name' => 'Dr. Siti Nurhaliza, M.Sc',
                 'email' => 'admin1@labgos.ac.id',
                 'phone' => '+62 813-4567-8901',
-                'position' => 'Lab Manager - Spektroskopi',
+                'position' => 'Laboran',
             ],
             [
                 'name' => 'Drs. Budi Santoso, M.Si',
                 'email' => 'admin2@labgos.ac.id',
                 'phone' => '+62 814-5678-9012',
-                'position' => 'Lab Manager - Optik',
+                'position' => 'Laboran',
             ],
             [
                 'name' => 'Dr. Maya Sari, M.T',
                 'email' => 'admin3@labgos.ac.id',
                 'phone' => '+62 815-6789-0123',
-                'position' => 'Lab Manager - Elektronik',
+                'position' => 'Laboran',
             ],
             [
                 'name' => 'Prof. Dr. Andi Rahman, M.Sc',
                 'email' => 'admin4@labgos.ac.id',
                 'phone' => '+62 816-7890-1234',
-                'position' => 'Senior Research Associate',
+                'position' => 'Laboran',
             ],
             [
                 'name' => 'Ir. Dewi Kusuma, M.T',
                 'email' => 'admin5@labgos.ac.id',
                 'phone' => '+62 817-8901-2345',
-                'position' => 'Technical Manager',
+                'position' => 'Staff',
             ],
         ];
 

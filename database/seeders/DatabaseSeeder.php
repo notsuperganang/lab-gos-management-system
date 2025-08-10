@@ -123,9 +123,9 @@ class DatabaseSeeder extends Seeder
         $this->command->line('  Password: password');
         $this->command->newLine();
         $this->command->line('Admin Users:');
-        $this->command->line('  Email: admin1@labgos.ac.id (Spektroskopi)');
-        $this->command->line('  Email: admin2@labgos.ac.id (Optik)');
-        $this->command->line('  Email: admin3@labgos.ac.id (Elektronik)');
+        $this->command->line('  Email: admin1@labgos.ac.id');
+        $this->command->line('  Email: admin2@labgos.ac.id');
+        $this->command->line('  Email: admin3@labgos.ac.id');
         $this->command->line('  Password: password (for all admin accounts)');
         $this->command->newLine();
     }
