@@ -148,6 +148,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
     
     // Equipment management
     Route::prefix('equipment')->name('equipment.')->group(function () {
+        // Equipment categories (must come before {equipment} route to avoid conflicts)
+        Route::get('/categories', [EquipmentManagementController::class, 'categories'])
+            ->name('categories.index');
+        Route::post('/categories', [EquipmentManagementController::class, 'storeCategory'])
+            ->name('categories.store');
+        Route::put('/categories/{category}', [EquipmentManagementController::class, 'updateCategory'])
+            ->name('categories.update');
+        Route::delete('/categories/{category}', [EquipmentManagementController::class, 'destroyCategory'])
+            ->name('categories.destroy');
+        
+        // Equipment CRUD (specific routes come after more general ones)
         Route::get('/', [EquipmentManagementController::class, 'index'])
             ->name('index');
         Route::post('/', [EquipmentManagementController::class, 'store'])
@@ -158,16 +169,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('update');
         Route::delete('/{equipment}', [EquipmentManagementController::class, 'destroy'])
             ->name('destroy');
-        
-        // Equipment categories
-        Route::get('/categories', [EquipmentManagementController::class, 'categories'])
-            ->name('categories.index');
-        Route::post('/categories', [EquipmentManagementController::class, 'storeCategory'])
-            ->name('categories.store');
-        Route::put('/categories/{category}', [EquipmentManagementController::class, 'updateCategory'])
-            ->name('categories.update');
-        Route::delete('/categories/{category}', [EquipmentManagementController::class, 'destroyCategory'])
-            ->name('categories.destroy');
     });
     
     // Content management
