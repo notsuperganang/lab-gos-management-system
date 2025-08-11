@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class TestingRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -267,6 +269,50 @@ class TestingRequest extends Model
     }
 
     /**
+     * Validate status transition.
+     */
+    public function canTransitionTo(string $newStatus): bool
+    {
+        $validTransitions = [
+            'pending' => ['approved', 'rejected', 'cancelled'],
+            'approved' => ['in_progress', 'cancelled'],
+            'in_progress' => ['completed', 'cancelled'],
+            'rejected' => [], // Final state
+            'completed' => [], // Final state
+            'cancelled' => [], // Final state
+        ];
+
+        return in_array($newStatus, $validTransitions[$this->status] ?? []);
+    }
+
+    /**
+     * Get valid next statuses.
+     */
+    public function getValidNextStatuses(): array
+    {
+        $validTransitions = [
+            'pending' => [
+                'approved' => 'Approve & Quote',
+                'rejected' => 'Reject',
+                'cancelled' => 'Cancel'
+            ],
+            'approved' => [
+                'in_progress' => 'Start Testing',
+                'cancelled' => 'Cancel'
+            ],
+            'in_progress' => [
+                'completed' => 'Mark as Completed',
+                'cancelled' => 'Cancel'
+            ],
+            'rejected' => [],
+            'completed' => [],
+            'cancelled' => [],
+        ];
+
+        return $validTransitions[$this->status] ?? [];
+    }
+
+    /**
      * Check if request is overdue.
      */
     public function isOverdue(): bool
@@ -302,5 +348,36 @@ class TestingRequest extends Model
                 $request->request_id = self::generateRequestId();
             }
         });
+    }
+
+    /**
+     * Configure activity log options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'status', 
+                'client_name',
+                'client_organization',
+                'client_email',
+                'client_phone',
+                'sample_name',
+                'testing_type',
+                'urgent_request',
+                'preferred_date',
+                'reviewed_by',
+                'approval_notes',
+                'total_cost',
+                'scheduled_date'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'Testing request submitted',
+                'updated' => 'Testing request updated',
+                'deleted' => 'Testing request deleted',
+                default => "Testing request {$eventName}",
+            });
     }
 }

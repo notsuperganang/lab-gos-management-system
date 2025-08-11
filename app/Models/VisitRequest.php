@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class VisitRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -237,6 +239,45 @@ class VisitRequest extends Model
     }
 
     /**
+     * Validate status transition.
+     */
+    public function canTransitionTo(string $newStatus): bool
+    {
+        $validTransitions = [
+            'pending' => ['approved', 'rejected', 'cancelled'],
+            'approved' => ['completed', 'cancelled'],
+            'rejected' => [], // Final state
+            'completed' => [], // Final state
+            'cancelled' => [], // Final state
+        ];
+
+        return in_array($newStatus, $validTransitions[$this->status] ?? []);
+    }
+
+    /**
+     * Get valid next statuses.
+     */
+    public function getValidNextStatuses(): array
+    {
+        $validTransitions = [
+            'pending' => [
+                'approved' => 'Approve',
+                'rejected' => 'Reject',
+                'cancelled' => 'Cancel'
+            ],
+            'approved' => [
+                'completed' => 'Mark as Completed',
+                'cancelled' => 'Cancel'
+            ],
+            'rejected' => [],
+            'completed' => [],
+            'cancelled' => [],
+        ];
+
+        return $validTransitions[$this->status] ?? [];
+    }
+
+    /**
      * Generate unique request ID.
      */
     public static function generateRequestId()
@@ -260,5 +301,34 @@ class VisitRequest extends Model
                 $request->request_id = self::generateRequestId();
             }
         });
+    }
+
+    /**
+     * Configure activity log options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'status', 
+                'full_name',
+                'email',
+                'phone',
+                'institution',
+                'purpose',
+                'visit_date',
+                'visit_time',
+                'participants',
+                'reviewed_by',
+                'approval_notes'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'Visit request submitted',
+                'updated' => 'Visit request updated',
+                'deleted' => 'Visit request deleted',
+                default => "Visit request {$eventName}",
+            });
     }
 }

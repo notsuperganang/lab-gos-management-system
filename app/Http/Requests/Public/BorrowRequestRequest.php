@@ -27,7 +27,7 @@ class BorrowRequestRequest extends FormRequest
             'members' => 'required|array|min:1|max:10',
             'members.*.name' => 'required|string|max:255',
             'members.*.nim' => 'required|string|max:50',
-            'members.*.program' => 'required|string|max:255',
+            'members.*.study_program' => 'required|string|max:255',
             
             'supervisor_name' => 'required|string|max:255',
             'supervisor_nip' => 'required|string|max:50',
@@ -37,8 +37,8 @@ class BorrowRequestRequest extends FormRequest
             'purpose' => 'required|string|max:1000',
             'borrow_date' => 'required|date|after:today|before:' . now()->addMonths(6)->format('Y-m-d'),
             'return_date' => 'required|date|after:borrow_date|before:' . now()->addMonths(6)->format('Y-m-d'),
-            'start_time' => 'required|string|regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/',
-            'end_time' => 'required|string|regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/|after:start_time',
+            'start_time' => 'required|string|date_format:H:i',
+            'end_time' => 'required|string|date_format:H:i|after:start_time',
             
             'equipment_items' => 'required|array|min:1|max:20',
             'equipment_items.*.equipment_id' => 'required|exists:equipment,id',
@@ -62,7 +62,7 @@ class BorrowRequestRequest extends FormRequest
             
             'members.*.name.required' => 'Member name is required.',
             'members.*.nim.required' => 'Member NIM is required.',
-            'members.*.program.required' => 'Member study program is required.',
+            'members.*.study_program.required' => 'Member study program is required.',
             
             'supervisor_email.email' => 'Please provide a valid supervisor email address.',
             'borrow_date.after' => 'Borrow date must be at least tomorrow.',

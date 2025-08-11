@@ -98,6 +98,48 @@ class RequestManagementController extends Controller
             
             DB::beginTransaction();
             
+            // First, validate equipment availability and reserve stock
+            $equipmentReservations = [];
+            $borrowRequestItems = $borrowRequest->borrowRequestItems()->with('equipment')->get();
+            
+            foreach ($borrowRequestItems as $item) {
+                $equipment = $item->equipment;
+                $quantityToApprove = $item->quantity_requested;
+                
+                // Check for custom quantity adjustments
+                if (isset($validated['equipment_adjustments'])) {
+                    $adjustment = collect($validated['equipment_adjustments'])
+                        ->firstWhere('borrow_request_item_id', $item->id);
+                    if ($adjustment) {
+                        $quantityToApprove = $adjustment['quantity_approved'];
+                    }
+                }
+                
+                // Skip if no quantity to approve
+                if ($quantityToApprove <= 0) {
+                    continue;
+                }
+                
+                // Check equipment availability
+                if (!$equipment->isAvailable($quantityToApprove)) {
+                    throw new \Exception(
+                        "Equipment '{$equipment->name}' tidak tersedia dalam jumlah {$quantityToApprove}. " .
+                        "Tersedia: {$equipment->available_quantity} unit"
+                    );
+                }
+                
+                // Reserve the equipment
+                if (!$equipment->reserveQuantity($quantityToApprove)) {
+                    throw new \Exception("Failed to reserve {$equipment->name}");
+                }
+                
+                $equipmentReservations[] = [
+                    'equipment' => $equipment,
+                    'quantity' => $quantityToApprove,
+                    'item_id' => $item->id
+                ];
+            }
+            
             // Update request status
             $borrowRequest->update([
                 'status' => 'approved',
@@ -106,20 +148,20 @@ class RequestManagementController extends Controller
                 'approval_notes' => $validated['approval_notes'] ?? null,
             ]);
             
-            // Update equipment quantities if provided
-            if (isset($validated['equipment_adjustments'])) {
-                foreach ($validated['equipment_adjustments'] as $adjustment) {
-                    $borrowRequest->borrowRequestItems()
-                        ->where('id', $adjustment['borrow_request_item_id'])
-                        ->update([
-                            'quantity_approved' => $adjustment['quantity_approved']
-                        ]);
+            // Update approved quantities in borrow request items
+            foreach ($equipmentReservations as $reservation) {
+                $borrowRequest->borrowRequestItems()
+                    ->where('id', $reservation['item_id'])
+                    ->update([
+                        'quantity_approved' => $reservation['quantity']
+                    ]);
+            }
+            
+            // If no equipment adjustments provided, approve all requested quantities
+            if (empty($equipmentReservations) && !isset($validated['equipment_adjustments'])) {
+                foreach ($borrowRequestItems as $item) {
+                    $item->update(['quantity_approved' => $item->quantity_requested]);
                 }
-            } else {
-                // Default: approve all requested quantities
-                $borrowRequest->borrowRequestItems()->update([
-                    'quantity_approved' => DB::raw('quantity_requested')
-                ]);
             }
             
             DB::commit();
@@ -196,6 +238,155 @@ class RequestManagementController extends Controller
                 null,
                 $e->getMessage()
             );
+        }
+    }
+    
+    /**
+     * Get single borrow request details
+     */
+    public function showBorrowRequest(BorrowRequest $borrowRequest): JsonResponse
+    {
+        try {
+            $borrowRequest->load(['borrowRequestItems.equipment.category', 'reviewer']);
+            
+            return ApiResponse::success($borrowRequest, 'Borrow request retrieved successfully');
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to get borrow request details', [
+                'request_id' => $borrowRequest->request_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ApiResponse::error('Failed to get borrow request details', 500);
+        }
+    }
+    
+    /**
+     * Update borrow request (for status changes like active -> completed)
+     */
+    public function updateBorrowRequest(Request $request, BorrowRequest $borrowRequest): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'status' => 'required|in:active,completed,cancelled',
+                'admin_notes' => 'nullable|string|max:1000',
+                'equipment_conditions' => 'nullable|array',
+                'equipment_conditions.*.borrow_request_item_id' => 'required|exists:borrow_request_items,id',
+                'equipment_conditions.*.condition_after' => 'required|in:excellent,good,fair,poor,damaged',
+                'equipment_conditions.*.return_notes' => 'nullable|string|max:500',
+            ]);
+            
+            DB::beginTransaction();
+            
+            $oldStatus = $borrowRequest->status;
+            
+            // Update request status
+            $borrowRequest->update([
+                'status' => $validated['status'],
+                'reviewed_at' => now(),
+                'reviewed_by' => $request->user()->id,
+                'approval_notes' => $validated['admin_notes'] ?? $borrowRequest->approval_notes,
+            ]);
+            
+            // Handle equipment return and stock release for completed requests
+            if ($validated['status'] === 'completed' && $oldStatus !== 'completed') {
+                $this->handleEquipmentReturn($borrowRequest, $validated['equipment_conditions'] ?? []);
+            }
+            
+            // Handle cancellation - release reserved stock
+            if ($validated['status'] === 'cancelled' && in_array($oldStatus, ['approved', 'active'])) {
+                $this->releaseEquipmentStock($borrowRequest);
+            }
+            
+            DB::commit();
+            
+            Log::info('Borrow request updated', [
+                'request_id' => $borrowRequest->request_id,
+                'status_change' => "{$oldStatus} -> {$validated['status']}",
+                'admin_user_id' => $request->user()->id
+            ]);
+            
+            return ApiResponse::success(
+                ['request_id' => $borrowRequest->request_id, 'status' => $borrowRequest->status],
+                'Borrow request updated successfully'
+            );
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to update borrow request', [
+                'request_id' => $borrowRequest->request_id,
+                'error' => $e->getMessage(),
+                'admin_user_id' => $request->user()->id
+            ]);
+            
+            return ApiResponse::error(
+                'Failed to update borrow request',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+    
+    /**
+     * Handle equipment return and stock release
+     */
+    private function handleEquipmentReturn(BorrowRequest $borrowRequest, array $equipmentConditions = []): void
+    {
+        $borrowRequestItems = $borrowRequest->borrowRequestItems()->with('equipment')->get();
+        
+        foreach ($borrowRequestItems as $item) {
+            $equipment = $item->equipment;
+            $quantityToRelease = $item->quantity_approved ?: $item->quantity_requested;
+            
+            // Release the reserved stock
+            $equipment->releaseQuantity($quantityToRelease);
+            
+            // Update item condition if provided
+            $conditionData = collect($equipmentConditions)
+                ->firstWhere('borrow_request_item_id', $item->id);
+            
+            if ($conditionData) {
+                $item->update([
+                    'condition_after' => $conditionData['condition_after'],
+                    'return_notes' => $conditionData['return_notes'] ?? null
+                ]);
+                
+                // Log if equipment was returned damaged
+                if ($conditionData['condition_after'] === 'damaged') {
+                    Log::warning('Equipment returned damaged', [
+                        'request_id' => $borrowRequest->request_id,
+                        'equipment_id' => $equipment->id,
+                        'equipment_name' => $equipment->name,
+                        'notes' => $conditionData['return_notes'] ?? 'No notes provided'
+                    ]);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Release equipment stock for cancelled requests
+     */
+    private function releaseEquipmentStock(BorrowRequest $borrowRequest): void
+    {
+        $borrowRequestItems = $borrowRequest->borrowRequestItems()->with('equipment')->get();
+        
+        foreach ($borrowRequestItems as $item) {
+            $equipment = $item->equipment;
+            $quantityToRelease = $item->quantity_approved ?: 0;
+            
+            if ($quantityToRelease > 0) {
+                $equipment->releaseQuantity($quantityToRelease);
+                
+                Log::info('Equipment stock released due to cancellation', [
+                    'request_id' => $borrowRequest->request_id,
+                    'equipment_id' => $equipment->id,
+                    'equipment_name' => $equipment->name,
+                    'quantity_released' => $quantityToRelease
+                ]);
+            }
         }
     }
     

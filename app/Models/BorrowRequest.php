@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class BorrowRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -222,6 +224,50 @@ class BorrowRequest extends Model
     }
 
     /**
+     * Validate status transition.
+     */
+    public function canTransitionTo(string $newStatus): bool
+    {
+        $validTransitions = [
+            'pending' => ['approved', 'rejected', 'cancelled'],
+            'approved' => ['active', 'cancelled'],
+            'active' => ['completed', 'cancelled'],
+            'rejected' => [], // Final state
+            'completed' => [], // Final state
+            'cancelled' => [], // Final state
+        ];
+
+        return in_array($newStatus, $validTransitions[$this->status] ?? []);
+    }
+
+    /**
+     * Get valid next statuses.
+     */
+    public function getValidNextStatuses(): array
+    {
+        $validTransitions = [
+            'pending' => [
+                'approved' => 'Approve',
+                'rejected' => 'Reject',
+                'cancelled' => 'Cancel'
+            ],
+            'approved' => [
+                'active' => 'Activate (Equipment Ready)',
+                'cancelled' => 'Cancel'
+            ],
+            'active' => [
+                'completed' => 'Complete (Equipment Returned)',
+                'cancelled' => 'Cancel'
+            ],
+            'rejected' => [],
+            'completed' => [],
+            'cancelled' => [],
+        ];
+
+        return $validTransitions[$this->status] ?? [];
+    }
+
+    /**
      * Generate unique request ID.
      */
     public static function generateRequestId()
@@ -245,5 +291,31 @@ class BorrowRequest extends Model
                 $request->request_id = self::generateRequestId();
             }
         });
+    }
+
+    /**
+     * Configure activity log options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'status', 
+                'supervisor_name',
+                'supervisor_email',
+                'purpose',
+                'borrow_date',
+                'return_date',
+                'reviewed_by',
+                'approval_notes'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'Borrow request submitted',
+                'updated' => 'Borrow request updated',
+                'deleted' => 'Borrow request deleted',
+                default => "Borrow request {$eventName}",
+            });
     }
 }

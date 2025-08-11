@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Equipment extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -181,5 +183,113 @@ class Equipment extends Model
             'poor' => 'red',
             default => 'gray',
         };
+    }
+
+    /**
+     * Reserve equipment quantity for borrowing.
+     */
+    public function reserveQuantity(int $quantity): bool
+    {
+        if (!$this->isAvailable($quantity)) {
+            return false;
+        }
+
+        $this->decrement('available_quantity', $quantity);
+        return true;
+    }
+
+    /**
+     * Release reserved equipment quantity.
+     */
+    public function releaseQuantity(int $quantity): void
+    {
+        $this->increment('available_quantity', $quantity);
+        
+        // Ensure available quantity doesn't exceed total quantity
+        if ($this->available_quantity > $this->total_quantity) {
+            $this->update(['available_quantity' => $this->total_quantity]);
+        }
+    }
+
+    /**
+     * Get currently borrowed quantity.
+     */
+    public function getBorrowedQuantity(): int
+    {
+        return $this->activeBorrowRequests()
+            ->sum('quantity_approved') ?: 0;
+    }
+
+    /**
+     * Get availability percentage.
+     */
+    public function getAvailabilityPercentage(): float
+    {
+        if ($this->total_quantity <= 0) {
+            return 0;
+        }
+
+        return round(($this->available_quantity / $this->total_quantity) * 100, 1);
+    }
+
+    /**
+     * Check if equipment has low availability.
+     */
+    public function hasLowAvailability(float $threshold = 20.0): bool
+    {
+        return $this->getAvailabilityPercentage() <= $threshold;
+    }
+
+    /**
+     * Get available statuses.
+     */
+    public static function getStatuses()
+    {
+        return [
+            'active' => 'Active',
+            'maintenance' => 'Under Maintenance',
+            'retired' => 'Retired',
+        ];
+    }
+
+    /**
+     * Get available conditions.
+     */
+    public static function getConditions()
+    {
+        return [
+            'excellent' => 'Excellent',
+            'good' => 'Good',
+            'fair' => 'Fair',
+            'poor' => 'Poor',
+        ];
+    }
+
+    /**
+     * Configure activity log options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'name',
+                'category_id',
+                'status',
+                'condition_status',
+                'total_quantity',
+                'available_quantity',
+                'location',
+                'notes',
+                'last_maintenance_date',
+                'next_maintenance_date'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => match($eventName) {
+                'created' => 'Equipment added',
+                'updated' => 'Equipment updated',
+                'deleted' => 'Equipment deleted',
+                default => "Equipment {$eventName}",
+            });
     }
 }
