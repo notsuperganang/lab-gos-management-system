@@ -98,7 +98,7 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
 */
 
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.admin.')->group(function () {
-    
+
     // Dashboard and statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'statistics'])
         ->name('dashboard.stats');
@@ -106,7 +106,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
         ->name('activity-logs');
     Route::get('/notifications', [DashboardController::class, 'notifications'])
         ->name('notifications');
-    
+
     // Request management
     Route::prefix('requests')->name('requests.')->group(function () {
         // Borrow requests
@@ -120,7 +120,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('borrow.approve');
         Route::put('/borrow/{borrowRequest}/reject', [RequestManagementController::class, 'rejectBorrowRequest'])
             ->name('borrow.reject');
-        
+
         // Visit requests
         Route::get('/visit', [RequestManagementController::class, 'visitRequests'])
             ->name('visit.index');
@@ -132,7 +132,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('visit.approve');
         Route::put('/visit/{visitRequest}/reject', [RequestManagementController::class, 'rejectVisitRequest'])
             ->name('visit.reject');
-        
+
         // Testing requests
         Route::get('/testing', [RequestManagementController::class, 'testingRequests'])
             ->name('testing.index');
@@ -145,7 +145,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
         Route::put('/testing/{testingRequest}/reject', [RequestManagementController::class, 'rejectTestingRequest'])
             ->name('testing.reject');
     });
-    
+
     // Equipment management
     Route::prefix('equipment')->name('equipment.')->group(function () {
         // Equipment categories (must come before {equipment} route to avoid conflicts)
@@ -157,7 +157,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('categories.update');
         Route::delete('/categories/{category}', [EquipmentManagementController::class, 'destroyCategory'])
             ->name('categories.destroy');
-        
+
         // Equipment CRUD (specific routes come after more general ones)
         Route::get('/', [EquipmentManagementController::class, 'index'])
             ->name('index');
@@ -170,7 +170,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
         Route::delete('/{equipment}', [EquipmentManagementController::class, 'destroy'])
             ->name('destroy');
     });
-    
+
     // Content management
     Route::prefix('content')->name('content.')->group(function () {
         // Articles
@@ -184,7 +184,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('articles.update');
         Route::delete('/articles/{article}', [ContentManagementController::class, 'destroyArticle'])
             ->name('articles.destroy');
-        
+
         // Staff members
         Route::get('/staff', [ContentManagementController::class, 'staff'])
             ->name('staff.index');
@@ -196,13 +196,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('staff.update');
         Route::delete('/staff/{staff}', [ContentManagementController::class, 'destroyStaff'])
             ->name('staff.destroy');
-        
+
         // Site settings
         Route::get('/site-settings', [ContentManagementController::class, 'siteSettings'])
             ->name('site-settings.index');
         Route::put('/site-settings', [ContentManagementController::class, 'updateSiteSettings'])
             ->name('site-settings.update');
-        
+
         // Gallery
         Route::get('/gallery', [ContentManagementController::class, 'gallery'])
             ->name('gallery.index');
@@ -226,7 +226,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
 */
 
 Route::middleware(['auth:sanctum', 'role:superadmin'])->prefix('superadmin')->name('api.superadmin.')->group(function () {
-    
+
     // User management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])
