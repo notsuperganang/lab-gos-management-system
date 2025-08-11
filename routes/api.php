@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Public\ArticleController;
 use App\Http\Controllers\Api\Public\EquipmentController;
 use App\Http\Controllers\Api\Public\RequestController;
 use App\Http\Controllers\Api\Public\TrackingController;
+use App\Http\Controllers\Api\Public\GalleryController;
 use App\Http\Controllers\Api\Admin\RequestManagementController;
 use App\Http\Controllers\Api\Admin\EquipmentManagementController;
 use App\Http\Controllers\Api\Admin\ContentManagementController;
@@ -61,6 +62,12 @@ Route::get('/equipment', [EquipmentController::class, 'index'])
     ->name('api.equipment.index');
 Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])
     ->name('api.equipment.show');
+
+// Gallery
+Route::get('/gallery', [GalleryController::class, 'index'])
+    ->name('api.gallery.index');
+Route::get('/gallery/{gallery}', [GalleryController::class, 'show'])
+    ->name('api.gallery.show');
 
 // Request submissions
 Route::prefix('requests')->name('api.requests.')->group(function () {
@@ -194,6 +201,18 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('site-settings.index');
         Route::put('/site-settings', [ContentManagementController::class, 'updateSiteSettings'])
             ->name('site-settings.update');
+        
+        // Gallery
+        Route::get('/gallery', [ContentManagementController::class, 'gallery'])
+            ->name('gallery.index');
+        Route::post('/gallery', [ContentManagementController::class, 'storeGallery'])
+            ->name('gallery.store');
+        Route::get('/gallery/{gallery}', [ContentManagementController::class, 'showGallery'])
+            ->name('gallery.show');
+        Route::put('/gallery/{gallery}', [ContentManagementController::class, 'updateGallery'])
+            ->name('gallery.update');
+        Route::delete('/gallery/{gallery}', [ContentManagementController::class, 'destroyGallery'])
+            ->name('gallery.destroy');
     });
 });
 
