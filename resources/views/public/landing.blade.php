@@ -38,13 +38,13 @@
                     </p>
                 </div>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="/layanan" class="group bg-secondary hover:bg-yellow-500 text-gray-800 px-8 py-4 rounded-full font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
+                    <a href="{{ route('layanan.peminjaman-alat') }}" class="group bg-secondary hover:bg-yellow-500 text-gray-800 px-8 py-4 rounded-full font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
                         <span class="flex items-center justify-center">
                             <i class="fas fa-rocket mr-2 group-hover:animate-bounce"></i>
                             Jelajahi Layanan
                         </span>
                     </a>
-                    <a href="/fasilitas" class="group border-2 border-white text-white hover:bg-white hover:text-primary px-8 py-4 rounded-full font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
+                    <a href="{{ route('galeri') }}" class="group border-2 border-white text-white hover:bg-white hover:text-primary px-8 py-4 rounded-full font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
                         <span class="flex items-center justify-center">
                             <i class="fas fa-microscope mr-2 group-hover:animate-pulse"></i>
                             Lihat Fasilitas
@@ -152,99 +152,61 @@
             </div>
             
             <div class="grid md:grid-cols-3 gap-8">
-                <!-- Artikel 1 -->
+                @forelse($articles as $index => $article)
                 <div x-data="{ animated: false }" 
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                      class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-4 hover:rotate-1 ease-out"
-                     style="transition-delay: 0.1s;">
-                    <div class="h-48 bg-gradient-to-br from-primary to-blue-600 relative overflow-hidden">
+                     style="transition-delay: {{ $index * 0.1 }}s;">
+                    <div class="h-48 relative overflow-hidden">
+                        <x-media.image 
+                            :src="$article->featured_image_url" 
+                            :alt="$article->title"
+                            variant="card"
+                            class="transition-transform duration-500 group-hover:scale-110"
+                        />
                         <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="fas fa-newspaper text-white text-4xl group-hover:scale-110 transition-transform duration-500"></i>
-                        </div>
+                        @if($index === 0)
                         <div class="absolute top-4 right-4 bg-secondary text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
                             Baru
                         </div>
+                        @endif
                     </div>
                     <div class="p-6">
                         <div class="flex items-center text-sm text-gray-500 mb-3">
                             <i class="fas fa-calendar-alt mr-2"></i>
-                            <span>15 Januari 2025</span>
+                            <span>{{ $article->published_at->format('d M Y') }}</span>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-primary transition-colors duration-300">
-                            Penelitian Spektroskopi Terbaru di Lab GOS
+                        <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                            {{ $article->title }}
                         </h3>
-                        <p class="text-gray-600 leading-relaxed mb-4">
-                            Tim peneliti Lab GOS berhasil mengembangkan metode spektroskopi baru yang dapat meningkatkan akurasi analisis material hingga 95%.
+                        <p class="text-gray-600 leading-relaxed mb-4 line-clamp-3">
+                            {{ $article->excerpt }}
                         </p>
-                        <a href="#" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group-hover:translate-x-2 transform">
+                        <a href="{{ route('artikel.show', $article->slug) }}" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group-hover:translate-x-2 transform">
                             Baca Selengkapnya
                             <i class="fas fa-arrow-right ml-2 group-hover:animate-pulse"></i>
                         </a>
                     </div>
                 </div>
-
-                <!-- Artikel 2 -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
-                     class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-4 hover:-rotate-1 ease-out"
-                     style="transition-delay: 0.2s;">
-                    <div class="h-48 bg-gradient-to-br from-secondary to-yellow-600 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="fas fa-users text-white text-4xl group-hover:scale-110 transition-transform duration-500"></i>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex items-center text-sm text-gray-500 mb-3">
-                            <i class="fas fa-calendar-alt mr-2"></i>
-                            <span>10 Januari 2025</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-secondary transition-colors duration-300">
-                            Kunjungan Mahasiswa Internasional ke Lab GOS
-                        </h3>
-                        <p class="text-gray-600 leading-relaxed mb-4">
-                            Sebanyak 25 mahasiswa dari berbagai negara ASEAN mengunjungi Lab GOS untuk program pertukaran ilmu pengetahuan.
-                        </p>
-                        <a href="#" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group-hover:translate-x-2 transform">
-                            Baca Selengkapnya
-                            <i class="fas fa-arrow-right ml-2 group-hover:animate-pulse"></i>
-                        </a>
-                    </div>
+                @empty
+                <div class="col-span-3 text-center py-12">
+                    <i class="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-500 mb-2">Belum Ada Artikel</h3>
+                    <p class="text-gray-400">Artikel akan segera ditambahkan.</p>
                 </div>
-
-                <!-- Artikel 3 -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
-                     class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-4 hover:rotate-1 ease-out"
-                     style="transition-delay: 0.3s;">
-                    <div class="h-48 bg-gradient-to-br from-green-600 to-green-700 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="fas fa-award text-white text-4xl group-hover:scale-110 transition-transform duration-500"></i>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex items-center text-sm text-gray-500 mb-3">
-                            <i class="fas fa-calendar-alt mr-2"></i>
-                            <span>5 Januari 2025</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-green-600 transition-colors duration-300">
-                            Penghargaan Internasional untuk Lab GOS
-                        </h3>
-                        <p class="text-gray-600 leading-relaxed mb-4">
-                            Lab GOS meraih penghargaan sebagai laboratorium terbaik di bidang spektroskopi dari organisasi ilmiah internasional.
-                        </p>
-                        <a href="#" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group-hover:translate-x-2 transform">
-                            Baca Selengkapnya
-                            <i class="fas fa-arrow-right ml-2 group-hover:animate-pulse"></i>
-                        </a>
-                    </div>
-                </div>
+                @endforelse
             </div>
+
+            @if($articles->count() >= 3)
+            <div class="text-center mt-12">
+                <a href="{{ route('artikel') }}" 
+                   class="group inline-flex items-center justify-center bg-primary hover:bg-blue-800 text-white px-8 py-4 rounded-full font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
+                    <i class="fas fa-newspaper mr-2 group-hover:animate-pulse"></i>
+                    Lihat Semua Artikel
+                </a>
+            </div>
+            @endif
         </div>
     </section>
 
@@ -267,72 +229,62 @@
                 </p>
             </div>
             
+            @if($galleryItems->count() > 0)
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <!-- Gallery Item 1 -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
-                     class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 ease-out md:col-span-2 md:row-span-2"
-                     style="transition-delay: 0.1s;">
-                    <div class="aspect-square md:aspect-[2/2] bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center relative">
-                        <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <i class="fas fa-microscope text-white text-6xl group-hover:scale-110 transition-transform duration-500 relative z-10"></i>
-                        <div class="absolute bottom-4 left-4 right-4 text-white z-10">
-                            <h3 class="font-bold text-lg mb-1">Peralatan Spektroskopi</h3>
-                            <p class="text-sm text-blue-200">Fasilitas utama laboratorium</p>
+                @foreach($galleryItems as $index => $item)
+                    @php
+                        $colSpan = match($index) {
+                            0 => 'md:col-span-2 md:row-span-2',
+                            3 => 'md:col-span-2', 
+                            default => ''
+                        };
+                        
+                        $aspectClass = match($index) {
+                            0 => 'aspect-square md:aspect-[2/2]',
+                            3 => 'aspect-square md:aspect-[2/1]',
+                            default => 'aspect-square'
+                        };
+                    @endphp
+                    
+                    <div x-data="{ animated: false }" 
+                         x-scroll-animate="animated = true"
+                         :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                         class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 ease-out {{ $colSpan }}"
+                         style="transition-delay: {{ $index * 0.1 }}s;">
+                        <div class="{{ $aspectClass }} relative">
+                            <x-media.image 
+                                :src="$item->image_url" 
+                                :alt="$item->title"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
+                            <div class="absolute bottom-4 left-4 right-4 text-white z-10">
+                                <h3 class="font-bold {{ $index === 0 || $index === 3 ? 'text-lg' : 'text-sm' }} mb-1">{{ $item->title }}</h3>
+                                @if($item->description)
+                                <p class="text-xs text-gray-200">{{ Str::limit($item->description, 50) }}</p>
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Gallery Item 2 -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
-                     class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 ease-out"
-                     style="transition-delay: 0.2s;">
-                    <div class="aspect-square bg-gradient-to-br from-secondary to-yellow-600 flex items-center justify-center relative">
-                        <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <i class="fas fa-users text-white text-3xl group-hover:scale-110 transition-transform duration-500 relative z-10"></i>
-                        <div class="absolute bottom-2 left-2 right-2 text-white z-10">
-                            <h3 class="font-bold text-sm mb-1">Praktikum</h3>
-                            <p class="text-xs text-yellow-200">Mahasiswa</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gallery Item 3 -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
-                     class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 ease-out"
-                     style="transition-delay: 0.3s;">
-                    <div class="aspect-square bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center relative">
-                        <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <i class="fas fa-vial text-white text-3xl group-hover:scale-110 transition-transform duration-500 relative z-10"></i>
-                        <div class="absolute bottom-2 left-2 right-2 text-white z-10">
-                            <h3 class="font-bold text-sm mb-1">Penelitian</h3>
-                            <p class="text-xs text-green-200">Eksperimen</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gallery Item 4 -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
-                     class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:scale-105 ease-out md:col-span-2"
-                     style="transition-delay: 0.4s;">
-                    <div class="aspect-square md:aspect-[2/1] bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center relative">
-                        <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                        <i class="fas fa-atom text-white text-4xl group-hover:scale-110 transition-transform duration-500 relative z-10"></i>
-                        <div class="absolute bottom-4 left-4 right-4 text-white z-10">
-                            <h3 class="font-bold text-lg mb-1">Laboratorium Modern</h3>
-                            <p class="text-sm text-purple-200">Fasilitas lengkap untuk penelitian optik</p>
-                        </div>
-                    </div>
-                </div>
-
+                    
+                    @if($index === 3) @break @endif
+                @endforeach
             </div>
+
+            <div class="text-center mt-12">
+                <a href="{{ route('galeri') }}" 
+                   class="group inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
+                    <i class="fas fa-images mr-2 group-hover:animate-pulse"></i>
+                    Lihat Galeri Lengkap
+                </a>
+            </div>
+            @else
+            <div class="text-center py-12">
+                <i class="fas fa-images text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-500 mb-2">Belum Ada Galeri</h3>
+                <p class="text-gray-400">Dokumentasi kegiatan akan segera ditambahkan.</p>
+            </div>
+            @endif
         </div>
     </section>
 
@@ -370,12 +322,12 @@
                         Layanan peminjaman peralatan laboratorium untuk keperluan praktikum dan penelitian mahasiswa serta dosen dengan sistem booking online.
                     </p>
                     <div class="text-center">
-                        <button class="group-hover:scale-105 bg-primary hover:bg-blue-800 text-white px-6 py-3 rounded-xl transition-all duration-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        <a href="{{ route('layanan.peminjaman-alat') }}" class="inline-block group-hover:scale-105 bg-primary hover:bg-blue-800 text-white px-6 py-3 rounded-xl transition-all duration-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                             <span class="flex items-center justify-center">
                                 <i class="fas fa-calendar-plus mr-2"></i>
                                 Ajukan Peminjaman
                             </span>
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -393,12 +345,12 @@
                         Layanan kunjungan laboratorium untuk keperluan edukasi, riset, atau kerjasama dengan pihak eksternal disertai tour fasilitas.
                     </p>
                     <div class="text-center">
-                        <button class="group-hover:scale-105 bg-secondary hover:bg-yellow-600 text-gray-800 px-6 py-3 rounded-xl transition-all duration-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        <a href="{{ route('layanan.kunjungan') }}" class="inline-block group-hover:scale-105 bg-secondary hover:bg-yellow-600 text-gray-800 px-6 py-3 rounded-xl transition-all duration-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                             <span class="flex items-center justify-center">
                                 <i class="fas fa-door-open mr-2"></i>
                                 Daftar Kunjungan
                             </span>
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -416,12 +368,12 @@
                         Layanan pengujian dan analisis sampel menggunakan peralatan spektroskopi dan optik modern dengan hasil akurat.
                     </p>
                     <div class="text-center">
-                        <button class="group-hover:scale-105 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl transition-all duration-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        <a href="{{ route('layanan.pengujian') }}" class="inline-block group-hover:scale-105 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl transition-all duration-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                             <span class="flex items-center justify-center">
                                 <i class="fas fa-flask mr-2"></i>
                                 Ajukan Pengujian
                             </span>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
