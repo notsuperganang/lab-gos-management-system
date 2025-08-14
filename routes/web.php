@@ -1,20 +1,18 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
 // Public pages routes
-Route::get('/', function () {
-    return view('public.landing');
-})->name('home');
+Route::get('/', [PublicPageController::class, 'landing'])->name('home');
 
-Route::get('/staff', function () {
-    return view('public.staff');
-})->name('staff');
+Route::get('/staff', [PublicPageController::class, 'staff'])->name('staff');
 
-Route::get('/artikel', function () {
-    return view('public.artikel');
-})->name('artikel');
+Route::get('/artikel', [PublicPageController::class, 'articles'])->name('artikel');
+Route::get('/artikel/{article:slug}', [PublicPageController::class, 'showArticle'])->name('artikel.show');
+
+Route::get('/galeri', [PublicPageController::class, 'gallery'])->name('galeri');
 
 // Tracking routes
 Route::prefix('tracking')->name('tracking.')->group(function () {
@@ -38,31 +36,23 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
         return redirect()->route('home');
     })->name('index');
 
-    Route::get('/peminjaman-alat/form', function () {
-        return view('public.layanan.form-peminjaman');
-    })->name('form-peminjaman');
+    Route::get('/peminjaman-alat/form', [PublicPageController::class, 'borrowForm'])->name('form-peminjaman');
     
     Route::get('/peminjaman-alat/tracking/{requestId}', function ($requestId) {
         return view('public.layanan.tracking-peminjaman', ['requestId' => $requestId]);
     })->name('peminjaman-alat.tracking');
 
     // Peminjaman alat menuju ke katalog alat
-    Route::get('/peminjaman-alat', function () {
-        return view('public.layanan.katalog-alat');
-    })->name('peminjaman-alat');
+    Route::get('/peminjaman-alat', [PublicPageController::class, 'equipmentCatalog'])->name('peminjaman-alat');
 
-    Route::get('/kunjungan', function () {
-        return view('public.layanan.kunjungan');
-    })->name('kunjungan');
+    Route::get('/kunjungan', [PublicPageController::class, 'visitForm'])->name('kunjungan');
     
     // Kunjungan tracking route (with dynamic visit ID)
     Route::get('/kunjungan/confirmation/{visitId}', function ($visitId) {
         return view('public.layanan.tracking-kunjungan', ['visitId' => $visitId]);
     })->name('kunjungan.confirmation');
     
-    Route::get('/pengujian', function () {
-        return view('public.layanan.pengujian');
-    })->name('pengujian');
+    Route::get('/pengujian', [PublicPageController::class, 'testingService'])->name('pengujian');
 });
 
 // Authenticated routes

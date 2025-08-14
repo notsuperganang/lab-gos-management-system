@@ -31,6 +31,7 @@ class ArticleRequest extends FormRequest
             'tags' => 'nullable|array|max:10',
             'tags.*' => 'string|max:50',
             'is_published' => 'boolean',
+            'is_featured' => 'boolean',
             'published_at' => 'nullable|date',
             'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
             'remove_featured_image' => $isUpdating ? 'boolean' : 'nullable',
@@ -54,6 +55,7 @@ class ArticleRequest extends FormRequest
             'tags.max' => 'Maximum 10 tags are allowed.',
             'tags.*.string' => 'Each tag must be a string.',
             'tags.*.max' => 'Each tag must not exceed 50 characters.',
+            'is_featured.boolean' => 'Featured status must be true or false.',
             'published_at.date' => 'Published date must be a valid date.',
             'featured_image.image' => 'Featured image must be an image file.',
             'featured_image.mimes' => 'Featured image must be a JPEG, PNG, JPG, GIF, or WebP file.',

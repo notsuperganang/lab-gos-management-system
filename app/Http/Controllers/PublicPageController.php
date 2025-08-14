@@ -17,9 +17,15 @@ class PublicPageController extends Controller
      */
     public function landing(): View
     {
-        // Get latest articles for homepage
+        // Get featured article first (prioritize featured, then latest)
+        $featured = Article::published()->featured()
+            ->orderByDesc('published_at')->first() 
+            ?? Article::published()->latest('published_at')->first();
+
+        // Get other latest articles for homepage (exclude featured)
         $articles = Article::published()
-            ->latest()
+            ->when($featured, fn($q) => $q->where('id', '!=', $featured->id))
+            ->latest('published_at')
             ->take(3)
             ->select('id', 'title', 'slug', 'excerpt', 'featured_image_path', 'published_at', 'category')
             ->get();
@@ -34,7 +40,7 @@ class PublicPageController extends Controller
         $siteSettings = SiteSetting::all()->pluck('value', 'key');
         $labConfig = config('lab');
 
-        return view('public.landing', compact('articles', 'galleryItems', 'siteSettings', 'labConfig'));
+        return view('public.landing', compact('featured', 'articles', 'galleryItems', 'siteSettings', 'labConfig'));
     }
 
     /**
@@ -42,7 +48,14 @@ class PublicPageController extends Controller
      */
     public function articles(Request $request): View
     {
-        $query = Article::published()->with(['publisher'])->latest();
+        // Get featured article first (prioritize featured, then latest) - always show regardless of filter
+        $featured = Article::published()->featured()
+            ->orderByDesc('published_at')->first() 
+            ?? Article::published()->latest('published_at')->first();
+
+        // Get other articles - do NOT exclude featured article from filtered results
+        $query = Article::published()->with(['publisher'])
+            ->latest('published_at');
 
         // Apply filters
         if ($request->filled('category')) {
@@ -53,10 +66,11 @@ class PublicPageController extends Controller
             $query->search($request->get('search'));
         }
 
-        $articles = $query->paginate(9);
+        $others = $query->paginate(6)->withQueryString();
         $categories = Article::getCategories();
+        $currentCategory = $request->get('category');
 
-        return view('public.artikel', compact('articles', 'categories'));
+        return view('public.artikel', compact('featured', 'others', 'categories', 'currentCategory'));
     }
 
     /**

@@ -25,6 +25,7 @@ class Article extends Model
         'category',
         'tags',
         'is_published',
+        'is_featured',
         'published_at',
         'published_by',
         'views_count',
@@ -40,6 +41,7 @@ class Article extends Model
         return [
             'tags' => 'array',
             'is_published' => 'boolean',
+            'is_featured' => 'boolean',
             'published_at' => 'datetime',
             'views_count' => 'integer',
         ];
@@ -61,6 +63,14 @@ class Article extends Model
         return $query->where('is_published', true)
                     ->whereNotNull('published_at')
                     ->where('published_at', '<=', now());
+    }
+
+    /**
+     * Scope a query to only include featured articles.
+     */
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
     }
 
     /**
@@ -106,10 +116,10 @@ class Article extends Model
     public static function getCategories()
     {
         return [
-            'research' => 'Research',
-            'news' => 'News',
-            'announcement' => 'Announcement',
-            'publication' => 'Publication',
+            'research' => 'Riset',
+            'news' => 'Berita',
+            'announcement' => 'Pengumuman',
+            'publication' => 'Publikasi',
         ];
     }
 
@@ -198,6 +208,22 @@ class Article extends Model
         static::updating(function ($article) {
             if ($article->isDirty('title') && empty($article->slug)) {
                 $article->slug = $article->generateSlug();
+            }
+        });
+    }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        // Ensure only one article can be featured at a time (app-level constraint)
+        static::saving(function ($article) {
+            if ($article->is_featured && $article->isDirty('is_featured')) {
+                // Unfeature all other articles silently to prevent infinite loops
+                static::where('id', '!=', $article->id ?? 0)
+                    ->where('is_featured', true)
+                    ->update(['is_featured' => false]);
             }
         });
     }

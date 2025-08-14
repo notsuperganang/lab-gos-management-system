@@ -41,6 +41,7 @@
     <section class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
+            @if($featured)
             <!-- Featured Article -->
             <div x-data="{ animated: false }" 
                  x-scroll-animate="animated = true"
@@ -57,15 +58,16 @@
                     <div class="md:flex">
                         <!-- Image Section -->
                         <div class="md:w-1/2 h-64 md:h-auto relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-br from-primary to-blue-600"></div>
+                            <x-media.image 
+                                :src="$featured->featured_image_url" 
+                                :alt="$featured->title"
+                                class="w-full h-full object-cover"
+                            />
                             <div class="absolute inset-0 bg-black bg-opacity-30"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <i class="fas fa-microscope text-white text-6xl"></i>
-                            </div>
                             <div class="absolute top-4 left-4">
                                 <span class="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                                    <i class="fas fa-fire mr-1"></i>
-                                    Trending
+                                    <i class="fas fa-star mr-1"></i>
+                                    Featured
                                 </span>
                             </div>
                         </div>
@@ -73,35 +75,33 @@
                         <!-- Content Section -->
                         <div class="md:w-1/2 p-8">
                             <div class="flex items-center text-sm text-gray-500 mb-3">
-                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold mr-3">Penelitian</span>
+                                <x-articles.category-badge 
+                                    :category="$featured->category" 
+                                    :label="$featured->category_label"
+                                    class="px-2 py-1 text-xs mr-3" 
+                                />
                                 <i class="fas fa-calendar-alt mr-2"></i>
-                                <span>20 Januari 2025</span>
+                                <span>{{ $featured->published_at->format('d M Y') }}</span>
+                                @if($featured->publisher)
                                 <i class="fas fa-user ml-4 mr-2"></i>
-                                <span>Dr. Ahmad Reza</span>
+                                <span>{{ $featured->publisher->name }}</span>
+                                @endif
                             </div>
                             <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 leading-tight">
-                                Terobosan Baru dalam Spektroskopi Laser untuk Deteksi Material Nano
+                                {{ $featured->title }}
                             </h3>
                             <p class="text-gray-600 leading-relaxed mb-6">
-                                Tim peneliti Lab GOS berhasil mengembangkan teknik spektroskopi laser revolusioner yang mampu mendeteksi material berukuran nano dengan tingkat akurasi hingga 99.8%. Penelitian ini membuka peluang besar dalam bidang nanoteknologi dan aplikasi medis di masa depan.
+                                {{ $featured->excerpt }}
                             </p>
                             <div class="flex items-center justify-between">
-                                <a href="#" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group">
+                                <a href="{{ route('artikel.show', $featured->slug) }}" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group">
                                     Baca Selengkapnya
                                     <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
                                 </a>
-                                <div class="flex items-center space-x-4 text-gray-500">
+                                <div class="flex items-center text-gray-500">
                                     <span class="flex items-center">
-                                        <i class="fas fa-eye mr-1"></i>
-                                        <span class="text-sm">1,245</span>
-                                    </span>
-                                    <span class="flex items-center">
-                                        <i class="fas fa-heart mr-1"></i>
-                                        <span class="text-sm">89</span>
-                                    </span>
-                                    <span class="flex items-center">
-                                        <i class="fas fa-share mr-1"></i>
-                                        <span class="text-sm">23</span>
+                                        <i class="fas fa-clock mr-1"></i>
+                                        <span class="text-sm">{{ $featured->reading_time }} min</span>
                                     </span>
                                 </div>
                             </div>
@@ -109,171 +109,90 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Filter & Articles Section -->
-            <div x-data="{ 
-                activeFilter: 'semua',
-                articles: [
-                    { 
-                        title: 'Workshop Spektroskopi untuk Mahasiswa Baru', 
-                        excerpt: 'Kegiatan pengenalan laboratorium dan pelatihan dasar spektroskopi untuk mahasiswa semester pertama.',
-                        category: 'kegiatan', 
-                        date: '18 Januari 2025', 
-                        author: 'Devi Anggraini',
-                        views: 542,
-                        likes: 34,
-                        image: 'workshop'
-                    },
-                    { 
-                        title: 'Publikasi Hasil Penelitian di Journal Nature', 
-                        excerpt: 'Paper penelitian tentang aplikasi optik kuantum berhasil dipublikasikan di jurnal internasional bergengsi.',
-                        category: 'penelitian', 
-                        date: '15 Januari 2025', 
-                        author: 'Dr. Siti Nurhaliza',
-                        views: 891,
-                        likes: 67,
-                        image: 'research'
-                    },
-                    { 
-                        title: 'Pengumuman Jadwal Praktikum Semester Genap', 
-                        excerpt: 'Informasi lengkap mengenai jadwal praktikum dan aturan baru untuk semester genap 2024/2025.',
-                        category: 'pengumuman', 
-                        date: '12 Januari 2025', 
-                        author: 'Rizky Pratama',
-                        views: 1234,
-                        likes: 45,
-                        image: 'announcement'
-                    },
-                    { 
-                        title: 'Kolaborasi Internasional dengan Universitas Tokyo', 
-                        excerpt: 'Lab GOS menjalin kerjasama penelitian dengan Tokyo Institute of Technology dalam bidang optik quantum.',
-                        category: 'penelitian', 
-                        date: '10 Januari 2025', 
-                        author: 'Prof. Dr. Fatimah Al-Zahra',
-                        views: 723,
-                        likes: 78,
-                        image: 'collaboration'
-                    },
-                    { 
-                        title: 'Open House Lab GOS 2025', 
-                        excerpt: 'Acara tahunan untuk memperkenalkan fasilitas dan kegiatan laboratorium kepada masyarakat umum.',
-                        category: 'kegiatan', 
-                        date: '8 Januari 2025', 
-                        author: 'Lina Marlina',
-                        views: 456,
-                        likes: 29,
-                        image: 'openhouse'
-                    },
-                    { 
-                        title: 'Penyebaran Informasi Beasiswa Penelitian', 
-                        excerpt: 'Tersedia beasiswa untuk mahasiswa yang ingin melakukan penelitian lanjutan di bidang spektroskopi.',
-                        category: 'pengumuman', 
-                        date: '5 Januari 2025', 
-                        author: 'Dr. Muhammad Iqbal',
-                        views: 687,
-                        likes: 52,
-                        image: 'scholarship'
-                    }
-                ],
-                get filteredArticles() {
-                    if (this.activeFilter === 'semua') {
-                        return this.articles;
-                    }
-                    return this.articles.filter(article => article.category === this.activeFilter);
-                },
-                setFilter(filter) {
-                    this.activeFilter = filter;
-                },
-                getCategoryColor(category) {
-                    const colors = {
-                        'penelitian': 'from-blue-500 to-blue-700',
-                        'kegiatan': 'from-green-500 to-green-700', 
-                        'pengumuman': 'from-purple-500 to-purple-700'
-                    };
-                    return colors[category] || 'from-gray-500 to-gray-700';
-                },
-                getCategoryBadgeColor(category) {
-                    const colors = {
-                        'penelitian': 'bg-blue-100 text-blue-800',
-                        'kegiatan': 'bg-green-100 text-green-800',
-                        'pengumuman': 'bg-purple-100 text-purple-800'
-                    };
-                    return colors[category] || 'bg-gray-100 text-gray-800';
-                }
-            }">
+            <div>
                 
-                <!-- Filter Buttons -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
-                     class="flex justify-center mb-12 transition-all duration-1000 ease-out">
-                    <div class="bg-white rounded-2xl p-2 shadow-lg inline-flex space-x-2">
-                        <button @click="setFilter('semua')" 
-                                :class="activeFilter === 'semua' ? 'bg-primary text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100'"
-                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                <!-- Search and Filter -->
+                <div class="mb-6 md:mb-8 lg:mb-10">
+                    <!-- Search Box -->
+                    <div x-data="{ animated: false }" 
+                         x-scroll-animate="animated = true"
+                         :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                         class="mb-8 transition-all duration-1000 ease-out">
+                        <form method="GET" action="{{ route('artikel') }}" class="max-w-md mx-auto">
+                            <div class="relative">
+                                <input type="text" 
+                                       name="search" 
+                                       value="{{ request('search') }}"
+                                       placeholder="Cari artikel..." 
+                                       class="w-full px-4 py-3 pl-12 pr-20 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent shadow-lg">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                                <button type="submit" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <div class="bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded-xl transition-colors duration-300">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                </button>
+                            </div>
+                            <!-- Preserve current search -->
+                            @if(request('category'))
+                                <input type="hidden" name="category" value="{{ request('category') }}">
+                            @endif
+                        </form>
+                    </div>
+
+                    <!-- Filter Buttons -->
+                    <div x-data="{ animated: false }" 
+                         x-scroll-animate="animated = true"
+                         :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                         class="flex justify-center transition-all duration-1000 ease-out">
+                    <div class="bg-white rounded-2xl p-2 shadow-lg inline-flex flex-wrap gap-2">
+                        <a href="{{ route('artikel', request()->only('search')) }}" 
+                           class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 {{ !$currentCategory ? 'bg-primary text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-th-large mr-2"></i>
                             Semua
-                        </button>
-                        <button @click="setFilter('penelitian')" 
-                                :class="activeFilter === 'penelitian' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100'"
-                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-microscope mr-2"></i>
-                            Penelitian
-                        </button>
-                        <button @click="setFilter('kegiatan')" 
-                                :class="activeFilter === 'kegiatan' ? 'bg-green-500 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100'"
-                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-calendar-check mr-2"></i>
-                            Kegiatan
-                        </button>
-                        <button @click="setFilter('pengumuman')" 
-                                :class="activeFilter === 'pengumuman' ? 'bg-purple-500 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100'"
-                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-bullhorn mr-2"></i>
-                            Pengumuman
-                        </button>
+                        </a>
+                        
+                        @foreach($categories as $key => $label)
+                        <a href="{{ route('artikel', array_merge(request()->only('search'), ['category' => $key])) }}" 
+                           class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 {{ $currentCategory === $key ? 'bg-blue-500 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <i class="fas fa-{{ $key === 'news' ? 'newspaper' : ($key === 'research' ? 'microscope' : ($key === 'announcement' ? 'bullhorn' : ($key === 'publication' ? 'book' : 'folder'))) }} mr-2"></i>
+                            {{ $label }}
+                        </a>
+                        @endforeach
                     </div>
                 </div>
 
                 <!-- Articles Grid -->
+                <div class="mt-12"></div>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <template x-for="(article, index) in filteredArticles" :key="article.title">
+                    @foreach($others as $index => $article)
                         <div x-data="{ animated: false }" 
                              x-scroll-animate="animated = true"
                              :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                              class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-4 hover:rotate-1 ease-out"
-                             :style="`transition-delay: ${index * 0.1}s`">
+                             style="transition-delay: {{ $index * 0.1 }}s;">
                             
                             <!-- Article Image -->
                             <div class="relative h-48 overflow-hidden">
-                                <div class="absolute inset-0 bg-gradient-to-br"
-                                     :class="getCategoryColor(article.category)"></div>
+                                <x-media.image 
+                                    :src="$article->featured_image_url" 
+                                    :alt="$article->title"
+                                    variant="card"
+                                    class="transition-transform duration-500 group-hover:scale-110"
+                                />
                                 <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-500"></div>
-                                
-                                <!-- Icon based on category -->
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <i class="text-white text-4xl group-hover:scale-110 transition-transform duration-500"
-                                       :class="{
-                                           'fas fa-flask': article.category === 'penelitian',
-                                           'fas fa-users': article.category === 'kegiatan',
-                                           'fas fa-megaphone': article.category === 'pengumuman'
-                                       }"></i>
-                                </div>
                                 
                                 <!-- Category Badge -->
                                 <div class="absolute top-4 left-4">
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold capitalize"
-                                          :class="getCategoryBadgeColor(article.category)"
-                                          x-text="article.category">
-                                    </span>
-                                </div>
-
-                                <!-- Stats Badge -->
-                                <div class="absolute top-4 right-4 flex space-x-2">
-                                    <span class="bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-xs flex items-center">
-                                        <i class="fas fa-eye mr-1"></i>
-                                        <span x-text="article.views"></span>
-                                    </span>
+                                    <x-articles.category-badge 
+                                        :category="$article->category" 
+                                        :label="$article->category_label"
+                                        class="px-3 py-1 text-xs" 
+                                    />
                                 </div>
                             </div>
                             
@@ -281,64 +200,73 @@
                             <div class="p-6">
                                 <div class="flex items-center text-sm text-gray-500 mb-3">
                                     <i class="fas fa-calendar-alt mr-2"></i>
-                                    <span x-text="article.date"></span>
+                                    <span>{{ $article->published_at->format('d M Y') }}</span>
+                                    @if($article->publisher)
                                     <i class="fas fa-user ml-4 mr-2"></i>
-                                    <span x-text="article.author"></span>
+                                    <span>{{ $article->publisher->name }}</span>
+                                    @endif
                                 </div>
                                 
-                                <h3 class="text-lg font-bold text-gray-800 mb-3 leading-tight group-hover:text-primary transition-colors duration-300" 
-                                    x-text="article.title"></h3>
+                                <h3 class="text-lg font-bold text-gray-800 mb-3 leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                                    {{ $article->title }}
+                                </h3>
                                 
-                                <p class="text-gray-600 leading-relaxed mb-4 text-sm" 
-                                   x-text="article.excerpt"></p>
+                                <p class="text-gray-600 leading-relaxed mb-4 text-sm line-clamp-3">
+                                    {{ $article->excerpt }}
+                                </p>
                                 
                                 <!-- Action Bar -->
                                 <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                    <a href="#" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group text-sm">
+                                    <a href="{{ route('artikel.show', $article->slug) }}" class="inline-flex items-center text-primary hover:text-secondary font-semibold transition-colors duration-300 group text-sm">
                                         Baca Selengkapnya
                                         <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
                                     </a>
                                     
-                                    <div class="flex items-center space-x-3 text-gray-500">
-                                        <button class="flex items-center hover:text-red-500 transition-colors duration-300">
-                                            <i class="fas fa-heart mr-1 text-xs"></i>
-                                            <span class="text-xs" x-text="article.likes"></span>
-                                        </button>
-                                        <button class="flex items-center hover:text-blue-500 transition-colors duration-300">
-                                            <i class="fas fa-share mr-1 text-xs"></i>
-                                        </button>
+                                    <div class="flex items-center text-gray-500">
+                                        @if($article->reading_time)
+                                        <span class="flex items-center">
+                                            <i class="fas fa-clock mr-1 text-xs"></i>
+                                            <span class="text-xs">{{ $article->reading_time }} min</span>
+                                        </span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </template>
+                    @endforeach
                 </div>
 
                 <!-- Empty State -->
-                <div x-show="filteredArticles.length === 0" 
-                     x-transition:enter="transition ease-out duration-300"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     class="text-center py-16">
+                @if($others->count() === 0)
+                <div class="text-center py-16">
                     <div class="text-6xl text-gray-300 mb-4">
                         <i class="fas fa-newspaper"></i>
                     </div>
                     <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada artikel ditemukan</h3>
                     <p class="text-gray-500">Coba pilih kategori lain atau reset filter</p>
+                    @if($currentCategory)
+                    <div class="mt-4">
+                        <a href="{{ route('artikel') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Lihat Semua Artikel
+                        </a>
+                    </div>
+                    @endif
                 </div>
+                @endif
 
-                <!-- Load More Button -->
+                <!-- Pagination -->
+                @if($others->hasPages())
                 <div x-data="{ animated: false }" 
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
-                     class="text-center mt-12 transition-all duration-1000 ease-out">
-                    <button class="bg-primary hover:bg-blue-800 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-                        <i class="fas fa-plus mr-2"></i>
-                        Muat Lebih Banyak
-                    </button>
+                     class="transition-all duration-1000 ease-out">
+                    {{ $others->onEachSide(1)->withQueryString()->links('vendor.pagination.gos') }}
                 </div>
+                @endif
 
                 <!-- Statistics -->
+                @if($others->total() > 0 || $featured)
                 <div x-data="{ animated: false }" 
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
@@ -351,23 +279,37 @@
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                         <div class="p-4">
-                            <div class="text-3xl font-bold text-primary mb-2" x-text="articles.length"></div>
-                            <div class="text-gray-600">Total Artikel</div>
+                            @if($currentCategory)
+                                <div class="text-3xl font-bold text-primary mb-2">{{ $others->total() + (($featured && $featured->category === $currentCategory) ? 1 : 0) }}</div>
+                                <div class="text-gray-600">{{ $categories[$currentCategory] ?? 'Artikel' }}</div>
+                            @else
+                                <div class="text-3xl font-bold text-primary mb-2">{{ \App\Models\Article::published()->count() }}</div>
+                                <div class="text-gray-600">Total Artikel</div>
+                            @endif
                         </div>
-                        <div class="p-4">
-                            <div class="text-3xl font-bold text-blue-500 mb-2" x-text="articles.filter(a => a.category === 'penelitian').length"></div>
-                            <div class="text-gray-600">Penelitian</div>
-                        </div>
-                        <div class="p-4">
-                            <div class="text-3xl font-bold text-green-500 mb-2" x-text="articles.filter(a => a.category === 'kegiatan').length"></div>
-                            <div class="text-gray-600">Kegiatan</div>
-                        </div>
-                        <div class="p-4">
-                            <div class="text-3xl font-bold text-purple-500 mb-2" x-text="articles.filter(a => a.category === 'pengumuman').length"></div>
-                            <div class="text-gray-600">Pengumuman</div>
-                        </div>
+                        @if(!$currentCategory)
+                            @foreach($categories as $key => $label)
+                                @php 
+                                    $count = \App\Models\Article::published()->byCategory($key)->count();
+                                    $color = match($key) {
+                                        'research' => 'text-blue-500',
+                                        'news' => 'text-green-500', 
+                                        'announcement' => 'text-purple-500',
+                                        'publication' => 'text-orange-500',
+                                        default => 'text-gray-500'
+                                    };
+                                @endphp
+                                @if($count > 0)
+                                <div class="p-4">
+                                    <div class="text-3xl font-bold {{ $color }} mb-2">{{ $count }}</div>
+                                    <div class="text-gray-600">{{ $label }}</div>
+                                </div>
+                                @endif
+                            @endforeach
+                        @endif
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </section>

@@ -82,7 +82,7 @@
                         Galeri
                     </a>
                 </div>
-                
+
                 <h5 class="text-md font-semibold mt-6 mb-4 flex items-center">
                     <i class="fas fa-search mr-2 text-secondary"></i>
                     Tracking
@@ -135,7 +135,7 @@
                                 <p>{{ $labConfig['operational_hours']['monday'] ?? 'Senin - Jumat: 08:00 - 16:00' }}</p>
                                 <p>{{ $labConfig['operational_hours']['friday'] ?? 'Jumat: 08:00 - 11:30' }}</p>
                             @else
-                                <p>Senin - Jumat: 08:00 - 16:00</p>
+                                <p>Senin - Kamis: 08:00 - 16:00</p>
                                 <p>Jumat: 08:00 - 11:30</p>
                             @endif
                         </div>

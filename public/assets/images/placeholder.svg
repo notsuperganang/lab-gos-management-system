@@ -1,0 +1,9 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#e5e7eb"/>
+  <rect x="50" y="50" width="300" height="200" fill="#d1d5db" rx="8"/>
+  <circle cx="120" cy="120" r="25" fill="#9ca3af"/>
+  <path d="m150 170 50-50 50 50 50-30v60H150z" fill="#9ca3af"/>
+  <text x="200" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6b7280">
+    Gambar tidak tersedia
+  </text>
+</svg>
