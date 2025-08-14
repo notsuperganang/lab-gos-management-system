@@ -46,6 +46,14 @@ class Gallery extends Model
     }
 
     /**
+     * Scope a query to only include published gallery items.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
      * Scope a query to order by sort order.
      */
     public function scopeOrdered($query)
@@ -62,15 +70,26 @@ class Gallery extends Model
     }
 
     /**
+     * Scope a query to search by title or description.
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
+        });
+    }
+
+    /**
      * Get available gallery categories.
      */
     public static function getCategories()
     {
         return [
-            'lab_facilities' => 'Lab Facilities',
-            'equipment' => 'Equipment',
-            'activities' => 'Activities',
-            'events' => 'Events',
+            'lab_facilities' => 'Fasilitas Lab',
+            'equipment' => 'Peralatan',
+            'activities' => 'Kegiatan',
+            'events' => 'Acara',
         ];
     }
 

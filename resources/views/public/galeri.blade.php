@@ -39,45 +39,56 @@
     <section class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            @if($galleryItems->count() > 0)
-            <!-- Filter Section -->
-            <div x-data="{ 
-                activeFilter: '{{ request('category', 'semua') }}',
-                setFilter(filter) {
-                    this.activeFilter = filter;
-                    // Update URL with category filter
-                    const url = new URL(window.location);
-                    if (filter === 'semua') {
-                        url.searchParams.delete('category');
-                    } else {
-                        url.searchParams.set('category', filter);
-                    }
-                    window.location.href = url.toString();
-                }
-            }">
+            @if($galleryItems->count() > 0 || $currentCategory || $currentSearch)
+            <!-- Search and Filter Section -->
+            <div>
                 
+                <!-- Search Box -->
+                <div x-data="{ animated: false }" 
+                     x-scroll-animate="animated = true"
+                     :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                     class="mb-8 transition-all duration-1000 ease-out">
+                    <form method="GET" action="{{ route('galeri') }}" class="max-w-md mx-auto">
+                        <div class="relative">
+                            <input type="text" 
+                                   name="q" 
+                                   value="{{ $currentSearch }}"
+                                   placeholder="Cari foto atau kata kunci..." 
+                                   class="w-full px-4 py-3 pl-12 pr-20 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent shadow-lg">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <button type="submit" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <div class="bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded-xl transition-colors duration-300">
+                                    Cari
+                                </div>
+                            </button>
+                        </div>
+                        <!-- Preserve current category filter -->
+                        @if($currentCategory)
+                            <input type="hidden" name="category" value="{{ $currentCategory }}">
+                        @endif
+                    </form>
+                </div>
+
                 <!-- Filter Buttons -->
                 <div x-data="{ animated: false }" 
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
-                     class="flex justify-center mb-12 transition-all duration-1000 ease-out">
+                     class="flex justify-center mb-8 md:mb-10 transition-all duration-1000 ease-out">
                     <div class="bg-white rounded-2xl p-2 shadow-lg inline-flex flex-wrap gap-2">
-                        <button @click="setFilter('semua')" 
-                                :class="activeFilter === 'semua' ? 'bg-primary text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100'"
-                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                        <a href="{{ route('galeri', request()->only('q')) }}" 
+                           class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 {{ !$currentCategory ? 'bg-primary text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-th-large mr-2"></i>
                             Semua
-                        </button>
+                        </a>
                         
-                        @foreach($categories as $category)
-                        @if($category)
-                        <button @click="setFilter('{{ $category }}')" 
-                                :class="activeFilter === '{{ $category }}' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100'"
-                                class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 capitalize">
-                            <i class="fas fa-{{ $category === 'research' ? 'microscope' : ($category === 'events' ? 'calendar-check' : ($category === 'facilities' ? 'building' : 'folder')) }} mr-2"></i>
-                            {{ $category }}
-                        </button>
-                        @endif
+                        @foreach($categories as $slug => $label)
+                        <a href="{{ route('galeri', array_merge(request()->only('q'), ['category' => $slug])) }}" 
+                           class="px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 {{ $currentCategory === $slug ? 'bg-blue-500 text-white shadow-lg scale-105' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <i class="fas fa-{{ $slug === 'lab_facilities' ? 'building' : ($slug === 'equipment' ? 'tools' : ($slug === 'activities' ? 'users' : ($slug === 'events' ? 'calendar-check' : 'folder'))) }} mr-2"></i>
+                            {{ $label }}
+                        </a>
                         @endforeach
                     </div>
                 </div>
@@ -103,9 +114,11 @@
                             <!-- Category Badge -->
                             @if($item->category)
                             <div class="absolute top-4 left-4">
-                                <span class="bg-white bg-opacity-90 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold capitalize">
-                                    {{ $item->category }}
-                                </span>
+                                <x-galleries.category-badge 
+                                    :category="$item->category" 
+                                    :label="$item->category_label"
+                                    class="px-3 py-1 text-xs" 
+                                />
                             </div>
                             @endif
 
@@ -152,10 +165,38 @@
                     @endforeach
                 </div>
 
+                <!-- Empty State for Filtered Results -->
+                @if($galleryItems->count() === 0)
+                <div class="text-center py-16">
+                    <div class="text-6xl text-gray-300 mb-4">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada foto ditemukan</h3>
+                    <p class="text-gray-500 mb-4">Coba kata kunci lain atau pilih kategori berbeda</p>
+                    @if($currentCategory || $currentSearch)
+                    <div class="flex justify-center space-x-4">
+                        @if($currentSearch)
+                        <a href="{{ route('galeri', ['category' => $currentCategory]) }}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-300">
+                            <i class="fas fa-times mr-2"></i>
+                            Hapus Pencarian
+                        </a>
+                        @endif
+                        <a href="{{ route('galeri') }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Lihat Semua Foto
+                        </a>
+                    </div>
+                    @endif
+                </div>
+                @endif
+
                 <!-- Pagination -->
                 @if($galleryItems->hasPages())
-                <div class="flex justify-center">
-                    {{ $galleryItems->appends(request()->query())->links() }}
+                <div x-data="{ animated: false }" 
+                     x-scroll-animate="animated = true"
+                     :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                     class="transition-all duration-1000 ease-out">
+                    {{ $galleryItems->onEachSide(1)->withQueryString()->links('vendor.pagination.gos') }}
                 </div>
                 @endif
             </div>
@@ -173,7 +214,7 @@
     </section>
 
     <!-- Stats Section -->
-    @if($galleryItems->count() > 0)
+    @if($totalPhotos > 0)
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div x-data="{ animated: false }" 
@@ -186,20 +227,53 @@
                         📊 Statistik Galeri
                     </h2>
                     <p class="text-blue-100 max-w-2xl mx-auto">
-                        Dokumentasi perjalanan dan pencapaian Laboratorium GOS
+                        @if($currentCategory || $currentSearch)
+                            Statistik untuk filter saat ini
+                        @else
+                            Dokumentasi perjalanan dan pencapaian Laboratorium GOS
+                        @endif
                     </p>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                     <div class="p-4">
-                        <div class="text-3xl font-bold text-secondary mb-2">{{ $galleryItems->total() }}</div>
+                        <div class="text-3xl font-bold text-secondary mb-2">
+                            @if($currentCategory || $currentSearch)
+                                {{ $galleryItems->total() }}
+                            @else
+                                {{ $totalPhotos }}
+                            @endif
+                        </div>
                         <div class="text-blue-200">Total Foto</div>
                     </div>
                     <div class="p-4">
-                        <div class="text-3xl font-bold text-secondary mb-2">{{ $categories->count() }}</div>
+                        <div class="text-3xl font-bold text-secondary mb-2">{{ $totalCategories }}</div>
                         <div class="text-blue-200">Kategori</div>
                     </div>
+                    
+                    @if(!$currentCategory && !$currentSearch && $categoryStats->count() > 0)
+                        @foreach($categoryStats->take(2) as $stat)
+                        <div class="p-4">
+                            <div class="text-3xl font-bold text-secondary mb-2">{{ $stat['count'] }}</div>
+                            <div class="text-blue-200">{{ $stat['name'] }}</div>
+                        </div>
+                        @endforeach
+                    @endif
                 </div>
+
+                @if(!$currentCategory && !$currentSearch && $categoryStats->count() > 2)
+                <div class="mt-8 pt-8 border-t border-blue-400">
+                    <h3 class="text-xl font-semibold text-center mb-6 text-blue-100">Distribusi per Kategori</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach($categoryStats as $stat)
+                        <div class="text-center p-3 bg-white bg-opacity-10 rounded-xl">
+                            <div class="text-lg font-bold text-secondary mb-1">{{ $stat['count'] }}</div>
+                            <div class="text-blue-200 text-sm">{{ $stat['name'] }}</div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
     </section>
@@ -211,30 +285,73 @@
          x-cloak
          @open-gallery-modal.window="showModal = true; currentImage = $event.detail.image; currentTitle = $event.detail.title; currentDescription = $event.detail.description;"
          @keydown.escape.window="showModal = false"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
         
-        <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto"
+             x-show="showModal"
+             x-transition:enter="transition ease-out duration-500 delay-100"
+             x-transition:enter-start="opacity-0 scale-75 translate-y-8"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-300"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4">
             <div class="relative">
-                <button @click="showModal = false" class="absolute top-4 right-4 z-10 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                <button @click="showModal = false" 
+                        class="absolute top-4 right-4 z-10 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+                        x-show="showModal"
+                        x-transition:enter="transition ease-out duration-700 delay-300"
+                        x-transition:enter-start="opacity-0 rotate-90 scale-50"
+                        x-transition:enter-end="opacity-100 rotate-0 scale-100">
                     <i class="fas fa-times"></i>
                 </button>
 
-                <div class="relative h-96 md:h-[500px] overflow-hidden rounded-t-3xl">
+                <div class="relative h-96 md:h-[500px] overflow-hidden rounded-t-3xl"
+                     x-show="showModal"
+                     x-transition:enter="transition ease-out duration-600 delay-200"
+                     x-transition:enter-start="opacity-0 scale-110"
+                     x-transition:enter-end="opacity-100 scale-100">
                     <img :src="currentImage" :alt="currentTitle" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
 
-                <div class="p-6 md:p-8">
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4" x-text="currentTitle"></h3>
-                    <p class="text-gray-600 leading-relaxed mb-6" x-text="currentDescription" x-show="currentDescription"></p>
+                <div class="p-6 md:p-8"
+                     x-show="showModal"
+                     x-transition:enter="transition ease-out duration-700 delay-400"
+                     x-transition:enter-start="opacity-0 translate-y-6"
+                     x-transition:enter-end="opacity-100 translate-y-0">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4" 
+                        x-text="currentTitle"
+                        x-show="showModal"
+                        x-transition:enter="transition ease-out duration-800 delay-500"
+                        x-transition:enter-start="opacity-0 translate-x-4"
+                        x-transition:enter-end="opacity-100 translate-x-0"></h3>
+                    <p class="text-gray-600 leading-relaxed mb-6" 
+                       x-text="currentDescription" 
+                       x-show="currentDescription && showModal"
+                       x-transition:enter="transition ease-out duration-800 delay-600"
+                       x-transition:enter-start="opacity-0 translate-x-4"
+                       x-transition:enter-end="opacity-100 translate-x-0"></p>
                     
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between"
+                         x-show="showModal"
+                         x-transition:enter="transition ease-out duration-800 delay-700"
+                         x-transition:enter-start="opacity-0 translate-y-4"
+                         x-transition:enter-end="opacity-100 translate-y-0">
                         <div class="flex items-center space-x-4">
-                            <button @click="shareGalleryItem(currentTitle, currentImage)" class="flex items-center text-primary">
+                            <button @click="shareGalleryItem(currentTitle, currentImage)" 
+                                    class="flex items-center text-primary hover:text-secondary transition-all duration-300 transform hover:scale-105">
                                 <i class="fas fa-share mr-2"></i>
                                 Bagikan
                             </button>
                         </div>
-                        <button @click="showModal = false" class="bg-gray-100 text-gray-700 px-6 py-2 rounded-xl">
+                        <button @click="showModal = false" 
+                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-xl transition-all duration-300 transform hover:scale-105">
                             Tutup
                         </button>
                     </div>

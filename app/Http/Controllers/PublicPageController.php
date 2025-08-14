@@ -183,15 +183,43 @@ class PublicPageController extends Controller
      */
     public function gallery(Request $request): View
     {
-        $query = Gallery::orderBy('sort_order');
+        $query = Gallery::published()->ordered();
 
+        // Apply filters
         if ($request->filled('category')) {
-            $query->where('category', $request->get('category'));
+            $query->byCategory($request->get('category'));
         }
 
-        $galleryItems = $query->paginate(12);
-        $categories = Gallery::distinct()->pluck('category')->filter();
+        if ($request->filled('q')) {
+            $query->search($request->get('q'));
+        }
 
-        return view('public.galeri', compact('galleryItems', 'categories'));
+        $galleryItems = $query->paginate(12)->withQueryString();
+        $categories = Gallery::getCategories();
+        $currentCategory = $request->get('category');
+        $currentSearch = $request->get('q');
+
+        // Calculate statistics
+        $totalPhotos = Gallery::published()->count();
+        $distinctCategories = Gallery::published()->select('category')->distinct()->pluck('category')->filter();
+        $totalCategories = $distinctCategories->count();
+        
+        $categoryStats = $distinctCategories->map(function ($category) {
+            return [
+                'slug' => $category,
+                'name' => Gallery::getCategories()[$category] ?? $category,
+                'count' => Gallery::published()->byCategory($category)->count()
+            ];
+        })->sortByDesc('count');
+
+        return view('public.galeri', compact(
+            'galleryItems', 
+            'categories', 
+            'currentCategory', 
+            'currentSearch',
+            'totalPhotos', 
+            'totalCategories', 
+            'categoryStats'
+        ));
     }
 }
