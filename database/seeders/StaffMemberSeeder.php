@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\StaffType;
 use App\Models\StaffMember;
 use Illuminate\Database\Seeder;
 
@@ -16,6 +17,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Dr. Ahmad Fadli, M.Si',
                 'position' => 'Kepala Laboratorium',
+                'staff_type' => StaffType::KEPALA_LABORATORIUM,
                 'specialization' => 'Spektroskopi dan Karakterisasi Material',
                 'education' => 'S3 Fisika - Universitas Indonesia (2015), S2 Fisika - ITB (2010), S1 Fisika - USU (2008)',
                 'email' => 'ahmad.fadli@usu.ac.id',
@@ -29,6 +31,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Dr. Siti Nurhaliza, M.Sc',
                 'position' => 'Lab Manager - Spektroskopi',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Spektroskopi UV-Vis dan FTIR',
                 'education' => 'S3 Chemistry - University of Melbourne (2018), S2 Chemistry - Universitas Gadjah Mada (2012), S1 Kimia - USU (2010)',
                 'email' => 'siti.nurhaliza@usu.ac.id',
@@ -42,6 +45,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Drs. Budi Santoso, M.Si',
                 'position' => 'Lab Manager - Optik',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Optik dan Fotonikal',
                 'education' => 'S2 Fisika - ITB (2014), S1 Fisika - USU (2010)',
                 'email' => 'budi.santoso@usu.ac.id',
@@ -55,6 +59,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Dr. Maya Sari, M.T',
                 'position' => 'Lab Manager - Elektronik',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Instrumentasi Elektronik',
                 'education' => 'S3 Teknik Elektro - ITB (2019), S2 Teknik Elektro - USU (2013), S1 Teknik Elektro - USU (2011)',
                 'email' => 'maya.sari@usu.ac.id',
@@ -68,6 +73,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Prof. Dr. Andi Rahman, M.Sc',
                 'position' => 'Senior Research Associate',
+                'staff_type' => StaffType::DOSEN,
                 'specialization' => 'Fisika Material dan Getaran',
                 'education' => 'S3 Physics - University of Cambridge (2005), S2 Physics - University of Edinburgh (2000), S1 Fisika - ITB (1998)',
                 'email' => 'andi.rahman@usu.ac.id',
@@ -81,6 +87,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Ir. Dewi Kusuma, M.T',
                 'position' => 'Technical Manager',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Maintenance dan Kalibrasi Peralatan',
                 'education' => 'S2 Teknik Fisika - ITB (2016), S1 Teknik Fisika - ITB (2012)',
                 'email' => 'dewi.kusuma@usu.ac.id',
@@ -94,6 +101,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Muhammad Rizki, S.Si',
                 'position' => 'Asisten Laboratorium Senior',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Operasional Peralatan Spektroskopi',
                 'education' => 'S1 Fisika - USU (2020)',
                 'email' => 'muhammad.rizki@usu.ac.id',
@@ -107,6 +115,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Sari Indah Lestari, S.Si',
                 'position' => 'Asisten Laboratorium',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Mikroskopi dan Imaging',
                 'education' => 'S1 Fisika - USU (2021)',
                 'email' => 'sari.lestari@usu.ac.id',
@@ -120,6 +129,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Dr. Rahmat Hidayat, M.Eng',
                 'position' => 'Research Scientist',
+                'staff_type' => StaffType::DOSEN,
                 'specialization' => 'Pengembangan Sensor Optik',
                 'education' => 'S3 Engineering Physics - Tokyo Institute of Technology (2020), S2 Engineering Physics - Tokyo Institute of Technology (2017), S1 Teknik Fisika - ITB (2015)',
                 'email' => 'rahmat.hidayat@usu.ac.id',
@@ -133,6 +143,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Putri Amelia, S.T',
                 'position' => 'IT Support Specialist',
+                'staff_type' => StaffType::TEKNISI,
                 'specialization' => 'Sistem Informasi dan Database',
                 'education' => 'S1 Teknik Informatika - USU (2022)',
                 'email' => 'putri.amelia@usu.ac.id',
@@ -146,6 +157,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Ahmad Syahrul, A.Md',
                 'position' => 'Teknisi Laboratorium',
+                'staff_type' => StaffType::TEKNISI,
                 'specialization' => 'Maintenance Peralatan Mekanik',
                 'education' => 'D3 Teknik Mesin - Politeknik Negeri Medan (2018)',
                 'email' => 'ahmad.syahrul@usu.ac.id',
@@ -159,6 +171,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Dr. Lisa Noviana, M.Si',
                 'position' => 'Research Scientist',
+                'staff_type' => StaffType::DOSEN,
                 'specialization' => 'Biofisika dan Aplikasi Medis',
                 'education' => 'S3 Biophysics - National University of Singapore (2021), S2 Fisika - ITB (2017), S1 Fisika - USU (2015)',
                 'email' => 'lisa.noviana@usu.ac.id',
@@ -174,6 +187,7 @@ class StaffMemberSeeder extends Seeder
             [
                 'name' => 'Dr. Robert Simanjuntak, M.Sc',
                 'position' => 'Former Lab Manager',
+                'staff_type' => StaffType::LABORAN,
                 'specialization' => 'Laser Physics',
                 'education' => 'S3 Physics - University of California (2010), S2 Physics - Stanford University (2005), S1 Fisika - ITB (2003)',
                 'email' => 'robert.simanjuntak@alumni.usu.ac.id',

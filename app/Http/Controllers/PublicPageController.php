@@ -85,14 +85,21 @@ class PublicPageController extends Controller
     /**
      * Show the staff page
      */
-    public function staff(): View
+    public function staff(Request $request): View
     {
-        $staffMembers = StaffMember::active()
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+        $query = StaffMember::active()->ordered();
 
-        return view('public.staff', compact('staffMembers'));
+        // Apply staff type filter if provided
+        if ($request->filled('type') && in_array($request->get('type'), \App\Enums\StaffType::values())) {
+            $staffType = \App\Enums\StaffType::from($request->get('type'));
+            $query->type($staffType);
+        }
+
+        $staffMembers = $query->paginate(12)->withQueryString();
+        $staffTypes = \App\Enums\StaffType::options();
+        $currentType = $request->get('type');
+
+        return view('public.staff', compact('staffMembers', 'staffTypes', 'currentType'));
     }
 
     /**

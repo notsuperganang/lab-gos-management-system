@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StaffType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,7 @@ class StaffMember extends Model
     protected $fillable = [
         'name',
         'position',
+        'staff_type',
         'specialization',
         'education',
         'email',
@@ -36,6 +38,7 @@ class StaffMember extends Model
     protected function casts(): array
     {
         return [
+            'staff_type' => StaffType::class,
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -63,6 +66,14 @@ class StaffMember extends Model
     public function scopeByPosition($query, $position)
     {
         return $query->where('position', 'like', "%{$position}%");
+    }
+
+    /**
+     * Scope a query to filter by staff type.
+     */
+    public function scopeType($query, StaffType $type)
+    {
+        return $query->where('staff_type', $type);
     }
 
     /**
@@ -101,5 +112,13 @@ class StaffMember extends Model
     public function hasResearchInterests(): bool
     {
         return !empty($this->research_interests);
+    }
+
+    /**
+     * Get the staff type label.
+     */
+    public function getStaffTypeLabelAttribute(): string
+    {
+        return $this->staff_type?->label() ?? 'Unknown';
     }
 }

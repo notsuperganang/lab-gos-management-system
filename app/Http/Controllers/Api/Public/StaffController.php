@@ -20,7 +20,13 @@ class StaffController extends Controller
         try {
             $query = StaffMember::active()->ordered();
             
-            // Apply filters
+            // Apply staff type filter if provided
+            if ($request->filled('type') && in_array($request->get('type'), \App\Enums\StaffType::values())) {
+                $staffType = \App\Enums\StaffType::from($request->get('type'));
+                $query->type($staffType);
+            }
+            
+            // Apply legacy position filter for backward compatibility
             if ($request->filled('position')) {
                 $query->byPosition($request->get('position'));
             }
@@ -44,6 +50,8 @@ class StaffController extends Controller
                     'id' => $staffMember->id,
                     'name' => $staffMember->name,
                     'position' => $staffMember->position,
+                    'staff_type' => $staffMember->staff_type?->value,
+                    'staff_type_label' => $staffMember->staff_type_label,
                     'specialization' => $staffMember->specialization,
                     'education' => $staffMember->education,
                     'email' => $staffMember->email,
@@ -69,9 +77,11 @@ class StaffController extends Controller
                         'to' => $staff->lastItem(),
                     ],
                     'filters' => [
+                        'type' => $request->get('type'),
                         'position' => $request->get('position'),
                         'search' => $request->get('search'),
-                    ]
+                    ],
+                    'available_types' => \App\Enums\StaffType::options(),
                 ]
             ]);
             
@@ -102,6 +112,8 @@ class StaffController extends Controller
                 'id' => $staff->id,
                 'name' => $staff->name,
                 'position' => $staff->position,
+                'staff_type' => $staff->staff_type?->value,
+                'staff_type_label' => $staff->staff_type_label,
                 'specialization' => $staff->specialization,
                 'education' => $staff->education,
                 'email' => $staff->email,

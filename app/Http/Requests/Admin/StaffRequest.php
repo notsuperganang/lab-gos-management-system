@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\StaffType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StaffRequest extends FormRequest
 {
@@ -27,6 +29,7 @@ class StaffRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
+            'staff_type' => ['required', Rule::enum(StaffType::class)],
             'specialization' => 'nullable|string|max:255',
             'education' => 'nullable|string|max:500',
             'email' => [
@@ -59,6 +62,8 @@ class StaffRequest extends FormRequest
             'name.max' => 'Name must not exceed 255 characters.',
             'position.required' => 'Position is required.',
             'position.max' => 'Position must not exceed 255 characters.',
+            'staff_type.required' => 'Staff type is required.',
+            'staff_type.enum' => 'Please select a valid staff type.',
             'specialization.max' => 'Specialization must not exceed 255 characters.',
             'education.max' => 'Education information must not exceed 500 characters.',
             'email.email' => 'Please provide a valid email address.',
