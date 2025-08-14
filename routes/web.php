@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,20 +54,3 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     Route::get('/pengujian', [PublicPageController::class, 'testingService'])->name('pengujian');
 });
 
-// Authenticated routes
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->middleware('verified')->name('dashboard');
-    
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // Test route for development
-    Route::get('/test', function () {
-        return view('public.test');
-    });
-});
-
-require __DIR__.'/auth.php';
