@@ -26,15 +26,18 @@ class VisitRequestObserver
             
             Log::info('Visit request created, notifications sent', [
                 'request_id' => $visitRequest->request_id,
-                'visitor' => $visitRequest->full_name,
+                'visitor' => $visitRequest->visitor_name,
                 'institution' => $visitRequest->institution
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to send visit request creation notifications', [
+            // Don't let notification failures break the request creation
+            Log::warning('Failed to send visit request creation notifications (non-critical)', [
                 'request_id' => $visitRequest->request_id,
+                'visitor' => $visitRequest->visitor_name ?? 'Unknown',
                 'error' => $e->getMessage()
             ]);
+            // Continue silently - notification failure shouldn't break the request
         }
     }
 
@@ -86,7 +89,7 @@ class VisitRequestObserver
     {
         Log::info('Visit request deleted', [
             'request_id' => $visitRequest->request_id,
-            'visitor' => $visitRequest->full_name
+            'visitor' => $visitRequest->visitor_name
         ]);
     }
 

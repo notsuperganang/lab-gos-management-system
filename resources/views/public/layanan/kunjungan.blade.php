@@ -96,9 +96,21 @@
                         <i class="fas fa-hourglass-half text-green-600 text-2xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Durasi Kunjungan</h3>
-                    <p class="text-gray-600 text-sm mb-3">Estimasi waktu</p>
-                    <div class="text-3xl font-bold text-green-600">2-3</div>
-                    <p class="text-gray-500 text-xs">jam</p>
+                    <p class="text-gray-600 text-sm mb-3">Pilihan durasi fleksibel</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-center space-x-4">
+                            <div class="bg-green-100 rounded-lg px-3 py-1">
+                                <span class="text-sm font-semibold text-green-700">1 Jam</span>
+                            </div>
+                            <div class="bg-green-100 rounded-lg px-3 py-1">
+                                <span class="text-sm font-semibold text-green-700">2 Jam</span>
+                            </div>
+                            <div class="bg-green-100 rounded-lg px-3 py-1">
+                                <span class="text-sm font-semibold text-green-700">3 Jam</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500">Sesuai kebutuhan kunjungan</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,24 +246,63 @@
                                     </label>
                                     <input type="date"
                                            x-model="formData.visitDate"
+                                           @change="validateAndUpdateDate($event)"
                                            :min="getMinDate()"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white"
                                            required>
-                                    <p class="text-xs text-gray-500 mt-1">Minimal H+3 dari hari ini</p>
+                                    <p class="text-xs text-gray-500 mt-1">Minimal H+3 dari hari ini (Senin - Jumat)</p>
+                                    <div x-show="dateError" class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                        <p class="text-red-600 text-sm flex items-center">
+                                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                                            <span x-text="dateError"></span>
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <!-- Visit Time -->
+                                <!-- Visit Duration -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        Waktu Kunjungan <span class="text-red-500">*</span>
+                                        Durasi Kunjungan <span class="text-red-500">*</span>
                                     </label>
-                                    <select x-model="formData.visitTime"
+                                    <select x-model="formData.visitDuration"
+                                            @change="updateAvailableSlots()"
                                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white"
                                             required>
-                                        <option value="">Pilih waktu kunjungan</option>
-                                        <option value="morning">Pagi (08:00 - 11:00)</option>
-                                        <option value="afternoon">Siang (13:00 - 16:00)</option>
+                                        <option value="">Pilih durasi kunjungan</option>
+                                        <option value="1">1 Jam</option>
+                                        <option value="2">2 Jam</option>
+                                        <option value="3">3 Jam</option>
                                     </select>
+                                    <p class="text-xs text-gray-500 mt-1">Pilih berapa lama kunjungan akan berlangsung</p>
+                                </div>
+
+                                <!-- Available Start Time -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Waktu Mulai <span class="text-red-500">*</span>
+                                    </label>
+                                    <select x-model="formData.startTime"
+                                            :disabled="!formData.visitDuration || !formData.visitDate || loadingSlots"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-300 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            required>
+                                        <option value="" x-show="!formData.visitDuration">Pilih durasi terlebih dahulu</option>
+                                        <option value="" x-show="formData.visitDuration && loadingSlots">Memuat waktu tersedia...</option>
+                                        <option value="" x-show="formData.visitDuration && !loadingSlots && availableSlots.length === 0">Tidak ada waktu tersedia</option>
+                                        <template x-for="slot in availableSlots" :key="slot.start">
+                                            <option :value="slot.start" x-text="slot.display"></option>
+                                        </template>
+                                    </select>
+                                    
+                                    <!-- Calculated End Time Display -->
+                                    <div x-show="formData.startTime && formData.visitDuration" 
+                                         class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <p class="text-sm text-blue-700">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            Waktu selesai: <span class="font-semibold" x-text="calculateEndTime()"></span>
+                                        </p>
+                                    </div>
+                                    
+                                    <p class="text-xs text-gray-500 mt-1">Waktu yang tersedia berdasarkan durasi dan jadwal lab</p>
                                 </div>
 
                                 <!-- Number of Participants -->
@@ -297,7 +348,7 @@
                             </h3>
 
                             <!-- File Upload Area -->
-                            <div x-data="fileUpload()">
+                            <div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
                                         Surat Permohonan Resmi dari Instansi <span class="text-red-500">*</span>
@@ -450,11 +501,23 @@
                     institution: '',
                     purpose: '',
                     visitDate: '',
-                    visitTime: '',
+                    visitDuration: '',
+                    startTime: '',
                     participants: 1,
                     additionalNotes: '',
                     agreement: false
                 },
+
+                // File upload properties
+                uploadedFile: null,
+                isDragging: false,
+                fileError: '',
+
+                // Time slot management
+                availableSlots: [],
+                loadingSlots: false,
+                slotsError: '',
+                dateError: '',
 
                 getMinDate() {
                     const today = new Date();
@@ -462,10 +525,34 @@
                     return today.toISOString().split('T')[0];
                 },
 
+                // Validate date and check for weekends
+                validateAndUpdateDate(event) {
+                    const selectedDate = event.target.value;
+                    this.dateError = '';
+                    
+                    if (!selectedDate) {
+                        this.updateAvailableSlots();
+                        return;
+                    }
+                    
+                    const date = new Date(selectedDate);
+                    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+                    
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                        this.dateError = 'Kunjungan laboratorium hanya tersedia pada hari kerja (Senin - Jumat)';
+                        this.formData.visitDate = '';
+                        this.availableSlots = [];
+                        return;
+                    }
+                    
+                    // If valid, update available slots
+                    this.updateAvailableSlots();
+                },
+
                 isFormValid() {
                     const requiredFields = [
                         'fullName', 'email', 'phone', 'institution',
-                        'purpose', 'visitDate', 'visitTime'
+                        'purpose', 'visitDate', 'visitDuration', 'startTime'
                     ];
 
                     const fieldsValid = requiredFields.every(field =>
@@ -474,8 +561,109 @@
 
                     return fieldsValid &&
                            this.formData.participants >= 1 &&
-                           this.formData.participants <= 25 &&
-                           this.formData.agreement;
+                           this.formData.participants <= 50 &&
+                           this.formData.agreement &&
+                           !this.dateError; // Also check for date validation errors
+                },
+
+                // Calculate end time based on start time and duration
+                calculateEndTime() {
+                    if (!this.formData.startTime || !this.formData.visitDuration) {
+                        return '';
+                    }
+
+                    const [hours, minutes] = this.formData.startTime.split(':').map(Number);
+                    const durationHours = parseInt(this.formData.visitDuration);
+                    
+                    const endHour = hours + durationHours;
+                    const endTime = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                    
+                    return `${endTime} WIB`;
+                },
+
+                // Generate base time slots based on duration
+                generateBaseSlots(duration) {
+                    const slots = [];
+                    const durationHours = parseInt(duration);
+                    
+                    // Operating hours: 08:00-16:00, lunch break: 12:00-13:00
+                    const startHour = 8;
+                    const endHour = 16;
+                    const lunchStart = 12;
+                    const lunchEnd = 13;
+                    
+                    for (let hour = startHour; hour <= endHour - durationHours; hour++) {
+                        const endTimeHour = hour + durationHours;
+                        
+                        // Skip if slot would overlap with lunch break
+                        if (hour < lunchEnd && endTimeHour > lunchStart) {
+                            continue;
+                        }
+                        
+                        // Skip if slot would end after operating hours
+                        if (endTimeHour > endHour) {
+                            continue;
+                        }
+                        
+                        const startTime = `${hour.toString().padStart(2, '0')}:00`;
+                        const endTime = `${endTimeHour.toString().padStart(2, '0')}:00`;
+                        
+                        slots.push({
+                            start: startTime,
+                            end: endTime,
+                            display: `${startTime} - ${endTime} WIB (${durationHours} jam)`
+                        });
+                    }
+                    
+                    return slots;
+                },
+
+                // Update available slots when duration or date changes
+                async updateAvailableSlots() {
+                    if (!this.formData.visitDuration || !this.formData.visitDate) {
+                        this.availableSlots = [];
+                        return;
+                    }
+
+                    this.loadingSlots = true;
+                    this.slotsError = '';
+                    this.formData.startTime = ''; // Reset start time selection
+
+                    try {
+                        // Wait for LabGOS to be available
+                        if (!window.LabGOS) {
+                            // Fallback to generated slots if API not available
+                            console.warn('LabGOS API not available, using generated slots');
+                            this.availableSlots = this.generateBaseSlots(this.formData.visitDuration);
+                            return;
+                        }
+
+                        // Try to get available slots from API
+                        try {
+                            const response = await window.LabGOS.getAvailableTimeSlots(
+                                this.formData.visitDate, 
+                                this.formData.visitDuration
+                            );
+                            
+                            if (response.success && response.data.available_slots) {
+                                this.availableSlots = response.data.available_slots;
+                            } else {
+                                // Fallback to generated slots
+                                this.availableSlots = this.generateBaseSlots(this.formData.visitDuration);
+                            }
+                        } catch (apiError) {
+                            console.warn('API call failed, using generated slots:', apiError);
+                            // Fallback to generated slots
+                            this.availableSlots = this.generateBaseSlots(this.formData.visitDuration);
+                        }
+
+                    } catch (error) {
+                        console.error('Error updating available slots:', error);
+                        this.slotsError = 'Gagal memuat waktu tersedia. Silakan coba lagi.';
+                        this.availableSlots = [];
+                    } finally {
+                        this.loadingSlots = false;
+                    }
                 },
 
                 async submitForm() {
@@ -484,42 +672,98 @@
                     this.submitting = true;
 
                     try {
-                        // Simulate API call
-                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        // Wait for LabGOS to be available
+                        let attempts = 0;
+                        while (!window.LabGOS && attempts < 10) {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            attempts++;
+                        }
 
-                        // Generate visit ID
-                        const visitId = 'KNJ-' + new Date().getFullYear() + '-' +
-                                       String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+                        if (!window.LabGOS) {
+                            throw new Error('Sistem tidak dapat memuat. Silakan refresh halaman.');
+                        }
 
-                        // Prepare form data
-                        const submitData = {
-                            visitId: visitId,
-                            formData: this.formData,
-                            submittedAt: new Date().toISOString(),
-                            status: 'submitted'
-                        };
+                        // Calculate end time
+                        const [hours, minutes] = this.formData.startTime.split(':').map(Number);
+                        const durationHours = parseInt(this.formData.visitDuration);
+                        const endHour = hours + durationHours;
+                        const endTime = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-                        console.log('Visit request submitted:', submitData);
+                        // Prepare FormData for file upload support
+                        const formData = new FormData();
+                        formData.append('visitor_name', this.formData.fullName);
+                        formData.append('visitor_email', this.formData.email);
+                        formData.append('visitor_phone', this.formData.phone);
+                        formData.append('institution', this.formData.institution);
+                        formData.append('group_size', this.formData.participants);
+                        formData.append('visit_date', this.formData.visitDate);
+                        formData.append('start_time', this.formData.startTime);
+                        formData.append('end_time', endTime);
+                        formData.append('visit_purpose', this.formData.purpose);
+                        formData.append('purpose_description', this.formData.additionalNotes || '');
+                        formData.append('special_requirements', this.formData.additionalNotes || '');
 
-                        // Redirect to confirmation page
-                        window.location.href = `/layanan/kunjungan/confirmation/${visitId}`;
+                        // Add uploaded file if present
+                        if (this.uploadedFile) {
+                            formData.append('request_letter', this.uploadedFile);
+                            console.log('Including uploaded file:', this.uploadedFile.name);
+                        }
+
+                        console.log('Submitting visit request with FormData');
+
+                        // Submit to API using direct fetch (since LabGOS client doesn't handle FormData)
+                        const response = await fetch('/api/requests/visit', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'Accept': 'application/json',
+                                // Don't set Content-Type header - let browser set it with boundary for FormData
+                            }
+                        });
+
+                        const responseData = await response.json();
+
+                        if (responseData.success) {
+                            // Store tracking data for next page
+                            sessionStorage.setItem('visitTrackingData', JSON.stringify({
+                                requestId: responseData.data.request_id,
+                                submittedAt: responseData.data.submitted_at,
+                                status: responseData.data.status
+                            }));
+
+                            // Show success message
+                            alert(`✅ Permohonan kunjungan berhasil dikirim!\n\nID Kunjungan: ${responseData.data.request_id}\n\nAnda akan diarahkan ke halaman tracking.`);
+
+                            // Redirect to tracking page
+                            window.location.href = `/layanan/kunjungan/confirmation/${responseData.data.request_id}`;
+                        } else {
+                            throw new Error(responseData.message || 'Gagal mengirim permohonan');
+                        }
 
                     } catch (error) {
                         console.error('Error submitting form:', error);
-                        alert('Terjadi kesalahan saat mengirim permohonan. Silakan coba lagi.');
+                        
+                        let errorMessage = 'Terjadi kesalahan saat mengirim permohonan.';
+                        
+                        if (error.response && error.response.data) {
+                            if (error.response.data.errors) {
+                                // Validation errors
+                                const errors = Object.values(error.response.data.errors).flat();
+                                errorMessage = errors.join('\n');
+                            } else if (error.response.data.message) {
+                                errorMessage = error.response.data.message;
+                            }
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+
+                        alert('❌ ' + errorMessage + '\n\nSilakan periksa kembali data yang diisi dan coba lagi.');
                     } finally {
                         this.submitting = false;
                     }
-                }
-            }
-        }
+                },
 
-        function fileUpload() {
-            return {
-                uploadedFile: null,
-                isDragging: false,
-                fileError: '',
-
+                // File upload methods
                 handleFileDrop(event) {
                     this.isDragging = false;
                     const files = event.dataTransfer.files;
@@ -572,6 +816,7 @@
                 }
             }
         }
+
     </script>
 
 </x-public.layouts.main>

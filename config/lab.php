@@ -50,7 +50,7 @@ return [
             'name' => 'Kunjungan Laboratorium',
             'enabled' => true,
             'requires_approval' => true,
-            'advance_booking_days' => 7,
+            'advance_booking_days' => 3,
         ],
         'testing_service' => [
             'name' => 'Pengujian dan Analisis Sampel',

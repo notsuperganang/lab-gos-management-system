@@ -202,6 +202,35 @@ const LabGOS = {
         });
     },
     
+    // Submit visit request
+    async submitVisitRequest(payload) {
+        return await this.request('/requests/visit', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    },
+    
+    // Track visit request
+    async trackVisit(requestId) {
+        return await this.request(`/tracking/visit/${requestId}`);
+    },
+    
+    // Cancel visit request
+    async cancelVisit(requestId) {
+        return await this.request(`/tracking/visit/${requestId}/cancel`, {
+            method: 'DELETE'
+        });
+    },
+    
+    // Get available time slots for visit scheduling
+    async getAvailableTimeSlots(date, duration) {
+        const searchParams = new URLSearchParams();
+        searchParams.append('date', date);
+        searchParams.append('duration', duration);
+        
+        return await this.request(`/visits/available-slots?${searchParams.toString()}`);
+    },
+    
     // Get site settings with caching
     async getSiteSettings() {
         // Simple caching mechanism (5 minutes)

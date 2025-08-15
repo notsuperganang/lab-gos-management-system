@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Public\EquipmentController;
 use App\Http\Controllers\Api\Public\RequestController;
 use App\Http\Controllers\Api\Public\TrackingController;
 use App\Http\Controllers\Api\Public\GalleryController;
+use App\Http\Controllers\Api\VisitSlotsController;
 use App\Http\Controllers\Api\Admin\RequestManagementController;
 use App\Http\Controllers\Api\Admin\EquipmentManagementController;
 use App\Http\Controllers\Api\Admin\ContentManagementController;
@@ -69,6 +70,10 @@ Route::get('/gallery', [GalleryController::class, 'index'])
 Route::get('/gallery/{gallery}', [GalleryController::class, 'show'])
     ->name('api.gallery.show');
 
+// Visit scheduling
+Route::get('/visits/available-slots', [VisitSlotsController::class, 'getAvailableSlots'])
+    ->name('api.visits.available-slots');
+
 // Request submissions
 Route::prefix('requests')->name('api.requests.')->group(function () {
     Route::post('/borrow', [RequestController::class, 'submitBorrowRequest'])
@@ -91,6 +96,8 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
     // Cancel requests
     Route::delete('/borrow/{requestId}/cancel', [TrackingController::class, 'cancelBorrowRequest'])
         ->name('borrow.cancel');
+    Route::delete('/visit/{requestId}/cancel', [TrackingController::class, 'cancelVisitRequest'])
+        ->name('visit.cancel');
 });
 
 /*

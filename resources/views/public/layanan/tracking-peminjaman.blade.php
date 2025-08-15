@@ -920,11 +920,25 @@ Terima kasih.`;
 
                 // Equipment specification helper methods (from katalog-alat)
                 getKeySpecs(equipment) {
-                    if (!equipment || !equipment.specifications || typeof equipment.specifications !== 'object') {
+                    if (!equipment || !equipment.specifications) {
                         return 'Tidak ada spesifikasi';
                     }
 
-                    const specs = equipment.specifications;
+                    let specs = equipment.specifications;
+                    
+                    // Handle case where specifications is a JSON string
+                    if (typeof specs === 'string') {
+                        try {
+                            specs = JSON.parse(specs);
+                        } catch (e) {
+                            return 'Tidak ada spesifikasi';
+                        }
+                    }
+                    
+                    if (typeof specs !== 'object') {
+                        return 'Tidak ada spesifikasi';
+                    }
+
                     const specEntries = Object.entries(specs).filter(([key, value]) =>
                         value !== null && value !== undefined && value !== ''
                     );

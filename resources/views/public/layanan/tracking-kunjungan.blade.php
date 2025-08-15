@@ -7,20 +7,20 @@
     <!-- Hero Section -->
     <section class="relative h-80 flex items-center justify-center pt-20">
         <!-- Background Image -->
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" 
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat"
              style="background-image: url('/assets/images/hero-bg.jpeg');">
             <div class="absolute inset-0 bg-black bg-opacity-60"></div>
         </div>
-        
+
         <!-- Content -->
         <div class="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate.once="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                  class="transition-all duration-1200 ease-out">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4 leading-tight">
                     <span class="relative">
-                        🏛️ Tracking 
+                        🏛️ Tracking
                         <span class="text-secondary">Kunjungan</span>
                         <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-secondary to-yellow-400 rounded-full animate-pulse"></div>
                     </span>
@@ -41,15 +41,40 @@
     <!-- Main Content -->
     <section class="py-20 bg-gray-50">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            <div x-data="trackingKunjungan()" class="space-y-8">
-                
+
+            <div x-data="trackingKunjungan()" x-init="init()" class="space-y-8">
+
+                <!-- Loading State -->
+                <div x-show="loading" class="text-center py-20">
+                    <div class="inline-flex items-center px-6 py-3 bg-white rounded-xl shadow-lg">
+                        <i class="fas fa-spinner fa-spin text-primary text-xl mr-3"></i>
+                        <span class="text-gray-700 font-semibold">Memuat data kunjungan...</span>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div x-show="error && !loading" class="text-center py-20">
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-8 max-w-md mx-auto">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-red-800 mb-2">Gagal Memuat Data</h3>
+                        <p class="text-red-600 mb-4" x-text="error"></p>
+                        <a href="/tracking/kunjungan"
+                           class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-search mr-2"></i>
+                            Cari Kunjungan Lain
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Status Timeline -->
-                <div x-data="{ animated: false }" 
+                <div x-show="!loading && !error"
+                     x-data="{ animated: false }"
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                      class="bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-1000 ease-out">
-                    
+
                     <!-- Header -->
                     <div class="bg-gradient-to-r from-primary to-blue-600 px-8 py-6 text-white relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-secondary bg-opacity-20 rounded-full -translate-y-16 translate-x-16"></div>
@@ -59,9 +84,25 @@
                                     <i class="fas fa-users mr-3 text-secondary"></i>
                                     Status Kunjungan
                                 </h2>
-                                <p class="text-blue-200">
+                                <p class="text-blue-200 mb-2">
                                     ID Kunjungan: <span class="font-bold text-secondary" x-text="visitId"></span>
                                 </p>
+                                <!-- Status Badge -->
+                                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
+                                     :class="{
+                                        'bg-yellow-100 text-yellow-800': currentStatus === 'pending' || currentStatus === 'under_review',
+                                        'bg-green-100 text-green-800': currentStatus === 'approved' || currentStatus === 'ready',
+                                        'bg-blue-100 text-blue-800': currentStatus === 'completed',
+                                        'bg-red-100 text-red-800': currentStatus === 'rejected' || currentStatus === 'cancelled'
+                                     }">
+                                    <span x-show="currentStatus === 'pending'">⏳ Menunggu Review</span>
+                                    <span x-show="currentStatus === 'under_review'">🔍 Sedang Direview</span>
+                                    <span x-show="currentStatus === 'approved'">✅ Disetujui</span>
+                                    <span x-show="currentStatus === 'ready'">🏛️ Siap Dikunjungi</span>
+                                    <span x-show="currentStatus === 'completed'">✅ Selesai</span>
+                                    <span x-show="currentStatus === 'rejected'">❌ Ditolak</span>
+                                    <span x-show="currentStatus === 'cancelled'">🚫 Dibatalkan</span>
+                                </div>
                             </div>
                             <div class="text-right">
                                 <div class="text-sm text-blue-200 mb-1">Diajukan pada</div>
@@ -77,7 +118,7 @@
                             <div class="absolute left-8 top-0 bottom-0 w-1 bg-gray-200"></div>
                             <div class="absolute left-8 top-0 w-1 bg-gradient-to-b from-primary to-blue-600 transition-all duration-1000 ease-out"
                                  :style="`height: ${getProgressHeight()}%`"></div>
-                            
+
                             <!-- Timeline Items -->
                             <div class="space-y-8">
                                 <template x-for="(step, index) in statusSteps" :key="index">
@@ -87,7 +128,7 @@
                                              :class="getStepClass(step.status)">
                                             <i :class="step.icon" class="text-xl"></i>
                                         </div>
-                                        
+
                                         <!-- Status Content -->
                                         <div class="ml-6 flex-1">
                                             <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
@@ -101,7 +142,7 @@
                                                 <p class="text-gray-600 text-sm mb-3" x-text="step.description"></p>
                                                 <div class="flex items-center text-xs text-gray-500">
                                                     <i class="fas fa-clock mr-1"></i>
-                                                    <span x-text="step.timestamp || 'Menunggu...'"></span>
+                                                    <span x-text="getStepTimestamp(step)"></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -109,16 +150,48 @@
                                 </template>
                             </div>
                         </div>
+
+                        <!-- Cancelled Status Message -->
+                        <div x-show="currentStatus === 'cancelled'" class="mt-8 p-6 bg-red-50 border border-red-200 rounded-xl">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-ban text-red-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-red-800">Permohonan Dibatalkan</h3>
+                                    <p class="text-red-600 text-sm">Permohonan kunjungan telah dibatalkan</p>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border border-red-100">
+                                <p class="text-gray-700 text-sm">
+                                    <strong>Informasi:</strong> Permohonan kunjungan dengan ID <span x-text="visitId" class="font-mono font-semibold"></span>
+                                    telah dibatalkan. Jika Anda masih memerlukan kunjungan laboratorium, silakan ajukan permohonan baru melalui halaman utama.
+                                </p>
+                                <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                                    <a href="/layanan/kunjungan"
+                                       class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-plus mr-2"></i>
+                                        Ajukan Permohonan Baru
+                                    </a>
+                                    <a href="/"
+                                       class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
+                                        <i class="fas fa-home mr-2"></i>
+                                        Kembali ke Beranda
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Detail Kunjungan -->
-                <div x-data="{ animated: false }" 
+                <div x-show="!loading && !error"
+                     x-data="{ animated: false }"
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                      class="bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-1000 ease-out"
                      style="transition-delay: 0.2s;">
-                    
+
                     <div class="bg-gradient-to-r from-secondary to-yellow-500 px-8 py-6 text-gray-800">
                         <h2 class="text-2xl font-bold mb-2 flex items-center">
                             <i class="fas fa-info-circle mr-3"></i>
@@ -129,20 +202,20 @@
 
                     <div class="p-8">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            
+
                             <!-- Info Pengunjung -->
                             <div class="space-y-6">
                                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
                                     <i class="fas fa-user mr-3 text-primary"></i>
                                     Informasi Pengunjung
                                 </h3>
-                                
+
                                 <div class="space-y-4">
                                     <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                         <div class="text-sm text-gray-600 mb-1">Nama Penanggung Jawab</div>
                                         <div class="font-semibold text-gray-800" x-text="visitorInfo.fullName"></div>
                                     </div>
-                                    
+
                                     <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                         <div class="text-sm text-gray-600 mb-1">Instansi/Organisasi</div>
                                         <div class="font-semibold text-gray-800" x-text="visitorInfo.institution"></div>
@@ -158,11 +231,30 @@
                                         <div class="font-semibold text-gray-800" x-text="visitorInfo.phone"></div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Tujuan Kunjungan -->
                                 <div class="bg-blue-50 rounded-xl p-4">
                                     <h4 class="font-semibold text-blue-800 mb-2">Tujuan Kunjungan</h4>
                                     <div class="text-sm text-blue-700" x-text="getPurposeText(visitorInfo.purpose)"></div>
+                                </div>
+
+                                <!-- Surat Permohonan -->
+                                <div class="bg-purple-50 rounded-xl p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-semibold text-purple-800 mb-1 flex items-center">
+                                                <i class="fas fa-file-pdf mr-2"></i>
+                                                Surat Permohonan
+                                            </h4>
+                                            <div class="text-sm text-purple-700" x-text="getLetterDisplayText()"></div>
+                                        </div>
+                                        <button x-show="hasRequestLetter()" 
+                                                @click="previewRequestLetter()"
+                                                class="w-8 h-8 bg-purple-100 hover:bg-purple-200 text-purple-600 hover:text-purple-700 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 group"
+                                                title="Lihat surat permohonan yang telah dikirim">
+                                            <i class="fas fa-eye text-sm group-hover:animate-pulse"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -172,7 +264,7 @@
                                     <i class="fas fa-calendar-alt mr-3 text-green-600"></i>
                                     Jadwal Kunjungan
                                 </h3>
-                                
+
                                 <div class="grid grid-cols-1 gap-4">
                                     <div class="bg-gray-50 rounded-xl p-4">
                                         <div class="text-sm text-gray-600 mb-1">Tanggal Kunjungan</div>
@@ -189,11 +281,11 @@
                                         </div>
                                     </div>
                                     <div class="bg-gray-50 rounded-xl p-4">
-                                        <div class="text-sm text-gray-600 mb-1">Durasi Estimasi</div>
-                                        <div class="font-semibold text-gray-800">2-3 jam</div>
+                                        <div class="text-sm text-gray-600 mb-1">Durasi</div>
+                                        <div class="font-semibold text-gray-800" x-text="getVisitDurationText()"></div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Catatan -->
                                 <div class="bg-green-50 rounded-xl p-4" x-show="scheduleInfo.additionalNotes">
                                     <h4 class="font-semibold text-green-800 mb-2">Catatan Tambahan</h4>
@@ -208,7 +300,7 @@
                                 <i class="fas fa-list-check mr-3 text-secondary"></i>
                                 Agenda Kunjungan
                             </h3>
-                            
+
                             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
                                 <div class="overflow-x-auto">
                                     <table class="w-full">
@@ -234,7 +326,7 @@
                                                     </td>
                                                     <td class="px-6 py-4 text-sm text-gray-700" x-text="agenda.location"></td>
                                                     <td class="px-6 py-4 text-center">
-                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800" 
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
                                                               x-text="agenda.duration"></span>
                                                     </td>
                                                 </tr>
@@ -248,12 +340,13 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div x-data="{ animated: false }" 
+                <div x-show="!loading && !error"
+                     x-data="{ animated: false }"
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                      class="bg-white rounded-3xl shadow-2xl p-8 transition-all duration-1000 ease-out"
                      style="transition-delay: 0.4s;">
-                    
+
                     <div class="text-center mb-8">
                         <h3 class="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center">
                             <i class="fas fa-cogs mr-3 text-purple-600"></i>
@@ -261,65 +354,83 @@
                         </h3>
                         <p class="text-gray-600">Pilih aksi yang ingin Anda lakukan</p>
                     </div>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        
+
                         <!-- Download Surat -->
                         <div class="bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="currentStatus === 'approved' || currentStatus === 'ready' ? 'bg-green-100' : 'bg-gray-200'">
+                                 :class="(currentStatus === 'approved' || currentStatus === 'ready') ? 'bg-green-100' :
+                                         currentStatus === 'cancelled' ? 'bg-gray-200' : 'bg-gray-200'">
                                 <i class="fas fa-download text-2xl"
-                                   :class="currentStatus === 'approved' || currentStatus === 'ready' ? 'text-green-600' : 'text-gray-400'"></i>
+                                   :class="(currentStatus === 'approved' || currentStatus === 'ready') ? 'text-green-600' :
+                                           currentStatus === 'cancelled' ? 'text-gray-400' : 'text-gray-400'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Download Surat</h4>
                             <p class="text-sm text-gray-600 mb-4">
                                 <span x-show="currentStatus === 'approved' || currentStatus === 'ready'">Surat izin siap diunduh</span>
-                                <span x-show="currentStatus !== 'approved' && currentStatus !== 'ready'">Menunggu persetujuan</span>
+                                <span x-show="currentStatus === 'pending' || currentStatus === 'under_review'">Menunggu persetujuan</span>
+                                <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
+                                <span x-show="['completed', 'rejected'].includes(currentStatus)">Tidak tersedia</span>
                             </p>
                             <button @click="downloadLetter()"
                                     :disabled="currentStatus !== 'approved' && currentStatus !== 'ready'"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="(currentStatus === 'approved' || currentStatus === 'ready') ? 
-                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl' : 
+                                    :class="(currentStatus === 'approved' || currentStatus === 'ready') ?
+                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl' :
                                            'bg-gray-300 text-gray-500 cursor-not-allowed'">
                                 <span x-show="currentStatus === 'approved' || currentStatus === 'ready'">Download</span>
-                                <span x-show="currentStatus !== 'approved' && currentStatus !== 'ready'">Belum Tersedia</span>
+                                <span x-show="currentStatus === 'pending' || currentStatus === 'under_review'">Belum Tersedia</span>
+                                <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
+                                <span x-show="['completed', 'rejected'].includes(currentStatus)">Tidak Tersedia</span>
                             </button>
                         </div>
 
                         <!-- WhatsApp Konfirmasi -->
                         <div class="bg-green-50 rounded-2xl p-6 text-center hover:bg-green-100 transition-all duration-300">
-                            <div class="w-16 h-16 bg-green-100 mx-auto mb-4 rounded-full flex items-center justify-center">
-                                <i class="fab fa-whatsapp text-2xl text-green-600"></i>
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                                 :class="currentStatus === 'cancelled' ? 'bg-gray-200' : 'bg-green-100'">
+                                <i class="fab fa-whatsapp text-2xl"
+                                   :class="currentStatus === 'cancelled' ? 'text-gray-400' : 'text-green-600'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Konfirmasi WhatsApp</h4>
-                            <p class="text-sm text-gray-600 mb-4">Hubungi admin untuk konfirmasi</p>
+                            <p class="text-sm text-gray-600 mb-4">
+                                <span x-show="currentStatus !== 'cancelled'">Hubungi admin untuk konfirmasi</span>
+                                <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
+                            </p>
                             <button @click="sendWhatsAppConfirmation()"
-                                    class="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                                Hubungi Admin
+                                    :disabled="currentStatus === 'cancelled'"
+                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                                    :class="currentStatus === 'cancelled' ?
+                                           'bg-gray-300 text-gray-500 cursor-not-allowed' :
+                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'">
+                                <span x-show="currentStatus !== 'cancelled'">Hubungi Admin</span>
+                                <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
                             </button>
                         </div>
 
                         <!-- Cancel Kunjungan -->
                         <div class="bg-red-50 rounded-2xl p-6 text-center hover:bg-red-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="(currentStatus === 'approved' || currentStatus === 'ready' || currentStatus === 'completed') ? 'bg-gray-200' : 'bg-red-100'">
+                                 :class="['approved', 'ready', 'completed', 'cancelled'].includes(currentStatus) ? 'bg-gray-200' : 'bg-red-100'">
                                 <i class="fas fa-times text-2xl"
-                                   :class="(currentStatus === 'approved' || currentStatus === 'ready' || currentStatus === 'completed') ? 'text-gray-400' : 'text-red-600'"></i>
+                                   :class="['approved', 'ready', 'completed', 'cancelled'].includes(currentStatus) ? 'text-gray-400' : 'text-red-600'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Batalkan Kunjungan</h4>
                             <p class="text-sm text-gray-600 mb-4">
                                 <span x-show="currentStatus === 'pending' || currentStatus === 'under_review'">Dapat dibatalkan sebelum disetujui</span>
-                                <span x-show="currentStatus === 'approved' || currentStatus === 'ready' || currentStatus === 'completed'">Tidak dapat dibatalkan</span>
+                                <span x-show="['approved', 'ready', 'completed'].includes(currentStatus)">Tidak dapat dibatalkan</span>
+                                <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Sudah dibatalkan</span>
                             </p>
                             <button @click="cancelVisit()"
-                                    :disabled="currentStatus === 'approved' || currentStatus === 'ready' || currentStatus === 'completed'"
+                                    :disabled="['approved', 'ready', 'completed', 'cancelled'].includes(currentStatus)"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="(currentStatus === 'approved' || currentStatus === 'ready' || currentStatus === 'completed') ? 
-                                           'bg-gray-300 text-gray-500 cursor-not-allowed' : 
+                                    :class="['approved', 'ready', 'completed', 'cancelled'].includes(currentStatus) ?
+                                           'bg-gray-300 text-gray-500 cursor-not-allowed' :
                                            'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl'">
                                 <span x-show="currentStatus === 'pending' || currentStatus === 'under_review'">Batalkan</span>
-                                <span x-show="currentStatus === 'approved' || currentStatus === 'ready' || currentStatus === 'completed'">Tidak Tersedia</span>
+                                <span x-show="['approved', 'ready', 'completed'].includes(currentStatus)">Tidak Tersedia</span>
+                                <span x-show="currentStatus === 'cancelled'">Sudah Dibatalkan</span>
                             </button>
                         </div>
                     </div>
@@ -327,7 +438,7 @@
 
                 <!-- Back to Home -->
                 <div class="text-center">
-                    <a href="/" 
+                    <a href="/"
                        class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-primary text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                         <i class="fas fa-home mr-2"></i>
                         Kembali ke Beranda
@@ -341,84 +452,209 @@
     <script>
         function trackingKunjungan() {
             return {
+                // Data management
                 visitData: null,
-                
-                init() {
-                    this.visitData = this.getVisitDataById('{{ $visitId ?? "KNJ-2025-001" }}');
-                    this.setupStatusSteps();
-                },
-                
-                getVisitDataById(visitId) {
-                    // Dummy data based on visit ID
-                    const dummyData = {
-                        'KNJ-2025-001': {
-                            id: 'KNJ-2025-001',
-                            fullName: 'Dr. Ahmad Budiman',
-                            email: 'ahmad.budiman@sman1.ac.id',
-                            phone: '081234567890',
-                            institution: 'SMAN 1 Banda Aceh',
-                            purpose: 'study-visit',
-                            visitDate: '15 Januari 2025',
-                            visitTime: 'Pagi (08:00 - 11:00)',
-                            participants: 25,
-                            additionalNotes: 'Kunjungan dalam rangka pembelajaran mata pelajaran Fisika untuk kelas XII IPA',
-                            status: 'approved',
-                            submittedAt: '8 Januari 2025, 10:30'
-                        },
-                        'KNJ-2025-002': {
-                            id: 'KNJ-2025-002',
-                            fullName: 'Prof. Siti Rahmawati',
-                            email: 'siti.rahmawati@univ.ac.id',
-                            phone: '082345678901',
-                            institution: 'Universitas Negeri Padang',
-                            purpose: 'research',
-                            visitDate: '20 Januari 2025',
-                            visitTime: 'Siang (13:00 - 16:00)',
-                            participants: 8,
-                            additionalNotes: 'Penelitian kolaborasi tentang spektroskopi inframerah',
-                            status: 'under_review',
-                            submittedAt: '9 Januari 2025, 14:15'
-                        },
-                        'KNJ-2025-003': {
-                            id: 'KNJ-2025-003',
-                            fullName: 'Ir. Bambang Sutrisno',
-                            email: 'bambang.s@smkn2.sch.id',
-                            phone: '083456789012',
-                            institution: 'SMK Negeri 2 Banda Aceh',
-                            purpose: 'learning',
-                            visitDate: '12 Januari 2025',
-                            visitTime: 'Pagi (08:00 - 11:00)',
-                            participants: 15,
-                            additionalNotes: 'Pembelajaran praktik untuk siswa jurusan Teknik Elektronika',
-                            status: 'ready',
-                            submittedAt: '5 Januari 2025, 09:00'
-                        }
-                    };
+                loading: true,
+                error: null,
+                siteSettings: null,
+                adminPhone: null,
 
-                    return dummyData[visitId] || {
-                        id: visitId,
-                        fullName: 'Pengguna Demo',
-                        email: 'demo@example.com',
-                        phone: '081234567890',
-                        institution: 'Instansi Demo',
-                        purpose: 'study-visit',
-                        visitDate: '20 Januari 2025',
-                        visitTime: 'Pagi (08:00 - 11:00)',
-                        participants: 10,
-                        additionalNotes: 'Data demo untuk testing sistem',
-                        status: 'pending',
-                        submittedAt: '10 Januari 2025, 12:00'
+                // Initialize component
+                async init() {
+                    // Wait for LabGOS to be available
+                    let attempts = 0;
+                    while (!window.LabGOS && attempts < 10) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        attempts++;
+                    }
+
+                    if (!window.LabGOS) {
+                        console.error('LabGOS API client not available');
+                        this.error = 'Sistem tidak dapat memuat data. Silakan refresh halaman.';
+                        this.loading = false;
+                        return;
+                    }
+
+                    // Load site settings for admin contact
+                    await this.loadSiteSettings();
+
+                    // Get visit ID from URL
+                    const urlPath = window.location.pathname;
+                    const visitIdMatch = urlPath.match(/\/confirmation\/([^\/]+)$/);
+
+                    if (visitIdMatch) {
+                        const visitId = visitIdMatch[1];
+                        await this.loadVisitData(visitId);
+                    } else {
+                        // Try to get from sessionStorage (from previous page)
+                        const storedData = sessionStorage.getItem('visitTrackingData');
+                        if (storedData) {
+                            try {
+                                const data = JSON.parse(storedData);
+                                await this.loadVisitData(data.requestId);
+                            } catch (error) {
+                                console.error('Failed to parse stored visit tracking data:', error);
+                                this.error = 'Gagal memuat data tracking';
+                            }
+                        } else {
+                            this.error = 'ID kunjungan tidak ditemukan';
+                        }
+                    }
+
+                    this.loading = false;
+                },
+
+                // Load site settings for admin contact info
+                async loadSiteSettings() {
+                    try {
+                        const response = await window.LabGOS.getSiteSettings();
+                        if (response.success) {
+                            this.siteSettings = response.data;
+                            this.extractAdminPhone();
+                        }
+                    } catch (error) {
+                        console.error('Failed to load site settings:', error);
+                    }
+                },
+
+                // Extract admin phone from site settings
+                extractAdminPhone() {
+                    if (!this.siteSettings) return;
+
+                    const siteSettings = this.siteSettings.site_settings || {};
+
+                    // Try to get from technical_contact first, then lab_head
+                    let adminPhone = null;
+
+                    if (siteSettings.technical_contact) {
+                        try {
+                            const technicalContact = JSON.parse(siteSettings.technical_contact);
+                            adminPhone = technicalContact.phone;
+                        } catch (e) {
+                            console.error('Failed to parse technical_contact:', e);
+                        }
+                    }
+
+                    if (!adminPhone && siteSettings.lab_head) {
+                        try {
+                            const labHead = JSON.parse(siteSettings.lab_head);
+                            adminPhone = labHead.phone;
+                        } catch (e) {
+                            console.error('Failed to parse lab_head:', e);
+                        }
+                    }
+
+                    // Format phone number for WhatsApp (remove +, spaces, dashes)
+                    if (adminPhone) {
+                        this.adminPhone = adminPhone.replace(/[\s\-\+]/g, '');
+                        // Ensure it starts with country code
+                        if (!this.adminPhone.startsWith('62') && this.adminPhone.startsWith('08')) {
+                            this.adminPhone = '62' + this.adminPhone.substring(1);
+                        }
+                    }
+                },
+
+                // Load visit data from API
+                async loadVisitData(visitId) {
+                    try {
+                        const response = await window.LabGOS.trackVisit(visitId);
+                        if (response.success) {
+                            this.visitData = response.data;
+                            this.setupStatusSteps();
+                        } else {
+                            this.error = response.message || 'Gagal memuat data kunjungan';
+                        }
+                    } catch (error) {
+                        console.error('Failed to load visit data:', error);
+                        this.error = 'Terjadi kesalahan saat memuat data kunjungan';
+                    }
+                },
+
+                // Computed properties for data access
+                get visitId() {
+                    return this.visitData?.request_id || '';
+                },
+
+                get submittedDate() {
+                    if (!this.visitData?.submitted_at) return '';
+
+                    // Fix time display issue - Laravel returns UTC time, convert to Jakarta time
+                    const submittedAtUTC = this.visitData.submitted_at.replace(' ', 'T') + 'Z';
+                    const submittedDate = new Date(submittedAtUTC);
+
+                    // Format in Indonesian locale with Jakarta timezone
+                    const dateString = submittedDate.toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'Asia/Jakarta'
+                    });
+
+                    const timeString = submittedDate.toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                        timeZone: 'Asia/Jakarta'
+                    });
+
+                    return `${dateString} pukul ${timeString}`;
+                },
+
+                get currentStatus() {
+                    return this.visitData?.status || 'pending';
+                },
+
+                get visitorInfo() {
+                    if (!this.visitData) return {};
+                    return {
+                        fullName: this.visitData.applicant?.visitor_name || '',
+                        institution: this.visitData.applicant?.institution || '',
+                        email: this.visitData.applicant?.visitor_email || '',
+                        phone: this.visitData.applicant?.visitor_phone || '',
+                        purpose: this.visitData.visit_purpose || ''
+                    };
+                },
+
+                get scheduleInfo() {
+                    if (!this.visitData) return {};
+
+                    const visitDate = this.visitData.visit_date ?
+                        new Date(this.visitData.visit_date).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        }) : '';
+
+                    // Use the new visit_time structure from API response
+                    let visitTime = '';
+                    if (this.visitData.visit_time && this.visitData.visit_time.display) {
+                        visitTime = this.visitData.visit_time.display;
+                    } else if (this.visitData.start_time && this.visitData.end_time) {
+                        // Fallback to individual time fields
+                        const startTime = this.visitData.start_time.substring(0,5);
+                        const endTime = this.visitData.end_time.substring(0,5);
+                        visitTime = `${startTime} - ${endTime} WIB`;
+                    }
+
+                    return {
+                        visitDate: visitDate,
+                        visitTime: visitTime,
+                        participants: this.visitData.group_size || 0,
+                        additionalNotes: this.visitData.purpose_description || this.visitData.special_requirements || ''
                     };
                 },
 
                 setupStatusSteps() {
+                    if (!this.visitData) return;
+
+                    // Reset to base steps first
                     const baseSteps = [
                         {
                             title: 'Permohonan Diajukan',
                             description: 'Permohonan kunjungan telah berhasil dikirim dan sedang dalam antrian review.',
                             icon: 'fas fa-paper-plane',
                             status: 'completed',
-                            timestamp: this.visitData.submittedAt
+                            timestamp: this.submittedDate
                         },
                         {
                             title: 'Review Admin',
@@ -444,88 +680,204 @@
                     ];
 
                     // Update status based on current visit status
-                    switch(this.visitData.status) {
+                    switch(this.currentStatus) {
+                        case 'pending':
+                            baseSteps[1].status = 'current';
+                            break;
                         case 'under_review':
                             baseSteps[1].status = 'current';
                             break;
                         case 'approved':
                             baseSteps[1].status = 'completed';
-                            baseSteps[1].timestamp = '9 Januari 2025, 16:45';
-                            baseSteps[2].status = 'current';
+                            baseSteps[2].status = 'completed';
+                            baseSteps[3].status = 'current';
                             break;
                         case 'ready':
                             baseSteps[1].status = 'completed';
-                            baseSteps[1].timestamp = '9 Januari 2025, 16:45';
                             baseSteps[2].status = 'completed';
-                            baseSteps[2].timestamp = '10 Januari 2025, 10:20';
                             baseSteps[3].status = 'current';
                             break;
                         case 'completed':
                             baseSteps[1].status = 'completed';
-                            baseSteps[1].timestamp = '9 Januari 2025, 16:45';
                             baseSteps[2].status = 'completed';
-                            baseSteps[2].timestamp = '10 Januari 2025, 10:20';
                             baseSteps[3].status = 'completed';
-                            baseSteps[3].timestamp = '12 Januari 2025, 11:30';
                             break;
-                        default: // pending
+                        case 'rejected':
+                            // For rejected, show rejection at review stage
+                            baseSteps[1].status = 'rejected';
+                            baseSteps[1].title = 'Permohonan Ditolak';
+                            baseSteps[1].description = 'Permohonan kunjungan ditolak oleh admin. Silakan ajukan permohonan baru.';
+                            baseSteps[1].icon = 'fas fa-times-circle';
+                            baseSteps[1].timestamp = this.formatTimestamp(this.visitData.reviewed_at) || 'Ditolak pada ' + this.submittedDate;
+                            // Mark remaining steps as skipped and update descriptions
+                            baseSteps[2].status = 'skipped';
+                            baseSteps[2].title = 'Persetujuan';
+                            baseSteps[2].description = 'Tahap ini tidak akan dilaksanakan karena permohonan ditolak.';
+                            baseSteps[2].icon = 'fas fa-ban';
+                            baseSteps[2].timestamp = null;
+                            baseSteps[3].status = 'skipped';
+                            baseSteps[3].title = 'Siap Dikunjungi';
+                            baseSteps[3].description = 'Tahap ini tidak akan dilaksanakan karena permohonan ditolak.';
+                            baseSteps[3].icon = 'fas fa-ban';
+                            baseSteps[3].timestamp = null;
+                            break;
+                        case 'cancelled':
+                            // For cancelled, show cancellation at review stage
+                            baseSteps[1].status = 'cancelled';
+                            baseSteps[1].title = 'Permohonan Dibatalkan';
+                            baseSteps[1].description = 'Permohonan kunjungan telah dibatalkan oleh pemohon.';
+                            baseSteps[1].icon = 'fas fa-ban';
+                            baseSteps[1].timestamp = this.formatTimestamp(this.visitData.reviewed_at) || 'Dibatalkan pada ' + this.submittedDate;
+                            // Mark remaining steps as skipped and update descriptions
+                            baseSteps[2].status = 'skipped';
+                            baseSteps[2].title = 'Persetujuan';
+                            baseSteps[2].description = 'Tahap ini tidak akan dilaksanakan karena permohonan dibatalkan.';
+                            baseSteps[2].icon = 'fas fa-ban';
+                            baseSteps[2].timestamp = null;
+                            baseSteps[3].status = 'skipped';
+                            baseSteps[3].title = 'Siap Dikunjungi';
+                            baseSteps[3].description = 'Tahap ini tidak akan dilaksanakan karena permohonan dibatalkan.';
+                            baseSteps[3].icon = 'fas fa-ban';
+                            baseSteps[3].timestamp = null;
+                            break;
+                        default:
                             baseSteps[1].status = 'current';
                     }
 
                     this.statusSteps = baseSteps;
                 },
 
-                // Computed properties
-                get visitId() { return this.visitData?.id || 'KNJ-2025-001'; },
-                get submittedDate() { return this.visitData?.submittedAt || ''; },
-                get currentStatus() { return this.visitData?.status || 'pending'; },
-                
-                get visitorInfo() {
-                    return {
-                        fullName: this.visitData?.fullName || '',
-                        institution: this.visitData?.institution || '',
-                        email: this.visitData?.email || '',
-                        phone: this.visitData?.phone || '',
-                        purpose: this.visitData?.purpose || ''
-                    };
-                },
-                
-                get scheduleInfo() {
-                    return {
-                        visitDate: this.visitData?.visitDate || '',
-                        visitTime: this.visitData?.visitTime || '',
-                        participants: this.visitData?.participants || 0,
-                        additionalNotes: this.visitData?.additionalNotes || ''
-                    };
-                },
+                // Status Steps
+                statusSteps: [],
 
                 get visitAgenda() {
-                    // Default agenda based on visit purpose
-                    const agendas = {
+                    // Calculate total visit duration in minutes from visit time
+                    const totalDuration = this.getVisitDurationInMinutes();
+
+                    // Generate dynamic agenda based on visit purpose and duration
+                    return this.generateDynamicAgenda(this.visitData?.visit_purpose || 'study-visit', totalDuration);
+                },
+
+                // Calculate visit duration in minutes from visit_time
+                getVisitDurationInMinutes() {
+                    if (!this.visitData?.visit_time) return 120; // Default 2 hours
+
+                    // If visit_time has start_time and end_time
+                    if (this.visitData.visit_time.start_time && this.visitData.visit_time.end_time) {
+                        const [startHour, startMin] = this.visitData.visit_time.start_time.split(':').map(Number);
+                        const [endHour, endMin] = this.visitData.visit_time.end_time.split(':').map(Number);
+
+                        const startMinutes = startHour * 60 + startMin;
+                        const endMinutes = endHour * 60 + endMin;
+
+                        return endMinutes - startMinutes;
+                    }
+
+                    // Parse from display string if available (e.g., "08:00 - 10:00 WIB")
+                    if (this.visitData.visit_time.display) {
+                        const timeMatch = this.visitData.visit_time.display.match(/(\d{2}):(\d{2})\s*-\s*(\d{2}):(\d{2})/);
+                        if (timeMatch) {
+                            const [, startHour, startMin, endHour, endMin] = timeMatch.map(Number);
+                            const startMinutes = startHour * 60 + startMin;
+                            const endMinutes = endHour * 60 + endMin;
+                            return endMinutes - startMinutes;
+                        }
+                    }
+
+                    return 120; // Default 2 hours
+                },
+
+                // Generate dynamic agenda based on purpose and available time
+                generateDynamicAgenda(purpose, totalMinutes) {
+                    const agendaTemplates = {
                         'study-visit': [
-                            { id: 1, activity: 'Presentasi Selamat Datang', description: 'Pengenalan laboratorium dan fasilitas', location: 'Ruang Meeting', duration: '30 menit' },
-                            { id: 2, activity: 'Tur Laboratorium Optik', description: 'Kunjungan ke lab optik dan penjelasan peralatan', location: 'Lab Optik', duration: '45 menit' },
-                            { id: 3, activity: 'Demonstrasi Spektroskopi', description: 'Demo penggunaan spektrometer', location: 'Lab Spektroskopi', duration: '60 menit' },
-                            { id: 4, activity: 'Sesi Tanya Jawab', description: 'Diskusi dan tanya jawab dengan staff lab', location: 'Ruang Meeting', duration: '30 menit' }
+                            { activity: 'Presentasi Selamat Datang', description: 'Pengenalan laboratorium dan fasilitas', location: 'Ruang Meeting', weight: 0.2 },
+                            { activity: 'Tur Laboratorium Optik', description: 'Kunjungan ke lab optik dan penjelasan peralatan', location: 'Lab Optik', weight: 0.3 },
+                            { activity: 'Demonstrasi Spektroskopi', description: 'Demo penggunaan spektrometer', location: 'Lab Spektroskopi', weight: 0.3 },
+                            { activity: 'Sesi Tanya Jawab', description: 'Diskusi dan tanya jawab dengan staff lab', location: 'Ruang Meeting', weight: 0.2 }
                         ],
                         'research': [
-                            { id: 1, activity: 'Briefing Penelitian', description: 'Diskusi rencana penelitian dan kebutuhan', location: 'Ruang Meeting', duration: '45 menit' },
-                            { id: 2, activity: 'Setup Peralatan', description: 'Persiapan dan kalibrasi instrumen penelitian', location: 'Lab Spektroskopi', duration: '90 menit' },
-                            { id: 3, activity: 'Kolaborasi Penelitian', description: 'Pelaksanaan penelitian bersama', location: 'Lab Spektroskopi', duration: '120 menit' }
+                            { activity: 'Briefing Penelitian', description: 'Diskusi rencana penelitian dan kebutuhan', location: 'Ruang Meeting', weight: 0.2 },
+                            { activity: 'Setup Peralatan', description: 'Persiapan dan kalibrasi instrumen penelitian', location: 'Lab Spektroskopi', weight: 0.3 },
+                            { activity: 'Kolaborasi Penelitian', description: 'Pelaksanaan penelitian bersama', location: 'Lab Spektroskopi', weight: 0.5 }
                         ],
                         'learning': [
-                            { id: 1, activity: 'Orientasi Lab', description: 'Pengenalan keselamatan dan prosedur lab', location: 'Ruang Meeting', duration: '30 menit' },
-                            { id: 2, activity: 'Praktik Gelombang', description: 'Hands-on learning dengan peralatan gelombang', location: 'Lab Gelombang', duration: '75 menit' },
-                            { id: 3, activity: 'Praktik Optik', description: 'Pembelajaran praktis sistem optik', location: 'Lab Optik', duration: '75 menit' },
-                            { id: 4, activity: 'Evaluasi & Review', description: 'Evaluasi pembelajaran dan feedback', location: 'Ruang Meeting', duration: '30 menit' }
+                            { activity: 'Orientasi Lab', description: 'Pengenalan keselamatan dan prosedur lab', location: 'Ruang Meeting', weight: 0.15 },
+                            { activity: 'Praktik Gelombang', description: 'Hands-on learning dengan peralatan gelombang', location: 'Lab Gelombang', weight: 0.35 },
+                            { activity: 'Praktik Optik', description: 'Pembelajaran praktis sistem optik', location: 'Lab Optik', weight: 0.35 },
+                            { activity: 'Evaluasi & Review', description: 'Evaluasi pembelajaran dan feedback', location: 'Ruang Meeting', weight: 0.15 }
                         ]
                     };
 
-                    return agendas[this.visitData?.purpose] || agendas['study-visit'];
+                    const template = agendaTemplates[purpose] || agendaTemplates['study-visit'];
+
+                    // Calculate duration for each activity based on weight and total time
+                    return template.map((item, index) => {
+                        const duration = Math.round(totalMinutes * item.weight);
+                        const hours = Math.floor(duration / 60);
+                        const minutes = duration % 60;
+
+                        let durationText;
+                        if (hours > 0 && minutes > 0) {
+                            durationText = `${hours} jam ${minutes} menit`;
+                        } else if (hours > 0) {
+                            durationText = `${hours} jam`;
+                        } else {
+                            durationText = `${minutes} menit`;
+                        }
+
+                        return {
+                            id: index + 1,
+                            activity: item.activity,
+                            description: item.description,
+                            location: item.location,
+                            duration: durationText
+                        };
+                    });
+                },
+
+                // Get formatted visit duration text
+                getVisitDurationText() {
+                    const totalMinutes = this.getVisitDurationInMinutes();
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = totalMinutes % 60;
+
+                    if (hours > 0 && minutes > 0) {
+                        return `${hours} jam ${minutes} menit`;
+                    } else if (hours > 0) {
+                        return `${hours} jam`;
+                    } else {
+                        return `${minutes} menit`;
+                    }
                 },
 
                 // Status helper methods
                 statusSteps: [],
+
+                formatTimestamp(timestamp) {
+                    if (!timestamp) return null;
+
+                    // Fix time display issue - Laravel returns UTC time, convert to Jakarta time
+                    const timestampUTC = timestamp.replace(' ', 'T') + 'Z';
+                    const date = new Date(timestampUTC);
+
+                    // Format in Indonesian locale with Jakarta timezone
+                    const dateString = date.toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'Asia/Jakarta'
+                    });
+
+                    const timeString = date.toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                        timeZone: 'Asia/Jakarta'
+                    });
+
+                    return `${dateString} pukul ${timeString}`;
+                },
 
                 getPurposeText(purpose) {
                     const purposes = {
@@ -541,60 +893,108 @@
                 getProgressHeight() {
                     const completedSteps = this.statusSteps.filter(step => step.status === 'completed').length;
                     const currentStep = this.statusSteps.findIndex(step => step.status === 'current');
+                    const rejectedStep = this.statusSteps.findIndex(step => step.status === 'rejected');
+                    const cancelledStep = this.statusSteps.findIndex(step => step.status === 'cancelled');
+
+                    // If there's a rejected or cancelled step, progress goes to that step
+                    if (rejectedStep >= 0 || cancelledStep >= 0) {
+                        const finalStep = Math.max(rejectedStep, cancelledStep);
+                        return ((finalStep + 1) / this.statusSteps.length) * 100;
+                    }
+
+                    // Normal progress calculation
                     const totalProgress = completedSteps + (currentStep >= 0 ? 0.5 : 0);
                     return (totalProgress / this.statusSteps.length) * 100;
                 },
-                
+
                 getStepClass(status) {
                     switch(status) {
                         case 'completed':
                             return 'bg-green-500 text-white';
                         case 'current':
                             return 'bg-primary text-white animate-pulse';
+                        case 'rejected':
+                            return 'bg-red-500 text-white';
+                        case 'cancelled':
+                            return 'bg-orange-500 text-white';
+                        case 'skipped':
+                            return 'bg-gray-400 text-gray-300';
                         case 'pending':
                             return 'bg-gray-300 text-gray-500';
                         default:
                             return 'bg-gray-300 text-gray-500';
                     }
                 },
-                
+
                 getStatusBadgeClass(status) {
                     switch(status) {
                         case 'completed':
                             return 'bg-green-100 text-green-800';
                         case 'current':
                             return 'bg-blue-100 text-blue-800';
+                        case 'rejected':
+                            return 'bg-red-100 text-red-800';
+                        case 'cancelled':
+                            return 'bg-orange-100 text-orange-800';
+                        case 'skipped':
+                            return 'bg-gray-100 text-gray-500';
                         case 'pending':
                             return 'bg-gray-100 text-gray-600';
                         default:
                             return 'bg-gray-100 text-gray-600';
                     }
                 },
-                
+
                 getStatusText(status) {
                     switch(status) {
                         case 'completed':
                             return 'Selesai';
                         case 'current':
                             return 'Sedang Proses';
+                        case 'rejected':
+                            return 'Ditolak';
+                        case 'cancelled':
+                            return 'Dibatalkan';
+                        case 'skipped':
+                            return 'Tidak Berlaku';
                         case 'pending':
                             return 'Menunggu';
                         default:
                             return 'Menunggu';
                     }
                 },
-                
+
+                getStepTimestamp(step) {
+                    switch(step.status) {
+                        case 'completed':
+                        case 'current':
+                        case 'rejected':
+                        case 'cancelled':
+                            return step.timestamp || this.submittedDate;
+                        case 'skipped':
+                            return 'Tidak akan dilaksanakan';
+                        case 'pending':
+                        default:
+                            return 'Menunggu...';
+                    }
+                },
+
                 // Actions
                 downloadLetter() {
                     if (this.currentStatus !== 'approved' && this.currentStatus !== 'ready') {
                         alert('Surat izin hanya dapat diunduh setelah permohonan disetujui.');
                         return;
                     }
-                    
-                    // Simulate file download
+
+                    // Create download link (URL will be provided by backend)
+                    const link = document.createElement('a');
+                    link.href = '#'; // URL file akan diisi dari backend
+                    link.download = `Surat_Izin_Kunjungan_${this.visitId}.pdf`;
+                    link.click();
+
                     alert('Surat izin kunjungan sedang diunduh...');
                 },
-                
+
                 sendWhatsAppConfirmation() {
                     const message = `Halo Admin Lab GOS USK,
 
@@ -608,35 +1008,86 @@ Saya ingin mengkonfirmasi kunjungan laboratorium dengan detail:
 Mohon konfirmasi dan informasi lebih lanjut mengenai persiapan kunjungan.
 
 Terima kasih.`;
-                    
-                    const phoneNumber = '6281234567890'; // Nomor admin lab
+
+                    // Use dynamic admin phone or fallback
+                    const phoneNumber = this.adminPhone || '6281234567890';
                     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                    
+
                     window.open(whatsappUrl, '_blank');
                 },
-                
+
                 async cancelVisit() {
-                    if (this.currentStatus === 'approved' || this.currentStatus === 'ready' || this.currentStatus === 'completed') {
+                    if (['approved', 'ready', 'completed'].includes(this.currentStatus)) {
                         alert('Kunjungan yang sudah disetujui tidak dapat dibatalkan. Hubungi admin untuk pembatalan.');
                         return;
                     }
-                    
-                    const confirmation = confirm('Apakah Anda yakin ingin membatalkan permohonan kunjungan ini?');
-                    
+
+                    const confirmation = confirm('Apakah Anda yakin ingin membatalkan permohonan kunjungan ini?\n\nPermohonan yang sudah dibatalkan tidak dapat dikembalikan.');
+
                     if (confirmation) {
                         try {
-                            // Simulate API call
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                            
-                            alert('Permohonan kunjungan berhasil dibatalkan.');
-                            
-                            // Redirect to home or visit form
-                            window.location.href = '/layanan/kunjungan';
-                            
+                            // Show loading state
+                            const originalText = event.target.innerHTML;
+                            event.target.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Membatalkan...';
+                            event.target.disabled = true;
+
+                            // Call cancel API
+                            const response = await window.LabGOS.cancelVisit(this.visitId);
+
+                            if (response.success) {
+                                // Show success message
+                                alert('✅ Permohonan kunjungan berhasil dibatalkan.\n\nHalaman tracking akan ditutup dan Anda akan diarahkan ke halaman kunjungan.');
+
+                                // Clear tracking data from session storage
+                                sessionStorage.removeItem('visitTrackingData');
+
+                                // Redirect to visit request page
+                                window.location.href = '/layanan/kunjungan';
+
+                            } else {
+                                // Show error message from API
+                                alert('❌ ' + (response.message || 'Gagal membatalkan permohonan.'));
+
+                                // Restore button
+                                event.target.innerHTML = originalText;
+                                event.target.disabled = false;
+                            }
+
                         } catch (error) {
                             console.error('Error canceling visit:', error);
-                            alert('Terjadi kesalahan saat membatalkan permohonan. Silakan coba lagi.');
+
+                            // Show user-friendly error message
+                            let errorMessage = 'Terjadi kesalahan saat membatalkan permohonan.';
+                            if (error.response && error.response.data && error.response.data.message) {
+                                errorMessage = error.response.data.message;
+                            }
+
+                            alert('❌ ' + errorMessage + '\n\nSilakan coba lagi atau hubungi admin jika masalah berlanjut.');
+
+                            // Restore button
+                            event.target.innerHTML = originalText;
+                            event.target.disabled = false;
                         }
+                    }
+                },
+
+                // Letter preview functionality
+                hasRequestLetter() {
+                    return this.visitData?.request_letter_url !== null && this.visitData?.request_letter_url !== undefined;
+                },
+
+                getLetterDisplayText() {
+                    return this.hasRequestLetter() ? 
+                        'Surat permohonan telah diunggah' : 
+                        'Tidak ada surat permohonan yang diunggah';
+                },
+
+                previewRequestLetter() {
+                    if (this.hasRequestLetter()) {
+                        // Open the letter file in a new tab
+                        window.open(this.visitData.request_letter_url, '_blank');
+                    } else {
+                        alert('Tidak ada surat permohonan yang tersedia untuk dilihat.');
                     }
                 }
             }

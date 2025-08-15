@@ -12,7 +12,7 @@ class TrackingController extends Controller
 {
     /**
      * Track borrow request by request ID
-     * 
+     *
      * Allows anyone to track the status of a borrow request using the request ID.
      * No authentication required for transparency.
      */
@@ -22,14 +22,14 @@ class TrackingController extends Controller
             $borrowRequest = BorrowRequest::with(['borrowRequestItems.equipment.category', 'reviewer'])
                 ->where('request_id', $requestId)
                 ->first();
-            
+
             if (!$borrowRequest) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Request not found. Please check your request ID.'
                 ], 404);
             }
-            
+
             // Transform equipment items
             $equipmentItems = $borrowRequest->borrowRequestItems->map(function ($item) {
                 return [
@@ -49,7 +49,7 @@ class TrackingController extends Controller
                     'notes' => $item->notes,
                 ];
             });
-            
+
             $data = [
                 'request_id' => $borrowRequest->request_id,
                 'status' => $borrowRequest->status,
@@ -79,13 +79,13 @@ class TrackingController extends Controller
                 'approval_notes' => $borrowRequest->approval_notes,
                 'timeline' => $this->getBorrowRequestTimeline($borrowRequest),
             ];
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Borrow request details retrieved successfully',
                 'data' => $data
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -94,7 +94,7 @@ class TrackingController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Track visit request by request ID
      */
@@ -104,32 +104,39 @@ class TrackingController extends Controller
             $visitRequest = VisitRequest::with('reviewer')
                 ->where('request_id', $requestId)
                 ->first();
-            
+
             if (!$visitRequest) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Request not found. Please check your request ID.'
                 ], 404);
             }
-            
+
             $data = [
                 'request_id' => $visitRequest->request_id,
                 'status' => $visitRequest->status,
                 'status_label' => $visitRequest->status_label,
                 'status_color' => $visitRequest->status_color,
                 'applicant' => [
-                    'full_name' => $visitRequest->full_name,
-                    'email' => $visitRequest->email,
-                    'phone' => $visitRequest->phone,
+                    'visitor_name' => $visitRequest->visitor_name,
+                    'visitor_email' => $visitRequest->visitor_email,
+                    'visitor_phone' => $visitRequest->visitor_phone,
                     'institution' => $visitRequest->institution,
                 ],
-                'purpose' => $visitRequest->purpose,
+                'visit_purpose' => $visitRequest->visit_purpose,
                 'purpose_label' => $visitRequest->purpose_label,
                 'visit_date' => $visitRequest->visit_date->format('Y-m-d'),
-                'visit_time' => $visitRequest->visit_time,
-                'visit_time_label' => $visitRequest->visit_time_label,
-                'participants' => $visitRequest->participants,
-                'additional_notes' => $visitRequest->additional_notes,
+                'visit_time' => [
+                    'start_time' => $visitRequest->start_time,
+                    'end_time' => $visitRequest->end_time,
+                    'display' => $visitRequest->start_time && $visitRequest->end_time
+                        ? $visitRequest->start_time . ' - ' . $visitRequest->end_time . ' WIB'
+                        : null
+                ],
+                'group_size' => $visitRequest->group_size,
+                'purpose_description' => $visitRequest->purpose_description,
+                'special_requirements' => $visitRequest->special_requirements,
+                'equipment_needed' => $visitRequest->equipment_needed,
                 'request_letter_url' => $visitRequest->request_letter_url,
                 'approval_letter_url' => $visitRequest->approval_letter_url,
                 'submitted_at' => $visitRequest->submitted_at->format('Y-m-d H:i:s'),
@@ -140,13 +147,13 @@ class TrackingController extends Controller
                 'approval_notes' => $visitRequest->approval_notes,
                 'timeline' => $this->getVisitRequestTimeline($visitRequest),
             ];
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Visit request details retrieved successfully',
                 'data' => $data
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -155,7 +162,7 @@ class TrackingController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Track testing request by request ID
      */
@@ -165,14 +172,14 @@ class TrackingController extends Controller
             $testingRequest = TestingRequest::with(['reviewer', 'assignedUser'])
                 ->where('request_id', $requestId)
                 ->first();
-            
+
             if (!$testingRequest) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Request not found. Please check your request ID.'
                 ], 404);
             }
-            
+
             $data = [
                 'request_id' => $testingRequest->request_id,
                 'status' => $testingRequest->status,
@@ -224,13 +231,13 @@ class TrackingController extends Controller
                 'is_overdue' => $testingRequest->isOverdue(),
                 'timeline' => $this->getTestingRequestTimeline($testingRequest),
             ];
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Testing request details retrieved successfully',
                 'data' => $data
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -239,7 +246,7 @@ class TrackingController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Get borrow request timeline
      */
@@ -253,7 +260,7 @@ class TrackingController extends Controller
                 'active' => true,
             ]
         ];
-        
+
         if ($request->reviewed_at) {
             $timeline[] = [
                 'status' => $request->status,
@@ -262,10 +269,10 @@ class TrackingController extends Controller
                 'active' => true,
             ];
         }
-        
+
         return $timeline;
     }
-    
+
     /**
      * Get visit request timeline
      */
@@ -279,7 +286,7 @@ class TrackingController extends Controller
                 'active' => true,
             ]
         ];
-        
+
         if ($request->reviewed_at) {
             $timeline[] = [
                 'status' => $request->status,
@@ -288,10 +295,10 @@ class TrackingController extends Controller
                 'active' => true,
             ];
         }
-        
+
         return $timeline;
     }
-    
+
     /**
      * Get testing request timeline
      */
@@ -305,7 +312,7 @@ class TrackingController extends Controller
                 'active' => true,
             ]
         ];
-        
+
         if ($request->reviewed_at) {
             $timeline[] = [
                 'status' => $request->status,
@@ -314,7 +321,7 @@ class TrackingController extends Controller
                 'active' => true,
             ];
         }
-        
+
         if ($request->actual_start_date) {
             $timeline[] = [
                 'status' => 'started',
@@ -323,7 +330,7 @@ class TrackingController extends Controller
                 'active' => true,
             ];
         }
-        
+
         if ($request->actual_completion_date) {
             $timeline[] = [
                 'status' => 'completed',
@@ -332,7 +339,7 @@ class TrackingController extends Controller
                 'active' => true,
             ];
         }
-        
+
         return $timeline;
     }
 
@@ -343,14 +350,14 @@ class TrackingController extends Controller
     {
         try {
             $borrowRequest = BorrowRequest::where('request_id', $requestId)->first();
-            
+
             if (!$borrowRequest) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Request not found. Please check your request ID.'
                 ], 404);
             }
-            
+
             // Check if request can be canceled
             if (in_array($borrowRequest->status, ['approved', 'active', 'completed'])) {
                 return response()->json([
@@ -358,21 +365,21 @@ class TrackingController extends Controller
                     'message' => 'Permohonan yang sudah disetujui atau sedang berlangsung tidak dapat dibatalkan.'
                 ], 400);
             }
-            
+
             if ($borrowRequest->status === 'cancelled') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Permohonan sudah dibatalkan sebelumnya.'
                 ], 400);
             }
-            
+
             // Update status to cancelled
             $borrowRequest->update([
                 'status' => 'cancelled',
                 'approval_notes' => 'Dibatalkan oleh pemohon pada ' . now()->format('d/m/Y H:i'),
                 'reviewed_at' => now(),
             ]);
-            
+
             // Log activity
             activity()
                 ->causedBy($borrowRequest->user)
@@ -382,7 +389,7 @@ class TrackingController extends Controller
                     'reason' => 'Dibatalkan oleh pemohon'
                 ])
                 ->log('Borrow request cancelled');
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Permohonan peminjaman berhasil dibatalkan.',
@@ -391,11 +398,76 @@ class TrackingController extends Controller
                     'status' => 'cancelled'
                 ]
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to cancel request',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a visit request
+     */
+    public function cancelVisitRequest(string $requestId): JsonResponse
+    {
+        try {
+            $visitRequest = VisitRequest::where('request_id', $requestId)->first();
+
+            if (!$visitRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request not found. Please check your request ID.'
+                ], 404);
+            }
+
+            // Check if request can be canceled
+            if (in_array($visitRequest->status, ['approved', 'ready', 'completed'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permohonan yang sudah disetujui atau sedang berlangsung tidak dapat dibatalkan.'
+                ], 400);
+            }
+
+            if ($visitRequest->status === 'cancelled') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permohonan sudah dibatalkan sebelumnya.'
+                ], 400);
+            }
+
+            // Update status to cancelled
+            $visitRequest->update([
+                'status' => 'cancelled',
+                'approval_notes' => 'Dibatalkan oleh pemohon pada ' . now()->format('d/m/Y H:i'),
+                'reviewed_at' => now(),
+            ]);
+
+            // Log activity
+            activity()
+                ->causedBy($visitRequest->user)
+                ->performedOn($visitRequest)
+                ->withProperties([
+                    'request_id' => $visitRequest->request_id,
+                    'reason' => 'Dibatalkan oleh pemohon'
+                ])
+                ->log('Visit request cancelled');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permohonan kunjungan berhasil dibatalkan.',
+                'data' => [
+                    'request_id' => $visitRequest->request_id,
+                    'status' => 'cancelled'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel visit request',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }

@@ -19,22 +19,24 @@ class VisitRequest extends Model
     protected $fillable = [
         'request_id',
         'status',
-        'full_name',
-        'email',
-        'phone',
+        'visitor_name',
+        'visitor_email',
+        'visitor_phone',
         'institution',
-        'purpose',
+        'visit_purpose',
         'visit_date',
-        'visit_time',
-        'participants',
-        'additional_notes',
+        'start_time',
+        'end_time',
+        'group_size',
+        'purpose_description',
+        'special_requirements',
+        'equipment_needed',
         'request_letter_path',
         'approval_letter_path',
         'submitted_at',
         'reviewed_at',
         'reviewed_by',
         'approval_notes',
-        'agreement_accepted',
     ];
 
     /**
@@ -46,10 +48,12 @@ class VisitRequest extends Model
     {
         return [
             'visit_date' => 'date',
-            'participants' => 'integer',
+            'start_time' => 'string',
+            'end_time' => 'string',
+            'group_size' => 'integer',
+            'equipment_needed' => 'array',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
-            'agreement_accepted' => 'boolean',
         ];
     }
 
@@ -170,7 +174,7 @@ class VisitRequest extends Model
     public function getPurposeLabelAttribute()
     {
         $purposes = self::getPurposes();
-        return $purposes[$this->purpose] ?? $this->purpose;
+        return $purposes[$this->visit_purpose] ?? $this->visit_purpose;
     }
 
     /**
@@ -311,14 +315,18 @@ class VisitRequest extends Model
         return LogOptions::defaults()
             ->logOnly([
                 'status', 
-                'full_name',
-                'email',
-                'phone',
+                'visitor_name',
+                'visitor_email',
+                'visitor_phone',
                 'institution',
-                'purpose',
+                'visit_purpose',
                 'visit_date',
-                'visit_time',
-                'participants',
+                'start_time',
+                'end_time',
+                'group_size',
+                'purpose_description',
+                'special_requirements',
+                'equipment_needed',
                 'reviewed_by',
                 'approval_notes'
             ])

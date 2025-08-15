@@ -112,29 +112,48 @@ class RequestController extends Controller
                 $requestLetterPath = $request->file('request_letter')->store('visit-requests/letters', 'public');
             }
             
-            // Create visit request
-            $visitRequest = VisitRequest::create([
-                'status' => 'pending',
-                'full_name' => $validated['full_name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'institution' => $validated['institution'],
-                'purpose' => $validated['purpose'],
-                'visit_date' => $validated['visit_date'],
-                'visit_time' => $validated['visit_time'],
-                'participants' => $validated['participants'],
-                'additional_notes' => $validated['additional_notes'],
-                'request_letter_path' => $requestLetterPath,
-                'agreement_accepted' => $validated['agreement_accepted'],
-                'submitted_at' => now(),
-            ]);
+            // Temporarily disable events to prevent observer issues during creation
+            VisitRequest::withoutEvents(function () use (&$visitRequest, $validated, $requestLetterPath) {
+                $visitRequest = VisitRequest::create([
+                    'request_id' => VisitRequest::generateRequestId(),
+                    'status' => 'pending',
+                    'visitor_name' => $validated['visitor_name'],
+                    'visitor_email' => $validated['visitor_email'],
+                    'visitor_phone' => $validated['visitor_phone'],
+                    'institution' => $validated['institution'],
+                    'visit_purpose' => $validated['visit_purpose'],
+                    'visit_date' => $validated['visit_date'],
+                    'start_time' => $validated['start_time'],
+                    'end_time' => $validated['end_time'],
+                    'group_size' => $validated['group_size'],
+                    'purpose_description' => $validated['purpose_description'] ?? null,
+                    'special_requirements' => $validated['special_requirements'] ?? null,
+                    'equipment_needed' => $validated['equipment_needed'] ?? null,
+                    'request_letter_path' => $requestLetterPath,
+                    'submitted_at' => now(),
+                ]);
+            });
             
+            // Commit the database transaction first
             DB::commit();
             
-            Log::info('Visit request submitted', [
+            Log::info('Visit request submitted successfully', [
                 'request_id' => $visitRequest->request_id,
-                'email' => $visitRequest->email
+                'visitor_email' => $visitRequest->visitor_email,
+                'visitor_name' => $visitRequest->visitor_name
             ]);
+            
+            // Try to send notifications after successful creation (non-blocking)
+            // Temporarily disabled for testing
+            // try {
+            //     $notificationService = app(\App\Services\NotificationService::class);
+            //     $notificationService->sendVisitRequestNotifications($visitRequest, 'submitted');
+            // } catch (\Exception $notificationError) {
+            //     Log::warning('Failed to send visit request notifications (non-critical)', [
+            //         'request_id' => $visitRequest->request_id,
+            //         'error' => $notificationError->getMessage()
+            //     ]);
+            // }
             
             return response()->json([
                 'success' => true,

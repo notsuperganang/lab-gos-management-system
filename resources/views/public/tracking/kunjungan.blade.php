@@ -312,23 +312,50 @@
                     this.errorMessage = '';
                     
                     try {
-                        // Simulate API call to check if ID exists
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        // For demo purposes, accept specific valid IDs
-                        const validIds = ['KNJ-2025-001', 'KNJ-2025-002', 'KNJ-2025-003'];
+                        // Wait for LabGOS to be available
+                        let attempts = 0;
+                        while (!window.LabGOS && attempts < 10) {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            attempts++;
+                        }
+
+                        if (!window.LabGOS) {
+                            throw new Error('Sistem tidak dapat memuat. Silakan refresh halaman.');
+                        }
+
                         const inputId = this.trackingId.trim();
                         
-                        if (validIds.includes(inputId) || inputId.match(/^KNJ-\d{4}-\d{3}$/)) {
-                            // Redirect to confirmation page with tracking details
+                        // Call tracking API
+                        const response = await window.LabGOS.trackVisit(inputId);
+                        
+                        if (response.success) {
+                            // Store tracking data for the next page
+                            sessionStorage.setItem('visitTrackingData', JSON.stringify({
+                                requestId: response.data.request_id,
+                                submittedAt: response.data.submitted_at,
+                                status: response.data.status
+                            }));
+
+                            // Redirect to tracking page with real data
                             window.location.href = `/layanan/kunjungan/confirmation/${inputId}`;
                         } else {
-                            this.errorMessage = 'ID kunjungan tidak ditemukan. Periksa kembali ID Anda atau hubungi admin.';
+                            this.errorMessage = response.message || 'ID kunjungan tidak ditemukan. Periksa kembali ID Anda atau hubungi admin.';
                         }
                         
                     } catch (error) {
                         console.error('Error searching tracking:', error);
-                        this.errorMessage = 'Terjadi kesalahan saat mencari data. Silakan coba lagi.';
+                        
+                        let errorMessage = 'Terjadi kesalahan saat mencari data.';
+                        
+                        if (error.response && error.response.data) {
+                            if (error.response.data.message) {
+                                errorMessage = error.response.data.message;
+                            }
+                        } else if (error.message) {
+                            errorMessage = error.message;
+                        }
+
+                        this.errorMessage = errorMessage;
                     } finally {
                         this.searching = false;
                     }
@@ -341,7 +368,8 @@
                     if (form) {
                         form.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    // Auto submit after a short delay
+                    
+                    // For demo IDs, either use real API or create mock data if API not available
                     setTimeout(() => {
                         this.searchTracking();
                     }, 500);
