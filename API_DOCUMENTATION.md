@@ -204,13 +204,14 @@ GET /api/equipment/categories
 
 #### Get Equipment List
 ```http
-GET /api/equipment?category_id=1&available=true
+GET /api/equipment?category_id=1&condition=excellent&available_only=true&search=microscope
 ```
 
 **Query Parameters:**
-- `category_id` - Filter by category
-- `available` - Show only available equipment
-- `search` - Search in name/model
+- `category_id` - Filter by category ID
+- `condition` - Filter by condition (excellent, good, fair, poor)
+- `available_only` - boolean, show only available equipment
+- `search` - Search in name, model, manufacturer, or category name
 
 #### Get Equipment Detail
 ```http
@@ -288,11 +289,14 @@ Content-Type: application/json
 }
 ```
 
-**📝 Note about Time Fields:**
-- `start_time` and `end_time` fields are **optional (nullable)** as of the latest version
-- Frontend no longer sends these fields in requests
-- Existing data with times will still display them in 24-hour format (HH:MM)
-- New requests will have `null` values for these fields
+**📝 Validation Notes:**
+- `members` array: min 1, max 10 members per request
+- `equipment_items` array: min 1, max 20 items per request  
+- `borrow_date`: must be after today, within 6 months
+- `return_date`: must be after or equal to borrow_date
+- `supervisor_nip`: required, max 50 characters
+- `start_time` and `end_time` fields are **optional (nullable)**
+- Phone numbers should be in Indonesian format (+62...)
 
 **Response:**
 ```json
@@ -353,6 +357,11 @@ Content-Type: application/json
 }
 ```
 
+**Testing Type Requirements:**
+- **FTIR**: Requires `wavenumber_range`, `resolution`, `sample_preparation` in parameters
+- **UV-Vis**: Requires `wavelength_range`, `solvent`, `concentration` in parameters  
+- **Optical**: Requires `magnification`, `illumination_type`, `image_format` in parameters
+
 ### 🔍 Request Tracking
 
 #### Track Borrow Request
@@ -368,6 +377,11 @@ GET /api/tracking/visit/{request_id}
 #### Track Testing Request
 ```http
 GET /api/tracking/testing/{request_id}
+```
+
+#### Cancel Borrow Request
+```http
+DELETE /api/tracking/borrow/{request_id}/cancel
 ```
 
 **Response:**
@@ -418,32 +432,64 @@ GET /api/tracking/testing/{request_id}
 
 #### Get Dashboard Statistics
 ```http
-GET /api/admin/dashboard/stats
+GET /api/admin/dashboard/stats?date_from=2025-08-01&date_to=2025-08-31
 Authorization: Bearer {token}
 ```
+
+**Query Parameters:**
+- `date_from` - Filter from date (default: 30 days ago)
+- `date_to` - Filter to date (default: today)
 
 **Response:**
 ```json
 {
   "success": true,
   "data": {
-    "pending_requests": {
-      "borrow": 5,
-      "visit": 2,
-      "testing": 3
+    "overview": {
+      "total_requests": 45,
+      "pending_requests": 10,
+      "active_requests": 26,
+      "completed_requests": 120
     },
-    "active_requests": {
-      "borrow": 12,
-      "visit": 8,
-      "testing": 6
+    "requests_by_type": {
+      "borrow": {
+        "total": 25,
+        "pending": 5,
+        "approved": 8,
+        "active": 7,
+        "completed": 5
+      },
+      "visit": {
+        "total": 12,
+        "pending": 2,
+        "approved": 4,
+        "active": 3,
+        "completed": 3
+      },
+      "testing": {
+        "total": 8,
+        "pending": 3,
+        "approved": 2,
+        "active": 2,
+        "completed": 1
+      }
     },
     "equipment_stats": {
       "total": 45,
       "available": 38,
       "in_use": 7,
-      "maintenance": 0
+      "maintenance": 0,
+      "categories_count": 8
     },
-    "recent_activity": 25
+    "recent_trends": {
+      "requests_this_month": 25,
+      "requests_last_month": 18,
+      "growth_percentage": 38.9
+    },
+    "peak_usage_times": [
+      { "hour": "09:00", "count": 12 },
+      { "hour": "14:00", "count": 8 }
+    ]
   }
 }
 ```
@@ -454,20 +500,72 @@ GET /api/admin/activity-logs?page=1&per_page=20
 Authorization: Bearer {token}
 ```
 
+#### Get Notifications
+```http
+GET /api/admin/notifications
+Authorization: Bearer {token}
+```
+
 ### 📋 Request Management
 
-#### Get Borrow Requests
+#### Visit Request Management
 ```http
-GET /api/admin/requests/borrow
+# List visit requests
+GET /api/admin/requests/visit?status=pending&search=research
+Authorization: Bearer {token}
+
+# Get specific visit request
+GET /api/admin/requests/visit/{id}
+Authorization: Bearer {token}
+
+# Update visit request
+PUT /api/admin/requests/visit/{id}
+Authorization: Bearer {token}
+
+# Approve visit request
+PUT /api/admin/requests/visit/{id}/approve
+Authorization: Bearer {token}
+
+# Reject visit request
+PUT /api/admin/requests/visit/{id}/reject
+Authorization: Bearer {token}
+```
+
+#### Testing Request Management
+```http
+# List testing requests
+GET /api/admin/requests/testing?urgency=high&date_from=2025-08-01
+Authorization: Bearer {token}
+
+# Get specific testing request
+GET /api/admin/requests/testing/{id}
+Authorization: Bearer {token}
+
+# Update testing request
+PUT /api/admin/requests/testing/{id}
+Authorization: Bearer {token}
+
+# Approve testing request
+PUT /api/admin/requests/testing/{id}/approve
+Authorization: Bearer {token}
+
+# Reject testing request
+PUT /api/admin/requests/testing/{id}/reject
+Authorization: Bearer {token}
+```
+
+#### Borrow Request Management
+```http
+GET /api/admin/requests/borrow?status=pending&date_from=2025-08-01&date_to=2025-08-31&search=jane
 Authorization: Bearer {token}
 ```
 
 **Query Parameters:**
 - `status` - Filter by status (pending, approved, active, completed, rejected, cancelled)
-- `date_from` - Filter from date (Y-m-d)
-- `date_to` - Filter to date (Y-m-d)
+- `date_from` - Filter from borrow date (Y-m-d format)
+- `date_to` - Filter to borrow date (Y-m-d format)
 - `search` - Search in request ID, supervisor name, email, purpose
-- `per_page` - Items per page (max: 100)
+- `per_page` - Items per page (default: 15, max: 100)
 
 #### Get Borrow Request Detail
 ```http
@@ -513,35 +611,47 @@ Content-Type: application/json
 
 ### 🔧 Equipment Management
 
-#### Get Equipment List (Admin)
+#### Equipment Categories Management
 ```http
-GET /api/admin/equipment
+# List equipment categories
+GET /api/admin/equipment/categories
+Authorization: Bearer {token}
+
+# Create new category
+POST /api/admin/equipment/categories
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "name": "New Category",
+  "description": "Category description"
+}
+
+# Update category
+PUT /api/admin/equipment/categories/{id}
+Authorization: Bearer {token}
+
+# Delete category
+DELETE /api/admin/equipment/categories/{id}
 Authorization: Bearer {token}
 ```
 
-#### Create Equipment
+#### Equipment CRUD Operations
 ```http
+# List all equipment (admin view)
+GET /api/admin/equipment
+Authorization: Bearer {token}
+
+# Create new equipment
 POST /api/admin/equipment
 Authorization: Bearer {token}
 Content-Type: multipart/form-data
 
-{
-  "name": "New Equipment",
-  "model": "Model X",
-  "manufacturer": "Manufacturer ABC",
-  "category_id": 1,
-  "specifications": "Technical specifications...",
-  "total_quantity": 1,
-  "purchase_date": "2025-01-15",
-  "location": "Room 201",
-  "image": "[file upload]",
-  "manual": "[file upload]",
-  "notes": "Special handling required"
-}
-```
+# Get specific equipment details
+GET /api/admin/equipment/{id}
+Authorization: Bearer {token}
 
-#### Update Equipment
-```http
+# Update equipment
 PUT /api/admin/equipment/{id}
 Authorization: Bearer {token}
 Content-Type: application/json
@@ -552,41 +662,93 @@ Content-Type: application/json
   "condition_status": "good",
   "location": "Room 202"
 }
-```
 
-#### Delete Equipment
-```http
+# Delete equipment
 DELETE /api/admin/equipment/{id}
 Authorization: Bearer {token}
 ```
 
 ### 📂 Content Management
 
-#### Get Articles (Admin)
+#### Articles Management
 ```http
+# List articles for admin management
 GET /api/admin/content/articles
 Authorization: Bearer {token}
-```
 
-#### Create Article
-```http
+# Create new article
 POST /api/admin/content/articles
 Authorization: Bearer {token}
 Content-Type: multipart/form-data
 
-{
-  "title": "New Article Title",
-  "slug": "new-article-slug",
-  "excerpt": "Article excerpt...",
-  "content": "Full article content...",
-  "featured_image": "[file upload]",
-  "status": "published",
-  "published_at": "2025-08-15 10:00:00"
-}
+# Get article for editing
+GET /api/admin/content/articles/{id}
+Authorization: Bearer {token}
+
+# Update article
+PUT /api/admin/content/articles/{id}
+Authorization: Bearer {token}
+
+# Delete article
+DELETE /api/admin/content/articles/{id}
+Authorization: Bearer {token}
 ```
 
-#### Update Site Settings
+#### Staff Management
 ```http
+# List staff members for management
+GET /api/admin/content/staff
+Authorization: Bearer {token}
+
+# Create new staff member
+POST /api/admin/content/staff
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+
+# Get staff member details
+GET /api/admin/content/staff/{id}
+Authorization: Bearer {token}
+
+# Update staff member
+PUT /api/admin/content/staff/{id}
+Authorization: Bearer {token}
+
+# Delete staff member
+DELETE /api/admin/content/staff/{id}
+Authorization: Bearer {token}
+```
+
+#### Gallery Management
+```http
+# List gallery items for management
+GET /api/admin/content/gallery
+Authorization: Bearer {token}
+
+# Create gallery item
+POST /api/admin/content/gallery
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+
+# Get gallery item
+GET /api/admin/content/gallery/{id}
+Authorization: Bearer {token}
+
+# Update gallery item
+PUT /api/admin/content/gallery/{id}
+Authorization: Bearer {token}
+
+# Delete gallery item
+DELETE /api/admin/content/gallery/{id}
+Authorization: Bearer {token}
+```
+
+#### Site Settings
+```http
+# Get site settings
+GET /api/admin/content/site-settings
+Authorization: Bearer {token}
+
+# Update site settings
 PUT /api/admin/content/site-settings
 Authorization: Bearer {token}
 Content-Type: application/json
@@ -875,4 +1037,40 @@ function EquipmentList() {
 6. **Validation**: Frontend should mirror API validation rules for better UX
 7. **Status Colors**: Use provided `status_color` and `condition_color` for consistent UI
 
-This documentation provides everything needed for seamless frontend integration with the Lab GOS backend API.
+---
+
+## 📊 API Endpoints Summary
+
+### Total Endpoints: 65+
+
+#### Public API (22 endpoints)
+- **Site Information**: 1 endpoint
+- **Staff Directory**: 2 endpoints
+- **Articles & News**: 2 endpoints  
+- **Equipment Catalog**: 3 endpoints
+- **Gallery**: 2 endpoints
+- **Request Submissions**: 3 endpoints
+- **Request Tracking**: 4 endpoints (including cancel)
+
+#### Admin API (35+ endpoints)
+- **Dashboard & Statistics**: 3 endpoints
+- **Borrow Request Management**: 5 endpoints
+- **Visit Request Management**: 5 endpoints
+- **Testing Request Management**: 5 endpoints
+- **Equipment Categories**: 4 endpoints
+- **Equipment Management**: 5 endpoints
+- **Content Management**: 
+  - Articles: 5 endpoints
+  - Staff: 5 endpoints
+  - Gallery: 5 endpoints
+  - Site Settings: 2 endpoints
+
+#### Super Admin API (6 endpoints)
+- **User Management**: 6 endpoints (CRUD + status update)
+
+### Authentication Requirements
+- **Public API**: No authentication required
+- **Admin API**: `auth:sanctum` + `role:admin`
+- **Super Admin API**: `auth:sanctum` + `role:superadmin`
+
+This comprehensive documentation provides everything needed for seamless frontend integration with the Lab GOS backend API.
