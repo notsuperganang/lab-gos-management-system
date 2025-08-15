@@ -31,7 +31,13 @@ class EquipmentController extends Controller
             }
             
             if ($request->filled('available_only')) {
-                $query->available();
+                if ($request->boolean('available_only')) {
+                    // Show only available equipment
+                    $query->available();
+                } else {
+                    // Show only unavailable equipment
+                    $query->where('available_quantity', '<=', 0);
+                }
             }
             
             if ($request->filled('search')) {
@@ -78,6 +84,7 @@ class EquipmentController extends Controller
                     'category' => $item->category ? [
                         'id' => $item->category->id,
                         'name' => $item->category->name,
+                        'color_code' => $item->category->color_code,
                     ] : null,
                     'is_available' => $item->isAvailable(),
                     'needs_maintenance' => $item->needsMaintenance(),
@@ -156,6 +163,7 @@ class EquipmentController extends Controller
                 'category' => $equipment->category ? [
                     'id' => $equipment->category->id,
                     'name' => $equipment->category->name,
+                    'color_code' => $equipment->category->color_code,
                 ] : null,
                 'is_available' => $equipment->isAvailable(),
                 'needs_maintenance' => $equipment->needsMaintenance(),
@@ -184,7 +192,7 @@ class EquipmentController extends Controller
     public function categories(): JsonResponse
     {
         try {
-            $categories = Category::orderBy('name')->get(['id', 'name', 'description']);
+            $categories = Category::orderBy('name')->get(['id', 'name', 'description', 'color_code']);
             
             return response()->json([
                 'success' => true,

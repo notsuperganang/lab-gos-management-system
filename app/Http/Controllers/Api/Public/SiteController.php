@@ -18,7 +18,7 @@ class SiteController extends Controller
     {
         try {
             // Get site settings from database
-            $siteSettings = SiteSetting::all()->pluck('value', 'key');
+            $siteSettings = SiteSetting::all()->pluck('content', 'key');
             
             // Get lab configuration
             $labConfig = config('lab');

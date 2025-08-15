@@ -87,6 +87,10 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
         ->name('visit');
     Route::get('/testing/{requestId}', [TrackingController::class, 'trackTestingRequest'])
         ->name('testing');
+
+    // Cancel requests
+    Route::delete('/borrow/{requestId}/cancel', [TrackingController::class, 'cancelBorrowRequest'])
+        ->name('borrow.cancel');
 });
 
 /*

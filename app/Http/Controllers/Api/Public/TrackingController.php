@@ -37,7 +37,10 @@ class TrackingController extends Controller
                         'id' => $item->equipment->id,
                         'name' => $item->equipment->name,
                         'model' => $item->equipment->model,
-                        'category' => $item->equipment->category?->name,
+                        'category' => [
+                            'name' => $item->equipment->category?->name,
+                        ],
+                        'specifications' => $item->equipment->specifications,
                     ],
                     'quantity_requested' => $item->quantity_requested,
                     'quantity_approved' => $item->quantity_approved,
@@ -331,5 +334,70 @@ class TrackingController extends Controller
         }
         
         return $timeline;
+    }
+
+    /**
+     * Cancel a borrow request
+     */
+    public function cancelBorrowRequest(string $requestId): JsonResponse
+    {
+        try {
+            $borrowRequest = BorrowRequest::where('request_id', $requestId)->first();
+            
+            if (!$borrowRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request not found. Please check your request ID.'
+                ], 404);
+            }
+            
+            // Check if request can be canceled
+            if (in_array($borrowRequest->status, ['approved', 'active', 'completed'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permohonan yang sudah disetujui atau sedang berlangsung tidak dapat dibatalkan.'
+                ], 400);
+            }
+            
+            if ($borrowRequest->status === 'cancelled') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permohonan sudah dibatalkan sebelumnya.'
+                ], 400);
+            }
+            
+            // Update status to cancelled
+            $borrowRequest->update([
+                'status' => 'cancelled',
+                'approval_notes' => 'Dibatalkan oleh pemohon pada ' . now()->format('d/m/Y H:i'),
+                'reviewed_at' => now(),
+            ]);
+            
+            // Log activity
+            activity()
+                ->causedBy($borrowRequest->user)
+                ->performedOn($borrowRequest)
+                ->withProperties([
+                    'request_id' => $borrowRequest->request_id,
+                    'reason' => 'Dibatalkan oleh pemohon'
+                ])
+                ->log('Borrow request cancelled');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Permohonan peminjaman berhasil dibatalkan.',
+                'data' => [
+                    'request_id' => $borrowRequest->request_id,
+                    'status' => 'cancelled'
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel request',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

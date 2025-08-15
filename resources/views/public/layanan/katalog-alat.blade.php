@@ -81,40 +81,173 @@
                 // Modal state
                 showDetailModal: false,
                 
+                // Loading state
+                loading: true,
+                error: null,
+                
                 // Filter states
-                searchQuery: '',
-                selectedCategory: 'semua',
+                searchQuery: new URLSearchParams(window.location.search).get('q') || '',
+                selectedCategory: new URLSearchParams(window.location.search).get('category_id') || 'semua',
                 selectedStatus: 'semua',
-                categories: ['semua', 'spektroskopi', 'optik', 'gelombang', 'elektronik'],
-                statusOptions: ['semua', 'tersedia', 'dipinjam', 'maintenance'],
+                categories: [],
+                statusOptions: ['semua', 'tersedia', 'tidak-tersedia'],
+                
+                // Pagination
+                currentPage: parseInt(new URLSearchParams(window.location.search).get('page')) || 1,
+                totalPages: 1,
                 
                 // Selection states
                 selectedItems: [],
                 
                 // Equipment data
-                equipments: [
-                    { id: 1, name: 'Spektrometer UV-Vis', category: 'spektroskopi', status: 'tersedia', available: 3, total: 5, specs: 'Range: 190-1100 nm, Resolusi: 1.8 nm' },
-                    { id: 2, name: 'Laser HeNe', category: 'optik', status: 'tersedia', available: 2, total: 3, specs: 'Wavelength: 632.8 nm, Power: 5 mW' },
-                    { id: 3, name: 'Function Generator', category: 'elektronik', status: 'tersedia', available: 4, total: 4, specs: 'Frequency: 1 μHz - 80 MHz' },
-                    { id: 4, name: 'Mikroskop Optik', category: 'optik', status: 'dipinjam', available: 0, total: 2, specs: 'Magnification: 40x - 1000x' },
-                    { id: 5, name: 'Osiloskop Digital', category: 'elektronik', status: 'tersedia', available: 1, total: 2, specs: 'Bandwidth: 100 MHz, 4 Channel' },
-                    { id: 6, name: 'Interferometer Michelson', category: 'optik', status: 'maintenance', available: 0, total: 1, specs: 'Precision: λ/20, Mirror: Ø25mm' }
-                ],
+                equipments: [],
                 
-                // Methods
+                // Initialization
+                async init() {
+                    // Wait for LabGOS to be available
+                    let attempts = 0;
+                    while (!window.LabGOS && attempts < 10) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        attempts++;
+                    }
+                    
+                    if (!window.LabGOS) {
+                        console.error('LabGOS API client not available');
+                        return;
+                    }
+                    
+                    await this.loadCategories();
+                    await this.loadEquipments();
+                },
+                
+                // Load categories from API
+                async loadCategories() {
+                    try {
+                        const response = await window.LabGOS.getCategories();
+                        if (response && response.success && response.data) {
+                            this.categories = [
+                                { id: 'semua', name: 'Semua', color_code: null },
+                                ...response.data
+                            ];
+                        } else {
+                            console.warn('Invalid categories response:', response);
+                            this.categories = [{ id: 'semua', name: 'Semua', color_code: null }];
+                        }
+                    } catch (error) {
+                        console.error('Failed to load categories:', error);
+                        this.categories = [{ id: 'semua', name: 'Semua', color_code: null }];
+                    }
+                },
+                
+                // Load equipments from API
+                async loadEquipments(updateUrl = false) {
+                    try {
+                        this.loading = true;
+                        this.error = null;
+                        
+                        const params = {
+                            page: this.currentPage
+                        };
+                        
+                        if (this.selectedCategory !== 'semua') {
+                            params.category_id = this.selectedCategory;
+                        }
+                        
+                        if (this.searchQuery.trim()) {
+                            params.search = this.searchQuery.trim();
+                        }
+                        
+                        if (this.selectedStatus === 'tersedia') {
+                            params.available_only = true;
+                        } else if (this.selectedStatus === 'tidak-tersedia') {
+                            params.available_only = false;
+                        }
+                        
+                        const response = await window.LabGOS.getEquipment(params);
+                        this.equipments = response.data;
+                        this.totalPages = response.meta.pagination?.last_page || 1;
+                        
+                        if (updateUrl) {
+                            this.updateURL();
+                        }
+                    } catch (error) {
+                        console.error('Failed to load equipments:', error);
+                        this.error = error.response?.data?.message || 'Gagal memuat data peralatan';
+                        this.equipments = [];
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                // Update URL with current filters
+                updateURL() {
+                    const params = new URLSearchParams();
+                    
+                    if (this.selectedCategory !== 'semua') {
+                        params.set('category_id', this.selectedCategory);
+                    }
+                    
+                    if (this.searchQuery.trim()) {
+                        params.set('q', this.searchQuery.trim());
+                    }
+                    
+                    if (this.currentPage > 1) {
+                        params.set('page', this.currentPage);
+                    }
+                    
+                    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                    window.history.pushState({}, '', newUrl);
+                },
+                
+                // Filter change handlers
+                async onCategoryChange() {
+                    this.currentPage = 1;
+                    await this.loadEquipments(true);
+                },
+                
+                async onSearchChange() {
+                    this.currentPage = 1;
+                    await this.loadEquipments(true);
+                },
+                
+                async onStatusChange() {
+                    this.currentPage = 1;
+                    await this.loadEquipments(true);
+                },
+                
+                // Pagination
+                async goToPage(page) {
+                    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+                        this.currentPage = page;
+                        await this.loadEquipments(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+                
+                // Equipment status helpers
+                getEquipmentStatus(equipment) {
+                    if (equipment.available_quantity > 0) {
+                        return 'tersedia';
+                    }
+                    return equipment.condition_status === 'maintenance' ? 'maintenance' : 'dipinjam';
+                },
+                
                 get filteredEquipments() {
-                    return this.equipments.filter(eq => {
-                        const matchesSearch = eq.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                                            eq.specs.toLowerCase().includes(this.searchQuery.toLowerCase());
-                        const matchesCategory = this.selectedCategory === 'semua' || eq.category === this.selectedCategory;
-                        const matchesStatus = this.selectedStatus === 'semua' || eq.status === this.selectedStatus;
-                        return matchesSearch && matchesCategory && matchesStatus;
-                    });
+                    return this.equipments;
                 },
                 
                 addToSelection(equipment) {
-                    if (!this.isSelected(equipment.id) && equipment.available > 0) {
-                        this.selectedItems.push({...equipment, quantity: 1});
+                    const available = equipment.available_quantity || 0;
+                    if (!this.isSelected(equipment.id) && available > 0) {
+                        this.selectedItems.push({
+                            id: equipment.id,
+                            name: equipment.name,
+                            category: equipment.category?.name || 'Tanpa Kategori',
+                            available: available,
+                            total: equipment.total_quantity || available,
+                            specs: this.getKeySpecs(equipment),
+                            quantity: 1
+                        });
                     }
                 },
                 
@@ -130,9 +263,177 @@
                     const colors = {
                         'tersedia': 'text-green-600 bg-green-100',
                         'dipinjam': 'text-orange-600 bg-orange-100', 
-                        'maintenance': 'text-red-600 bg-red-100'
+                        'maintenance': 'text-red-600 bg-red-100',
+                        'tidak-tersedia': 'text-red-600 bg-red-100'
                     };
                     return colors[status] || 'text-gray-600 bg-gray-100';
+                },
+                
+                getCategoryBadgeStyle(category) {
+                    if (!category || !category.color_code) {
+                        return 'background-color: #f3f4f6; color: #374151;';
+                    }
+                    // Use inline style to avoid Tailwind conflicts
+                    return `background-color: ${category.color_code}; color: #ffffff;`;
+                },
+                
+                getKeySpecs(equipment) {
+                    if (!equipment.specifications || typeof equipment.specifications !== 'object') {
+                        return 'Tidak ada spesifikasi';
+                    }
+                    
+                    const specs = equipment.specifications;
+                    const specEntries = Object.entries(specs).filter(([key, value]) => 
+                        value !== null && value !== undefined && value !== ''
+                    );
+                    
+                    if (specEntries.length === 0) {
+                        return 'Tidak ada spesifikasi';
+                    }
+                    
+                    // Tier 1: Pattern-based priority detection
+                    const prioritySpecs = this.getPrioritySpecs(specEntries);
+                    if (prioritySpecs.length > 0) {
+                        return prioritySpecs.slice(0, 2).map(([key, value]) => 
+                            `${this.formatSpecKey(key)}: ${value}`
+                        ).join(' • ');
+                    }
+                    
+                    // Tier 2: Smart field selection (first 2 available, excluding metadata)
+                    const filteredSpecs = this.filterMetadataFields(specEntries);
+                    const selectedSpecs = filteredSpecs.slice(0, 2);
+                    
+                    return selectedSpecs.map(([key, value]) => 
+                        `${this.formatSpecKey(key)}: ${value}`
+                    ).join(' • ') || 'Tidak ada spesifikasi';
+                },
+                
+                // Tier 1: Detect high-priority specification fields using patterns
+                getPrioritySpecs(specEntries) {
+                    const priorityPatterns = [
+                        // Range and measurement fields (highest priority)
+                        /.*range.*/i,
+                        /.*measurement.*/i,
+                        /.*span.*/i,
+                        
+                        // Precision and accuracy fields
+                        /.*resolution.*/i,
+                        /.*accuracy.*/i,
+                        /.*precision.*/i,
+                        
+                        // Power and electrical specifications
+                        /.*power.*/i,
+                        /.*voltage.*/i,
+                        /.*current.*/i,
+                        /.*output.*/i,
+                        
+                        // Physical properties
+                        /.*magnification.*/i,
+                        /.*wavelength.*/i,
+                        /.*frequency.*/i,
+                        
+                        // Performance specifications
+                        /.*bandwidth.*/i,
+                        /.*rate.*/i,
+                        /.*speed.*/i,
+                        /.*channels.*/i,
+                        
+                        // Optical specifications
+                        /.*detector.*/i,
+                        /.*illumination.*/i,
+                        /.*beam.*/i,
+                    ];
+                    
+                    const prioritySpecs = [];
+                    
+                    // Find specs matching priority patterns
+                    for (const pattern of priorityPatterns) {
+                        for (const [key, value] of specEntries) {
+                            if (pattern.test(key) && !prioritySpecs.some(([existingKey]) => existingKey === key)) {
+                                prioritySpecs.push([key, value]);
+                                if (prioritySpecs.length >= 2) break;
+                            }
+                        }
+                        if (prioritySpecs.length >= 2) break;
+                    }
+                    
+                    return prioritySpecs;
+                },
+                
+                // Tier 2: Filter out common metadata fields
+                filterMetadataFields(specEntries) {
+                    const metadataPatterns = [
+                        /.*software.*/i,
+                        /.*accessories.*/i,
+                        /.*notes.*/i,
+                        /.*description.*/i,
+                        /.*manual.*/i,
+                        /.*documentation.*/i,
+                        /.*warranty.*/i,
+                        /.*manufacturer.*/i,
+                        /.*model.*/i,
+                        /.*serial.*/i,
+                    ];
+                    
+                    return specEntries.filter(([key]) => 
+                        !metadataPatterns.some(pattern => pattern.test(key))
+                    );
+                },
+                
+                // Tier 3: Format specification keys to readable Indonesian labels
+                formatSpecKey(key) {
+                    // Indonesian translation mapping for common technical terms
+                    const translations = {
+                        'wavelength_range': 'Panjang Gelombang',
+                        'frequency_range': 'Frekuensi',
+                        'measuring_range': 'Range',
+                        'amplitude_range': 'Amplitudo',
+                        'wavelength': 'Panjang Gelombang',
+                        'frequency': 'Frekuensi',
+                        'resolution': 'Resolusi',
+                        'accuracy': 'Akurasi',
+                        'precision': 'Presisi',
+                        'power': 'Daya',
+                        'power_output': 'Output Daya',
+                        'voltage': 'Tegangan',
+                        'current': 'Arus',
+                        'bandwidth': 'Bandwidth',
+                        'sample_rate': 'Sample Rate',
+                        'magnification': 'Perbesaran',
+                        'objectives': 'Objektif',
+                        'channels': 'Channel',
+                        'detector': 'Detektor',
+                        'illumination': 'Penerangan',
+                        'beam_diameter': 'Diameter Beam',
+                        'beam_splitter': 'Beam Splitter',
+                        'optical_density': 'Densitas Optik',
+                        'wavelength_protection': 'Proteksi Gelombang',
+                        'operating_voltage': 'Tegangan Operasi',
+                        'stability': 'Stabilitas',
+                        'polarization': 'Polarisasi',
+                        'material': 'Material',
+                        'functions': 'Fungsi',
+                        'battery': 'Baterai',
+                        'eyepieces': 'Eyepiece',
+                        'condenser': 'Kondensor',
+                        'stage': 'Stage',
+                        'light_source': 'Sumber Cahaya',
+                        'interferometer': 'Interferometer',
+                        'memory_depth': 'Kedalaman Memori',
+                        'length': 'Panjang',
+                        'scale': 'Skala'
+                    };
+                    
+                    // Check for direct translation
+                    if (translations[key]) {
+                        return translations[key];
+                    }
+                    
+                    // Dynamic formatting for unknown keys
+                    return key
+                        .split('_')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
                 },
                 
                 // New methods for modal
@@ -144,9 +445,15 @@
                 },
                 
                 proceedToForm() {
+                    // Save selected equipment to sessionStorage for form page
+                    try {
+                        sessionStorage.setItem('selectedEquipments', JSON.stringify(this.selectedItems));
+                    } catch (error) {
+                        console.error('Failed to save selected equipments:', error);
+                    }
                     window.location.href = '/layanan/peminjaman-alat/form';
                 }
-            }">
+            }" x-init="init()">
 
                 <!-- Selected Items Chart (Optional) -->
                 <div x-show="selectedItems.length > 0" 
@@ -196,6 +503,8 @@
                             <div class="relative">
                                 <input type="text" 
                                        x-model="searchQuery"
+                                       @keydown.enter="onSearchChange()"
+                                       @input.debounce.500ms="onSearchChange()"
                                        placeholder="Nama alat atau spesifikasi..."
                                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300">
                                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -206,9 +515,10 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
                             <select x-model="selectedCategory" 
+                                    @change="onCategoryChange()"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300">
-                                <template x-for="category in categories" :key="category">
-                                    <option :value="category" x-text="category.charAt(0).toUpperCase() + category.slice(1)"></option>
+                                <template x-for="category in categories" :key="category.id">
+                                    <option :value="category.id" x-text="category.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -217,35 +527,50 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                             <select x-model="selectedStatus" 
+                                    @change="onStatusChange()"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300">
                                 <template x-for="status in statusOptions" :key="status">
-                                    <option :value="status" x-text="status.charAt(0).toUpperCase() + status.slice(1)"></option>
+                                    <option :value="status" x-text="status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')"></option>
                                 </template>
                             </select>
                         </div>
                     </div>
-                    
-                    <!-- Filter Tags -->
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <span x-show="selectedCategory !== 'semua'" 
-                              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-white">
-                            <span x-text="selectedCategory"></span>
-                            <button @click="selectedCategory = 'semua'" class="ml-2 hover:text-gray-200">
-                                <i class="fas fa-times text-xs"></i>
-                            </button>
-                        </span>
-                        <span x-show="selectedStatus !== 'semua'" 
-                              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-secondary text-gray-800">
-                            <span x-text="selectedStatus"></span>
-                            <button @click="selectedStatus = 'semua'" class="ml-2 hover:text-gray-600">
-                                <i class="fas fa-times text-xs"></i>
-                            </button>
-                        </span>
+                </div>
+
+                <!-- Loading State -->
+                <div x-show="loading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <template x-for="i in 6">
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 animate-pulse">
+                            <div class="h-48 bg-gray-200"></div>
+                            <div class="p-6">
+                                <div class="h-6 bg-gray-200 rounded mb-2"></div>
+                                <div class="h-4 bg-gray-200 rounded mb-4"></div>
+                                <div class="h-4 bg-gray-200 rounded mb-4"></div>
+                                <div class="h-10 bg-gray-200 rounded"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Error State -->
+                <div x-show="error && !loading" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     class="text-center py-16">
+                    <div class="text-6xl text-red-300 mb-4">
+                        <i class="fas fa-exclamation-triangle"></i>
                     </div>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">Terjadi Kesalahan</h3>
+                    <p class="text-gray-500 mb-4" x-text="error"></p>
+                    <button @click="loadEquipments()" 
+                            class="bg-primary hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-refresh mr-2"></i>Coba Lagi
+                    </button>
                 </div>
 
                 <!-- Equipment Grid -->
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div x-show="!loading && !error" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <template x-for="(equipment, index) in filteredEquipments" :key="equipment.id">
                         <div x-data="{ animated: false }" 
                              x-scroll-animate="animated = true"
@@ -260,16 +585,24 @@
                             
                             <!-- Equipment Image -->
                             <div class="relative h-48 overflow-hidden bg-gray-200">
-                                <div class="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"></div>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <i class="fas fa-microscope text-white text-4xl opacity-50"></i>
-                                </div>
+                                <template x-if="equipment.image_url">
+                                    <img :src="equipment.image_url" 
+                                         :alt="equipment.name"
+                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                </template>
+                                <template x-if="!equipment.image_url">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400">
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <i class="fas fa-microscope text-white text-4xl opacity-50"></i>
+                                        </div>
+                                    </div>
+                                </template>
                                 
                                 <!-- Status Badge -->
                                 <div class="absolute top-4 right-4">
                                     <span class="px-3 py-1 rounded-full text-xs font-semibold"
-                                          :class="getStatusColor(equipment.status)"
-                                          x-text="equipment.status.charAt(0).toUpperCase() + equipment.status.slice(1)">
+                                          :class="getStatusColor(getEquipmentStatus(equipment))"
+                                          x-text="getEquipmentStatus(equipment).charAt(0).toUpperCase() + getEquipmentStatus(equipment).slice(1)">
                                     </span>
                                 </div>
                             </div>
@@ -279,37 +612,38 @@
                                 <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-primary transition-colors duration-300" 
                                     x-text="equipment.name"></h3>
                                 
-                                <p class="text-gray-600 text-sm mb-4" x-text="equipment.specs"></p>
+                                <p class="text-gray-600 text-sm mb-4" x-text="getKeySpecs(equipment)"></p>
                                 
                                 <!-- Availability Info -->
                                 <div class="flex items-center justify-between mb-4">
                                     <div class="flex items-center">
                                         <i class="fas fa-box text-primary mr-2"></i>
                                         <span class="text-sm text-gray-600">
-                                            Tersedia: <span class="font-semibold" x-text="equipment.available"></span>/<span x-text="equipment.total"></span>
+                                            Tersedia: <span class="font-semibold" x-text="equipment.available_quantity"></span>/<span x-text="equipment.total_quantity"></span>
                                         </span>
                                     </div>
-                                    <div class="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600 capitalize" 
-                                         x-text="equipment.category"></div>
+                                    <div class="text-xs px-2 py-1 rounded-full text-white font-medium" 
+                                         :style="getCategoryBadgeStyle(equipment.category)"
+                                         x-text="equipment.category?.name || 'Tanpa Kategori'"></div>
                                 </div>
                                 
                                 <!-- Progress Bar -->
                                 <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
                                     <div class="bg-gradient-to-r from-primary to-blue-600 h-2 rounded-full transition-all duration-500"
-                                         :style="`width: ${(equipment.available / equipment.total) * 100}%`"></div>
+                                         :style="`width: ${(equipment.available_quantity / equipment.total_quantity) * 100}%`"></div>
                                 </div>
                                 
                                 <!-- Action Button -->
                                 <button @click="addToSelection(equipment)"
-                                        :disabled="equipment.available === 0 || isSelected(equipment.id)"
-                                        :class="equipment.available === 0 ? 'bg-gray-300 cursor-not-allowed' : 
+                                        :disabled="equipment.available_quantity === 0 || isSelected(equipment.id)"
+                                        :class="equipment.available_quantity === 0 ? 'bg-gray-300 cursor-not-allowed' : 
                                                 isSelected(equipment.id) ? 'bg-green-500 text-white' :
                                                 'bg-primary hover:bg-blue-800 text-white hover:scale-105'"
                                         class="w-full py-3 rounded-xl font-semibold transition-all duration-300 transform">
-                                    <span x-show="equipment.available === 0">
+                                    <span x-show="equipment.available_quantity === 0">
                                         <i class="fas fa-ban mr-2"></i>Tidak Tersedia
                                     </span>
-                                    <span x-show="equipment.available > 0 && !isSelected(equipment.id)">
+                                    <span x-show="equipment.available_quantity > 0 && !isSelected(equipment.id)">
                                         <i class="fas fa-plus mr-2"></i>Tambah ke Keranjang
                                     </span>
                                     <span x-show="isSelected(equipment.id)">
@@ -322,7 +656,7 @@
                 </div>
                 
                 <!-- No Results -->
-                <div x-show="filteredEquipments.length === 0" 
+                <div x-show="!loading && !error && filteredEquipments.length === 0" 
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="opacity-0 scale-95"
                      x-transition:enter-end="opacity-100 scale-100"
@@ -332,6 +666,49 @@
                     </div>
                     <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada peralatan ditemukan</h3>
                     <p class="text-gray-500">Coba ubah filter atau kata kunci pencarian</p>
+                </div>
+                
+                <!-- Pagination -->
+                <div x-show="!loading && !error && totalPages > 1" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="flex justify-center items-center space-x-2 mt-12">
+                    
+                    <!-- Previous Button -->
+                    <button @click="goToPage(currentPage - 1)"
+                            :disabled="currentPage <= 1"
+                            :class="currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-white'"
+                            class="px-4 py-2 bg-white border border-gray-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <!-- Page Numbers -->
+                    <template x-for="page in Array.from({length: Math.min(5, totalPages)}, (_, i) => {
+                        let start = Math.max(1, currentPage - 2);
+                        let end = Math.min(totalPages, start + 4);
+                        start = Math.max(1, end - 4);
+                        return start + i;
+                    }).filter(p => p <= totalPages)" :key="page">
+                        <button @click="goToPage(page)"
+                                :class="page === currentPage ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-primary hover:text-white border border-gray-300'"
+                                class="px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 font-medium"
+                                x-text="page">
+                        </button>
+                    </template>
+                    
+                    <!-- Next Button -->
+                    <button @click="goToPage(currentPage + 1)"
+                            :disabled="currentPage >= totalPages"
+                            :class="currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-white'"
+                            class="px-4 py-2 bg-white border border-gray-300 rounded-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <!-- Page Info -->
+                    <div class="ml-4 text-sm text-gray-600">
+                        Halaman <span class="font-semibold" x-text="currentPage"></span> dari <span class="font-semibold" x-text="totalPages"></span>
+                    </div>
                 </div>
                 
                 <!-- Selected Items Summary (Floating) -->

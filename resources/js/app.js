@@ -113,3 +113,116 @@ Alpine.start();
 document.addEventListener('alpine:init', () => {
     Alpine.store('scrollAnimations').init();
 });
+
+// LabGOS API Client
+const LabGOS = {
+    baseURL: '/api',
+    
+    // Helper method for making API requests
+    async request(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...options.headers
+            },
+            ...options
+        };
+        
+        try {
+            const response = await fetch(url, config);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw {
+                    status: response.status,
+                    response: { data }
+                };
+            }
+            
+            return data;
+        } catch (error) {
+            if (error.response) {
+                throw error;
+            }
+            throw {
+                status: 0,
+                response: { 
+                    data: { 
+                        message: 'Koneksi bermasalah. Periksa jaringan internet Anda.' 
+                    } 
+                }
+            };
+        }
+    },
+    
+    // Get equipment with filters and pagination
+    async getEquipment(params = {}) {
+        const searchParams = new URLSearchParams();
+        
+        if (params.category_id) searchParams.append('category_id', params.category_id);
+        if (params.available_only !== undefined) searchParams.append('available_only', params.available_only);
+        if (params.search) searchParams.append('search', params.search);
+        if (params.page) searchParams.append('page', params.page);
+        
+        const queryString = searchParams.toString();
+        const endpoint = `/equipment${queryString ? '?' + queryString : ''}`;
+        
+        return await this.request(endpoint);
+    },
+    
+    // Get equipment categories
+    async getCategories() {
+        return await this.request('/equipment/categories');
+    },
+    
+    // Get equipment detail by ID
+    async getEquipmentDetail(id) {
+        return await this.request(`/equipment/${id}`);
+    },
+    
+    // Submit borrow request
+    async submitBorrowRequest(payload) {
+        return await this.request('/requests/borrow', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    },
+    
+    // Track borrow request
+    async trackBorrow(requestId) {
+        return await this.request(`/tracking/borrow/${requestId}`);
+    },
+    
+    // Cancel borrow request
+    async cancelBorrow(requestId) {
+        return await this.request(`/tracking/borrow/${requestId}/cancel`, {
+            method: 'DELETE'
+        });
+    },
+    
+    // Get site settings with caching
+    async getSiteSettings() {
+        // Simple caching mechanism (5 minutes)
+        if (this._siteSettingsCache && this._siteSettingsCacheTime && 
+            (Date.now() - this._siteSettingsCacheTime < 300000)) {
+            return this._siteSettingsCache;
+        }
+        
+        try {
+            const response = await this.request('/site/settings');
+            if (response.success) {
+                this._siteSettingsCache = response;
+                this._siteSettingsCacheTime = Date.now();
+            }
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch site settings:', error);
+            throw error;
+        }
+    }
+};
+
+// Expose LabGOS to global window object
+window.LabGOS = LabGOS;

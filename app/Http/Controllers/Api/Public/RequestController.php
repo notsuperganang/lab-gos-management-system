@@ -43,8 +43,8 @@ class RequestController extends Controller
                 'purpose' => $validated['purpose'],
                 'borrow_date' => $validated['borrow_date'],
                 'return_date' => $validated['return_date'],
-                'start_time' => $validated['start_time'],
-                'end_time' => $validated['end_time'],
+                'start_time' => $validated['start_time'] ?? null,
+                'end_time' => $validated['end_time'] ?? null,
                 'submitted_at' => now(),
             ]);
             

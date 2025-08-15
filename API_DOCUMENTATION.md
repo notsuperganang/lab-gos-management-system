@@ -278,8 +278,6 @@ Content-Type: application/json
   "purpose": "Research experiment for thesis",
   "borrow_date": "2025-08-20",
   "return_date": "2025-08-21",
-  "start_time": "08:30",
-  "end_time": "15:00",
   "equipment_items": [
     {
       "equipment_id": 1,
@@ -289,6 +287,12 @@ Content-Type: application/json
   ]
 }
 ```
+
+**📝 Note about Time Fields:**
+- `start_time` and `end_time` fields are **optional (nullable)** as of the latest version
+- Frontend no longer sends these fields in requests
+- Existing data with times will still display them in 24-hour format (HH:MM)
+- New requests will have `null` values for these fields
 
 **Response:**
 ```json

@@ -36,9 +36,7 @@ class BorrowRequestRequest extends FormRequest
             
             'purpose' => 'required|string|max:1000',
             'borrow_date' => 'required|date|after:today|before:' . now()->addMonths(6)->format('Y-m-d'),
-            'return_date' => 'required|date|after:borrow_date|before:' . now()->addMonths(6)->format('Y-m-d'),
-            'start_time' => 'required|string|date_format:H:i',
-            'end_time' => 'required|string|date_format:H:i|after:start_time',
+            'return_date' => 'required|date|after_or_equal:borrow_date|before:' . now()->addMonths(6)->format('Y-m-d'),
             
             'equipment_items' => 'required|array|min:1|max:20',
             'equipment_items.*.equipment_id' => 'required|exists:equipment,id',
@@ -67,12 +65,8 @@ class BorrowRequestRequest extends FormRequest
             'supervisor_email.email' => 'Please provide a valid supervisor email address.',
             'borrow_date.after' => 'Borrow date must be at least tomorrow.',
             'borrow_date.before' => 'Borrow date cannot be more than 6 months in advance.',
-            'return_date.after' => 'Return date must be after borrow date.',
+            'return_date.after_or_equal' => 'Return date must be the same as or after borrow date.',
             'return_date.before' => 'Return date cannot be more than 6 months in advance.',
-            
-            'start_time.regex' => 'Start time must be in HH:MM format (24-hour).',
-            'end_time.regex' => 'End time must be in HH:MM format (24-hour).',
-            'end_time.after' => 'End time must be after start time.',
             
             'equipment_items.required' => 'At least one equipment item is required.',
             'equipment_items.min' => 'At least one equipment item is required.',
@@ -100,7 +94,6 @@ class BorrowRequestRequest extends FormRequest
             }
             
             $this->validateBorrowDuration($validator);
-            $this->validateOperationalHours($validator);
         });
     }
 
@@ -154,37 +147,4 @@ class BorrowRequestRequest extends FormRequest
         }
     }
 
-    /**
-     * Validate operational hours
-     */
-    private function validateOperationalHours($validator)
-    {
-        $startTime = $this->input('start_time');
-        $endTime = $this->input('end_time');
-        $borrowDate = $this->input('borrow_date');
-        
-        if ($startTime && $endTime && $borrowDate) {
-            // Get lab operational hours from config
-            $operationalHours = config('lab.operational_hours');
-            $borrowDateTime = \Carbon\Carbon::parse($borrowDate);
-            $dayOfWeek = strtolower($borrowDateTime->format('l'));
-            
-            $operatingTime = $operationalHours[$dayOfWeek] ?? null;
-            
-            if ($operatingTime === 'Tutup' || !$operatingTime) {
-                $validator->errors()->add('borrow_date', 'Laboratory is closed on ' . ucfirst($dayOfWeek) . '.');
-                return;
-            }
-            
-            // Parse operating hours (e.g., "08:00-16:00")
-            if (preg_match('/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $operatingTime, $matches)) {
-                $openTime = $matches[1];
-                $closeTime = $matches[2];
-                
-                if ($startTime < $openTime || $endTime > $closeTime) {
-                    $validator->errors()->add('start_time', "Operating hours on {$dayOfWeek}: {$operatingTime}");
-                }
-            }
-        }
-    }
 }

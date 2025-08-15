@@ -40,6 +40,12 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     Route::get('/peminjaman-alat/tracking/{requestId}', function ($requestId) {
         return view('public.layanan.tracking-peminjaman', ['requestId' => $requestId]);
     })->name('peminjaman-alat.tracking');
+    
+    // Tracking detail page (accepts request ID as query parameter)
+    Route::get('/tracking-peminjaman', function () {
+        $requestId = request()->get('rid');
+        return view('public.layanan.tracking-peminjaman', ['requestId' => $requestId]);
+    })->name('tracking-peminjaman');
 
     // Peminjaman alat menuju ke katalog alat
     Route::get('/peminjaman-alat', [PublicPageController::class, 'equipmentCatalog'])->name('peminjaman-alat');
