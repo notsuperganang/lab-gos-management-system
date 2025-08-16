@@ -393,19 +393,24 @@
                                 <i class="fab fa-whatsapp text-2xl"
                                    :class="currentStatus === 'cancelled' ? 'text-gray-400' : 'text-green-600'"></i>
                             </div>
-                            <h4 class="font-bold text-gray-800 mb-2">Konfirmasi WhatsApp</h4>
+                            <h4 class="font-bold text-gray-800 mb-2">Chat WhatsApp Admin</h4>
                             <p class="text-sm text-gray-600 mb-4">
-                                <span x-show="currentStatus !== 'cancelled'">Hubungi admin untuk konfirmasi</span>
+                                <span x-show="currentStatus !== 'cancelled'">Chat langsung dengan admin lab</span>
                                 <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
                             </p>
-                            <button @click="sendWhatsAppConfirmation()"
-                                    :disabled="currentStatus === 'cancelled'"
+                            <button @click="openWhatsAppChat()"
+                                    :disabled="currentStatus === 'cancelled' || !canSendMessage"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="currentStatus === 'cancelled' ?
+                                    :class="currentStatus === 'cancelled' ? 
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
+                                           !canSendMessage ? 
+                                           'bg-orange-400 text-white cursor-not-allowed' :
                                            'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'">
-                                <span x-show="currentStatus !== 'cancelled'">Hubungi Admin</span>
                                 <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
+                                <span x-show="currentStatus !== 'cancelled' && canSendMessage">
+                                    <i class="fab fa-whatsapp mr-2"></i>Chat Admin
+                                </span>
+                                <span x-show="currentStatus !== 'cancelled' && !canSendMessage" x-text="cooldownText"></span>
                             </button>
                         </div>
 
@@ -459,6 +464,12 @@
                 siteSettings: null,
                 adminPhone: null,
 
+                // Cooldown system
+                lastMessageTime: 0,
+                cooldownDuration: 300000, // 5 minutes in milliseconds
+                remainingTime: 0,
+                cooldownTimer: null,
+
                 // Initialize component
                 async init() {
                     // Wait for LabGOS to be available
@@ -501,6 +512,9 @@
                         }
                     }
 
+                    // Initialize cooldown system
+                    this.initializeCooldown();
+
                     this.loading = false;
                 },
 
@@ -519,8 +533,23 @@
 
                 // Extract admin phone from site settings
                 extractAdminPhone() {
-                    if (!this.siteSettings) return;
+                    // Use WhatsApp admin phone directly since it's the most accurate
+                    const whatsappAdminPhones = this.siteSettings?.whatsapp_admin_phones;
+                    
+                    if (whatsappAdminPhones && whatsappAdminPhones.length > 0) {
+                        // Use first WhatsApp admin phone
+                        let adminPhone = whatsappAdminPhones[0];
+                        // Format phone number for WhatsApp (remove +, spaces, dashes)
+                        this.adminPhone = adminPhone.replace(/[\s\-\+]/g, '');
+                        // Ensure it starts with country code
+                        if (!this.adminPhone.startsWith('62') && this.adminPhone.startsWith('08')) {
+                            this.adminPhone = '62' + this.adminPhone.substring(1);
+                        }
+                        return;
+                    }
 
+                    // Fallback to site settings if WhatsApp admin phones not available
+                    if (!this.siteSettings) return;
                     const siteSettings = this.siteSettings.site_settings || {};
 
                     // Try to get from technical_contact first, then lab_head
@@ -995,24 +1024,106 @@
                     alert('Surat izin kunjungan sedang diunduh...');
                 },
 
-                sendWhatsAppConfirmation() {
-                    const message = `Halo Admin Lab GOS USK,
+                // Cooldown system methods
+                initializeCooldown() {
+                    const stored = localStorage.getItem(`whatsapp_cooldown_${this.visitId}`);
+                    if (stored) {
+                        this.lastMessageTime = parseInt(stored);
+                        this.updateCooldownStatus();
+                    }
+                },
 
-Saya ingin mengkonfirmasi kunjungan laboratorium dengan detail:
+                get canSendMessage() {
+                    const now = Date.now();
+                    return (now - this.lastMessageTime) >= this.cooldownDuration;
+                },
+
+                get cooldownText() {
+                    if (this.canSendMessage) return 'Chat Admin';
+                    const remaining = Math.ceil(this.remainingTime / 1000);
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    return `Tunggu ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                },
+
+                updateCooldownStatus() {
+                    const now = Date.now();
+                    this.remainingTime = Math.max(0, this.cooldownDuration - (now - this.lastMessageTime));
+                    
+                    if (this.remainingTime > 0 && !this.cooldownTimer) {
+                        this.cooldownTimer = setInterval(() => {
+                            this.updateCooldownStatus();
+                        }, 1000);
+                    } else if (this.remainingTime === 0 && this.cooldownTimer) {
+                        clearInterval(this.cooldownTimer);
+                        this.cooldownTimer = null;
+                    }
+                },
+
+                startCooldown() {
+                    this.lastMessageTime = Date.now();
+                    localStorage.setItem(`whatsapp_cooldown_${this.visitId}`, this.lastMessageTime.toString());
+                    this.updateCooldownStatus();
+                },
+
+                openWhatsAppChat() {
+                    // Check cooldown
+                    if (!this.canSendMessage) {
+                        alert(`Harap tunggu ${this.cooldownText.replace('Tunggu ', '')} sebelum mengirim pesan lagi.`);
+                        return;
+                    }
+                    // Generate tracking URL
+                    const trackingUrl = `${window.location.origin}/layanan/kunjungan/confirmation/${this.visitId}`;
+                    
+                    const message = `Kepada Yang Terhormat,
+Admin Laboratorium Gelombang, Optik dan Spektroskopi (GOS)
+Departemen Fisika FMIPA Universitas Syiah Kuala
+
+Dengan hormat,
+
+Saya bermaksud untuk melakukan konsultasi terkait permohonan kunjungan laboratorium dengan rincian sebagai berikut:
+
+=== DETAIL PERMOHONAN KUNJUNGAN ===
 - ID Kunjungan: ${this.visitId}
+- Nama Pengunjung: ${this.visitorInfo.fullName}
+- Instansi/Institusi: ${this.visitorInfo.institution}
 - Tanggal Kunjungan: ${this.scheduleInfo.visitDate}
-- Waktu: ${this.scheduleInfo.visitTime}
+- Waktu Kunjungan: ${this.scheduleInfo.visitTime}
 - Jumlah Peserta: ${this.scheduleInfo.participants} orang
-- Instansi: ${this.visitorInfo.institution}
+- Status Permohonan: ${this.currentStatus === 'pending' ? 'Menunggu Persetujuan' : 
+                         this.currentStatus === 'approved' ? 'Disetujui' : 
+                         this.currentStatus === 'ready' ? 'Siap Dikunjungi' :
+                         this.currentStatus === 'completed' ? 'Selesai' :
+                         this.currentStatus === 'rejected' ? 'Ditolak' :
+                         this.currentStatus === 'cancelled' ? 'Dibatalkan' : this.currentStatus}
 
-Mohon konfirmasi dan informasi lebih lanjut mengenai persiapan kunjungan.
+Link Tracking (Klik untuk membuka):
+${trackingUrl}
 
-Terima kasih.`;
+Mohon kiranya Bapak/Ibu dapat memberikan informasi lebih lanjut mengenai:
+1. Persiapan yang diperlukan sebelum kunjungan
+2. Fasilitas laboratorium yang dapat diakses
+3. Prosedur dan tata tertib selama kunjungan
+4. Informasi lain yang perlu diketahui
 
-                    // Use dynamic admin phone or fallback
-                    const phoneNumber = this.adminPhone || '6281234567890';
+Demikian permohonan ini saya sampaikan. Atas perhatian dan kerjasamanya, saya ucapkan terima kasih.
+
+Hormat saya,
+${this.visitorInfo.fullName}
+${this.visitorInfo.institution}
+
+---
+Laboratorium GOS - Departemen Fisika FMIPA USK
+Email: labgos@usu.ac.id
+Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
+
+                    // Get admin phone from environment or use fallback
+                    const phoneNumber = '{{ str_replace("+", "", env("WHATSAPP_LAB_PHONE", "6285338573726")) }}';
                     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
+                    // Start cooldown after successful message
+                    this.startCooldown();
+                    
                     window.open(whatsappUrl, '_blank');
                 },
 

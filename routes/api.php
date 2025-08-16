@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\EquipmentManagementController;
 use App\Http\Controllers\Api\Admin\ContentManagementController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\SuperAdmin\UserManagementController;
+use App\Http\Controllers\Api\WhatsAppController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -98,6 +99,14 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
         ->name('borrow.cancel');
     Route::delete('/visit/{requestId}/cancel', [TrackingController::class, 'cancelVisitRequest'])
         ->name('visit.cancel');
+});
+
+// WhatsApp integration
+Route::prefix('whatsapp')->name('api.whatsapp.')->group(function () {
+    Route::post('/confirm/{type}/{requestId}', [WhatsAppController::class, 'sendConfirmation'])
+        ->name('confirm');
+    Route::get('/health', [WhatsAppController::class, 'healthCheck'])
+        ->name('health');
 });
 
 /*

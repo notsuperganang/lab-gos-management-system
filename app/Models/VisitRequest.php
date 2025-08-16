@@ -178,6 +178,47 @@ class VisitRequest extends Model
     }
 
     /**
+     * Backward compatibility accessors for NotificationService
+     */
+    public function getFullNameAttribute()
+    {
+        return $this->visitor_name;
+    }
+
+    public function getEmailAttribute()
+    {
+        return $this->visitor_email;
+    }
+
+    public function getPhoneAttribute()
+    {
+        return $this->visitor_phone;
+    }
+
+    public function getPurposeAttribute()
+    {
+        return $this->visit_purpose;
+    }
+
+    public function getParticipantsAttribute()
+    {
+        return $this->group_size;
+    }
+
+    public function getAdditionalNotesAttribute()
+    {
+        return $this->purpose_description;
+    }
+
+    public function getVisitTimeAttribute()
+    {
+        if ($this->start_time && $this->end_time) {
+            return $this->start_time . ' - ' . $this->end_time . ' WIB';
+        }
+        return null;
+    }
+
+    /**
      * Get the visit time label.
      */
     public function getVisitTimeLabelAttribute()

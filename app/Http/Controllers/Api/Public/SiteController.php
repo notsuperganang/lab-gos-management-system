@@ -39,6 +39,7 @@ class SiteController extends Controller
                 'rules' => $labConfig['rules'],
                 'forms' => $labConfig['forms'],
                 'site_settings' => $siteSettings,
+                'whatsapp_admin_phones' => config('whatsapp.admin_phones', []),
             ];
             
             return response()->json([
