@@ -195,6 +195,10 @@ class RequestController extends Controller
         try {
             $validated = $request->validated();
             
+            // Get testing type configuration for auto-computation
+            $testingConfig = TestingRequest::getTestingTypeConfig();
+            $config = $testingConfig[$validated['testing_type']] ?? $testingConfig['custom'];
+            
             DB::beginTransaction();
             
             // Create testing request
@@ -211,8 +215,9 @@ class RequestController extends Controller
                 'testing_type' => $validated['testing_type'],
                 'testing_parameters' => $validated['testing_parameters'] ?? [],
                 'urgent_request' => $validated['urgent_request'] ?? false,
-                'preferred_date' => $validated['preferred_date'],
-                'estimated_duration_hours' => $validated['estimated_duration_hours'],
+                'sample_delivery_schedule' => $validated['sample_delivery_schedule'],
+                'estimated_duration' => $config['duration_days'],
+                'cost' => $config['cost'],
                 'submitted_at' => now(),
             ]);
             

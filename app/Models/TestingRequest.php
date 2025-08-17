@@ -30,14 +30,12 @@ class TestingRequest extends Model
         'testing_type',
         'testing_parameters',
         'urgent_request',
-        'preferred_date',
-        'estimated_duration_hours',
-        'actual_start_date',
-        'actual_completion_date',
+        'sample_delivery_schedule',
+        'estimated_duration',
+        'completion_date',
         'result_files_path',
         'result_summary',
-        'cost_estimate',
-        'final_cost',
+        'cost',
         'submitted_at',
         'reviewed_at',
         'reviewed_by',
@@ -55,13 +53,11 @@ class TestingRequest extends Model
         return [
             'testing_parameters' => 'array',
             'urgent_request' => 'boolean',
-            'preferred_date' => 'date',
-            'estimated_duration_hours' => 'integer',
-            'actual_start_date' => 'date',
-            'actual_completion_date' => 'date',
+            'sample_delivery_schedule' => 'date',
+            'estimated_duration' => 'integer',
+            'completion_date' => 'date',
             'result_files_path' => 'array',
-            'cost_estimate' => 'decimal:2',
-            'final_cost' => 'decimal:2',
+            'cost' => 'decimal:2',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
         ];
@@ -165,6 +161,43 @@ class TestingRequest extends Model
             'optical_microscopy' => 'Optical Microscopy',
             'custom' => 'Custom Testing',
         ];
+    }
+
+    /**
+     * Get testing type configuration (duration and cost).
+     */
+    public static function getTestingTypeConfig()
+    {
+        return [
+            'uv_vis_spectroscopy' => [
+                'duration_days' => 3,
+                'cost' => 150000.00,
+            ],
+            'ftir_spectroscopy' => [
+                'duration_days' => 5,
+                'cost' => 200000.00,
+            ],
+            'optical_microscopy' => [
+                'duration_days' => 2,
+                'cost' => 100000.00,
+            ],
+            'custom' => [
+                'duration_days' => 7,
+                'cost' => 300000.00,
+            ],
+        ];
+    }
+
+    /**
+     * Get estimated completion date (sample delivery + duration).
+     */
+    public function getEstimatedCompletionDateAttribute()
+    {
+        if (!$this->sample_delivery_schedule || !$this->estimated_duration) {
+            return null;
+        }
+
+        return $this->sample_delivery_schedule->addDays($this->estimated_duration);
     }
 
     /**
@@ -317,11 +350,11 @@ class TestingRequest extends Model
      */
     public function isOverdue(): bool
     {
-        if (!$this->preferred_date || in_array($this->status, ['completed', 'cancelled', 'rejected'])) {
+        if (!$this->sample_delivery_schedule || in_array($this->status, ['completed', 'cancelled', 'rejected'])) {
             return false;
         }
 
-        return $this->preferred_date < now()->toDateString();
+        return $this->sample_delivery_schedule < now()->toDateString();
     }
 
     /**
@@ -365,7 +398,7 @@ class TestingRequest extends Model
                 'sample_name',
                 'testing_type',
                 'urgent_request',
-                'preferred_date',
+                'sample_delivery_schedule',
                 'reviewed_by',
                 'approval_notes',
                 'total_cost',

@@ -205,15 +205,13 @@ class TrackingController extends Controller
                     'urgent_request' => $testingRequest->urgent_request,
                 ],
                 'schedule' => [
-                    'preferred_date' => $testingRequest->preferred_date?->format('Y-m-d'),
-                    'estimated_duration_hours' => $testingRequest->estimated_duration_hours,
-                    'actual_start_date' => $testingRequest->actual_start_date?->format('Y-m-d'),
-                    'actual_completion_date' => $testingRequest->actual_completion_date?->format('Y-m-d'),
-                    'actual_duration_hours' => $testingRequest->actual_duration_hours,
+                    'sample_delivery_schedule' => $testingRequest->sample_delivery_schedule?->format('Y-m-d'),
+                    'estimated_duration' => $testingRequest->estimated_duration,
+                    'estimated_completion_date' => $testingRequest->estimated_completion_date?->format('Y-m-d'),
+                    'completion_date' => $testingRequest->completion_date?->format('Y-m-d'),
                 ],
                 'cost' => [
-                    'estimate' => $testingRequest->cost_estimate,
-                    'final' => $testingRequest->final_cost,
+                    'cost' => $testingRequest->cost,
                 ],
                 'results' => [
                     'summary' => $testingRequest->result_summary,
@@ -468,6 +466,71 @@ class TrackingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to cancel visit request',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a testing request
+     */
+    public function cancelTestingRequest(string $requestId): JsonResponse
+    {
+        try {
+            $testingRequest = TestingRequest::where('request_id', $requestId)->first();
+
+            if (!$testingRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request not found. Please check your request ID.'
+                ], 404);
+            }
+
+            // Check if request can be canceled
+            if (in_array($testingRequest->status, ['approved', 'in_progress', 'completed'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permohonan yang sudah disetujui atau sedang berlangsung tidak dapat dibatalkan.'
+                ], 400);
+            }
+
+            if ($testingRequest->status === 'cancelled') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permohonan sudah dibatalkan sebelumnya.'
+                ], 400);
+            }
+
+            // Update status to cancelled
+            $testingRequest->update([
+                'status' => 'cancelled',
+                'approval_notes' => 'Dibatalkan oleh pemohon pada ' . now()->format('d/m/Y H:i'),
+                'reviewed_at' => now(),
+            ]);
+
+            // Log activity
+            activity()
+                ->causedBy($testingRequest->user ?? null)
+                ->performedOn($testingRequest)
+                ->withProperties([
+                    'request_id' => $testingRequest->request_id,
+                    'reason' => 'Dibatalkan oleh pemohon'
+                ])
+                ->log('Testing request cancelled');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permohonan pengujian berhasil dibatalkan.',
+                'data' => [
+                    'request_id' => $testingRequest->request_id,
+                    'status' => 'cancelled'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel testing request',
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }

@@ -43,8 +43,7 @@ class TestingRequestRequest extends FormRequest
             'testing_parameters.*' => 'string|max:255',
             
             'urgent_request' => 'boolean',
-            'preferred_date' => "required|date|after:{$minDate}|before:{$maxDate}",
-            'estimated_duration_hours' => 'nullable|integer|min:1|max:168', // Max 1 week (168 hours)
+            'sample_delivery_schedule' => "required|date|after:{$minDate}|before:{$maxDate}",
         ];
     }
 
@@ -79,13 +78,9 @@ class TestingRequestRequest extends FormRequest
             'testing_parameters.max' => 'Maximum 20 testing parameters allowed.',
             'testing_parameters.*.string' => 'Each testing parameter must be a string.',
             
-            'preferred_date.required' => 'Preferred testing date is required.',
-            'preferred_date.after' => 'Testing must be scheduled at least 3 days in advance.',
-            'preferred_date.before' => 'Testing date cannot be more than 3 months in advance.',
-            
-            'estimated_duration_hours.integer' => 'Estimated duration must be a number.',
-            'estimated_duration_hours.min' => 'Minimum duration is 1 hour.',
-            'estimated_duration_hours.max' => 'Maximum duration is 168 hours (1 week).',
+            'sample_delivery_schedule.required' => 'Sample delivery date is required.',
+            'sample_delivery_schedule.after' => 'Sample delivery must be scheduled at least 3 days in advance.',
+            'sample_delivery_schedule.before' => 'Sample delivery date cannot be more than 3 months in advance.',
         ];
     }
 
@@ -109,14 +104,14 @@ class TestingRequestRequest extends FormRequest
      */
     private function validateTestingSchedule($validator)
     {
-        $preferredDate = $this->input('preferred_date');
+        $sampleDeliveryDate = $this->input('sample_delivery_schedule');
         
-        if (!$preferredDate) {
+        if (!$sampleDeliveryDate) {
             return;
         }
         
-        $preferredDateTime = \Carbon\Carbon::parse($preferredDate);
-        $dayOfWeek = strtolower($preferredDateTime->format('l'));
+        $deliveryDateTime = \Carbon\Carbon::parse($sampleDeliveryDate);
+        $dayOfWeek = strtolower($deliveryDateTime->format('l'));
         
         // Get lab operational hours from config
         $operationalHours = config('lab.operational_hours');
@@ -125,7 +120,7 @@ class TestingRequestRequest extends FormRequest
         // Check if lab is closed on selected day
         if ($operatingTime === 'Tutup' || !$operatingTime) {
             $validator->errors()->add(
-                'preferred_date',
+                'sample_delivery_schedule',
                 'Laboratory is closed on ' . ucfirst($dayOfWeek) . '. Please select a different date.'
             );
         }
@@ -137,16 +132,16 @@ class TestingRequestRequest extends FormRequest
     private function validateUrgentRequest($validator)
     {
         $urgentRequest = $this->input('urgent_request');
-        $preferredDate = $this->input('preferred_date');
+        $sampleDeliveryDate = $this->input('sample_delivery_schedule');
         
-        if ($urgentRequest && $preferredDate) {
-            $preferredDateTime = \Carbon\Carbon::parse($preferredDate);
-            $daysDifference = now()->diffInDays($preferredDateTime);
+        if ($urgentRequest && $sampleDeliveryDate) {
+            $deliveryDateTime = \Carbon\Carbon::parse($sampleDeliveryDate);
+            $daysDifference = now()->diffInDays($deliveryDateTime);
             
             // Urgent requests need at least 1 day notice but less than 3 days
             if ($daysDifference < 1) {
                 $validator->errors()->add(
-                    'preferred_date',
+                    'sample_delivery_schedule',
                     'Urgent requests require at least 24 hours advance notice.'
                 );
             } elseif ($daysDifference >= 7) {
@@ -206,8 +201,7 @@ class TestingRequestRequest extends FormRequest
             'testing_type' => 'testing type',
             'testing_parameters' => 'testing parameters',
             'urgent_request' => 'urgent request',
-            'preferred_date' => 'preferred date',
-            'estimated_duration_hours' => 'estimated duration',
+            'sample_delivery_schedule' => 'sample delivery date',
         ];
     }
 }

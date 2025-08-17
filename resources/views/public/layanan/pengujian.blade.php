@@ -5,19 +5,19 @@
 
     <!-- Hero Section -->
     <section class="relative h-96 flex items-center justify-center">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" 
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat"
              style="background-image: url('/assets/images/hero-bg.jpeg');">
             <div class="absolute inset-0 bg-black bg-opacity-60"></div>
         </div>
-        
+
         <div class="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate.once="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                  class="transition-all duration-1200 ease-out">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4 leading-tight">
                     <span class="relative">
-                        🧪 Layanan 
+                        🧪 Layanan
                         <span class="text-secondary">Pengujian Sampel</span>
                         <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-secondary to-yellow-400 rounded-full animate-pulse"></div>
                     </span>
@@ -38,13 +38,13 @@
     <!-- Services Overview -->
     <section class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  class="text-center mb-16 transition-all duration-1000 ease-out">
                 <h2 class="text-3xl md:text-4xl font-bold text-primary mb-4">
                     <span class="relative inline-block">
-                        🔬 Jenis 
+                        🔬 Jenis
                         <span class="text-secondary">Pengujian</span>
                         <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
                     </span>
@@ -100,12 +100,12 @@
                 @endphp
 
                 @foreach($services as $index => $service)
-                <div x-data="{ animated: false }" 
+                <div x-data="{ animated: false }"
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                      class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-700 transform hover:-translate-y-4 ease-out"
                      style="transition-delay: {{ $index * 0.1 }}s;">
-                    
+
                     <div class="h-48 bg-gradient-to-br {{ $service['color'] }} relative overflow-hidden">
                         <div class="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-10 transition-all duration-500"></div>
                         <div class="absolute inset-0 flex items-center justify-center">
@@ -117,7 +117,7 @@
                             </span>
                         </div>
                     </div>
-                    
+
                     <div class="p-6">
                         <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-primary transition-colors duration-300">
                             {{ $service['title'] }}
@@ -125,7 +125,7 @@
                         <p class="text-gray-600 leading-relaxed mb-4">
                             {{ $service['description'] }}
                         </p>
-                        
+
                         <div class="space-y-2 mb-6">
                             @foreach($service['parameters'] as $param)
                             <div class="flex items-center text-sm text-gray-500">
@@ -134,8 +134,8 @@
                             </div>
                             @endforeach
                         </div>
-                        
-                        <button onclick="openTestingForm('{{ strtolower(str_replace(' ', '_', $service['title'])) }}')" 
+
+                        <button onclick="openTestingForm('{{ strtolower(str_replace(' ', '_', $service['title'])) }}')"
                                 class="w-full bg-primary hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                             <i class="fas fa-paper-plane mr-2"></i>
                             Ajukan Pengujian
@@ -150,13 +150,13 @@
     <!-- Process Section -->
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  class="text-center mb-16 transition-all duration-1000 ease-out">
                 <h2 class="text-3xl md:text-4xl font-bold text-primary mb-4">
                     <span class="relative inline-block">
-                        📋 Alur 
+                        📋 Alur
                         <span class="text-secondary">Pengujian</span>
                         <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-secondary to-yellow-500 rounded-full"></div>
                     </span>
@@ -177,7 +177,7 @@
                         'color' => 'text-blue-500'
                     ],
                     [
-                        'step' => '02', 
+                        'step' => '02',
                         'title' => 'Verifikasi',
                         'description' => 'Tim lab memverifikasi permintaan dan memberikan estimasi biaya serta waktu',
                         'icon' => 'fas fa-check-double',
@@ -201,12 +201,12 @@
                 @endphp
 
                 @foreach($steps as $index => $step)
-                <div x-data="{ animated: false }" 
+                <div x-data="{ animated: false }"
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'"
                      class="text-center group transition-all duration-1000 ease-out"
                      style="transition-delay: {{ $index * 0.2 }}s;">
-                    
+
                     <div class="relative mb-6">
                         <div class="w-20 h-20 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center mx-auto shadow-lg group-hover:shadow-2xl group-hover:scale-110 transition-all duration-500">
                             <i class="{{ $step['icon'] }} text-white text-2xl"></i>
@@ -215,7 +215,7 @@
                             <span class="text-gray-800 font-bold text-sm">{{ $step['step'] }}</span>
                         </div>
                     </div>
-                    
+
                     <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:{{ $step['color'] }} transition-colors duration-300">
                         {{ $step['title'] }}
                     </h3>
@@ -231,13 +231,13 @@
     <!-- Requirements Section -->
     <section class="py-20 bg-gray-50">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  class="text-center mb-12 transition-all duration-1000 ease-out">
                 <h2 class="text-3xl md:text-4xl font-bold text-primary mb-4">
                     <span class="relative inline-block">
-                        📝 Persyaratan 
+                        📝 Persyaratan
                         <span class="text-secondary">Sampel</span>
                         <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
                     </span>
@@ -247,11 +247,11 @@
                 </p>
             </div>
 
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  class="bg-white rounded-3xl shadow-xl p-8 transition-all duration-1000 ease-out">
-                
+
                 <div class="grid md:grid-cols-2 gap-8">
                     <div>
                         <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -268,7 +268,7 @@
                                 'Surat pengantar dari institusi/perusahaan'
                             ];
                             @endphp
-                            
+
                             @foreach($generalReqs as $req)
                             <li class="flex items-center">
                                 <i class="fas fa-check-circle text-green-500 mr-3"></i>
@@ -298,7 +298,7 @@
                                 'Persetujuan dari Tim Keselamatan Lab'
                             ];
                             @endphp
-                            
+
                             @foreach($hazardousReqs as $req)
                             <li class="flex items-center">
                                 <i class="fas fa-shield-alt text-orange-500 mr-3"></i>
@@ -315,7 +315,7 @@
     <!-- CTA Section -->
     <section class="py-20 bg-primary">
         <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <div x-data="{ animated: false }" 
+            <div x-data="{ animated: false }"
                  x-scroll-animate="animated = true"
                  :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                  class="transition-all duration-1000 ease-out">
@@ -340,9 +340,9 @@
     </section>
 
     <!-- Testing Request Modal -->
-    <div x-data="{ showModal: false, selectedService: '' }" 
-         x-show="showModal" 
-         @open-testing-form.window="showModal = true; selectedService = $event.detail.service || ''"
+    <div x-data="testingFormData()"
+         x-show="showModal"
+         @open-testing-form.window="showModal = true; selectedTestingType = $event.detail.service || ''"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -350,91 +350,220 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        
+
         <div x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-90"
              x-transition:enter-end="opacity-100 scale-100"
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-90"
-             class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
-            
+             class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+
             <div class="p-8">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800">Formulir Pengujian Sampel</h3>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 transition-colors duration-300">
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-vial text-primary mr-2"></i>
+                        Formulir Pengujian Sampel
+                    </h3>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-300">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
                 </div>
-                
-                <form action="{{ route('api.requests.testing') }}" method="POST" enctype="multipart/form-data" id="testingForm">
-                    @csrf
-                    
-                    <!-- Service Selection -->
-                    <div class="mb-6">
-                        <label class="block text-gray-700 font-semibold mb-2">Jenis Pengujian</label>
-                        <select x-model="selectedService" name="testing_type" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
-                            <option value="">Pilih Jenis Pengujian</option>
-                            <option value="ftir">Spektroskopi FTIR</option>
-                            <option value="uv_vis">Spektroskopi UV-Vis</option>
-                            <option value="optical">Karakterisasi Optik</option>
-                        </select>
-                    </div>
 
-                    <!-- Basic Information -->
-                    <div class="grid md:grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">Nama Lengkap</label>
-                            <input type="text" name="requester_name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                <form @submit.prevent="submitForm()" id="testingForm">
+                    <!-- Client Information Section -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+                            <i class="fas fa-user text-primary mr-2"></i>
+                            Informasi Klien
+                        </h4>
+
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Nama Lengkap *</label>
+                                <input type="text" x-model="formData.client_name" required
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="Masukkan nama lengkap">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Email *</label>
+                                <input type="email" x-model="formData.client_email" required
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="nama@email.com">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">Email</label>
-                            <input type="email" name="requester_email" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">No. Telepon *</label>
+                                <input type="tel" x-model="formData.client_phone" required
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="+62812xxxxxxxx">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Organisasi/Institusi *</label>
+                                <input type="text" x-model="formData.client_organization" required
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="Nama universitas/perusahaan">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Alamat Lengkap *</label>
+                            <textarea x-model="formData.client_address" required rows="3"
+                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      placeholder="Alamat lengkap untuk pengiriman hasil"></textarea>
                         </div>
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">No. Telepon</label>
-                            <input type="tel" name="requester_phone" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <!-- Sample Information Section -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+                            <i class="fas fa-flask text-primary mr-2"></i>
+                            Informasi Sampel
+                        </h4>
+
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Nama Sampel *</label>
+                                <input type="text" x-model="formData.sample_name" required
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="Contoh: Sampel Polimer A">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Jumlah Sampel *</label>
+                                <input type="text" x-model="formData.sample_quantity" required
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       placeholder="Contoh: 10 gram, 5 ml, 3 buah">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-gray-700 font-semibold mb-2">Institusi</label>
-                            <input type="text" name="institution" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Deskripsi Sampel *</label>
+                            <textarea x-model="formData.sample_description" required rows="3"
+                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      placeholder="Jelaskan karakteristik sampel, cara preparasi, dan informasi penting lainnya"></textarea>
                         </div>
                     </div>
 
-                    <!-- Sample Information -->
-                    <div class="mb-6">
-                        <label class="block text-gray-700 font-semibold mb-2">Nama Sampel</label>
-                        <input type="text" name="sample_name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <!-- Testing Information Section -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+                            <i class="fas fa-microscope text-primary mr-2"></i>
+                            Informasi Pengujian
+                        </h4>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Jenis Pengujian *</label>
+                            <select x-model="selectedTestingType" @change="updateTestingParameters()" required
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">Pilih Jenis Pengujian</option>
+                                <option value="uv_vis_spectroscopy">UV-Vis Spectroscopy</option>
+                                <option value="ftir_spectroscopy">FTIR Spectroscopy</option>
+                                <option value="optical_microscopy">Optical Microscopy</option>
+                                <option value="custom">Custom Testing</option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Testing Parameters -->
+                        <div x-show="selectedTestingType === 'uv_vis_spectroscopy'" class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Parameter UV-Vis *</label>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <input type="text" x-model="testingParameters.wavelength_range"
+                                           placeholder="Rentang panjang gelombang (nm)"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <input type="text" x-model="testingParameters.solvent"
+                                           placeholder="Jenis pelarut"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div x-show="selectedTestingType === 'ftir_spectroscopy'" class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Parameter FTIR *</label>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <input type="text" x-model="testingParameters.wavenumber_range"
+                                           placeholder="Rentang bilangan gelombang (cm⁻¹)"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <input type="text" x-model="testingParameters.sample_preparation"
+                                           placeholder="Metode preparasi sampel"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div x-show="selectedTestingType === 'optical_microscopy'" class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Parameter Mikroskopi Optik *</label>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <input type="text" x-model="testingParameters.magnification"
+                                           placeholder="Perbesaran yang diinginkan"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <input type="text" x-model="testingParameters.illumination_type"
+                                           placeholder="Jenis penerangan"
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-6">
-                        <label class="block text-gray-700 font-semibold mb-2">Deskripsi Sampel</label>
-                        <textarea name="sample_description" rows="3" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
-                    </div>
+                    <!-- Schedule Information Section -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+                            <i class="fas fa-calendar text-primary mr-2"></i>
+                            Jadwal Pengantaran
+                        </h4>
 
-                    <!-- Testing Parameters -->
-                    <div class="mb-6">
-                        <label class="block text-gray-700 font-semibold mb-2">Parameter Pengujian</label>
-                        <textarea name="testing_parameters" rows="3" placeholder="Jelaskan parameter spesifik yang diinginkan..." class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
-                    </div>
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Jadwal Pengantaran Sampel *</label>
+                                <input type="date" x-model="formData.sample_delivery_schedule" required
+                                       :min="minDate" :max="maxDate"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <p class="text-sm text-gray-500 mt-1">Minimal 3 hari dari sekarang</p>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Estimasi Lama Waktu Pengujian</label>
+                                <input type="text" x-model="estimatedDurationText" readonly
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 cursor-not-allowed"
+                                       placeholder="Pilih jenis pengujian terlebih dahulu">
+                                <p class="text-sm text-gray-500 mt-1">Durasi otomatis berdasarkan jenis pengujian</p>
+                            </div>
+                        </div>
 
-                    <!-- File Upload -->
-                    <div class="mb-6">
-                        <label class="block text-gray-700 font-semibold mb-2">Dokumen Pendukung</label>
-                        <input type="file" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
-                        <p class="text-sm text-gray-500 mt-1">Format: PDF, DOC, DOCX, JPG, PNG (Max: 5MB)</p>
+                        <div class="mb-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="formData.urgent_request"
+                                       class="mr-3 w-5 h-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary">
+                                <span class="text-gray-700 font-semibold">Pengujian Mendesak</span>
+                            </label>
+                            <p class="text-sm text-gray-500 mt-1">Untuk pengujian dalam 1-7 hari (biaya tambahan mungkin berlaku)</p>
+                        </div>
                     </div>
 
                     <!-- Submit Button -->
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-primary hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            Kirim Pengajuan
+                        <button type="submit" :disabled="loading"
+                                class="flex-1 bg-primary hover:bg-blue-800 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:transform-none">
+                            <span x-show="!loading">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                Kirim Pengajuan
+                            </span>
+                            <span x-show="loading">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Mengirim...
+                            </span>
                         </button>
-                        <button type="button" @click="showModal = false" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-300">
+                        <button type="button" @click="closeModal()" :disabled="loading"
+                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-300 disabled:bg-gray-100">
                             Batal
                         </button>
                     </div>
@@ -450,33 +579,166 @@
             }));
         }
 
-        // Handle form submission
-        document.getElementById('testingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
+        // Alpine.js component for testing form
+        function testingFormData() {
+            return {
+                showModal: false,
+                loading: false,
+                selectedTestingType: '',
+                formData: {
+                    client_name: '',
+                    client_email: '',
+                    client_phone: '',
+                    client_organization: '',
+                    client_address: '',
+                    sample_name: '',
+                    sample_description: '',
+                    sample_quantity: '',
+                    sample_delivery_schedule: '',
+                    urgent_request: false
+                },
+                testingParameters: {
+                    wavelength_range: '',
+                    solvent: '',
+                    wavenumber_range: '',
+                    sample_preparation: '',
+                    magnification: '',
+                    illumination_type: ''
+                },
 
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Pengajuan berhasil dikirim! ID Pengujian: ' + result.data.request_id);
-                    this.reset();
-                    document.querySelector('[x-data]').__x.$data.showModal = false;
-                } else {
-                    alert('Terjadi kesalahan: ' + result.message);
+                // Testing type configuration
+                testingTypeConfig: {
+                    'uv_vis_spectroscopy': { duration_days: 3, cost: 150000 },
+                    'ftir_spectroscopy': { duration_days: 5, cost: 200000 },
+                    'optical_microscopy': { duration_days: 2, cost: 100000 },
+                    'custom': { duration_days: 7, cost: 300000 }
+                },
+
+                get estimatedDurationText() {
+                    if (!this.selectedTestingType) {
+                        return '';
+                    }
+                    const config = this.testingTypeConfig[this.selectedTestingType];
+                    return config ? `${config.duration_days} hari kerja` : '';
+                },
+
+                get minDate() {
+                    const date = new Date();
+                    date.setDate(date.getDate() + 3); // 3 days from now
+                    return date.toISOString().split('T')[0];
+                },
+
+                get maxDate() {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() + 3); // 3 months from now
+                    return date.toISOString().split('T')[0];
+                },
+
+                updateTestingParameters() {
+                    // Clear previous parameters
+                    this.testingParameters = {
+                        wavelength_range: '',
+                        solvent: '',
+                        wavenumber_range: '',
+                        sample_preparation: '',
+                        magnification: '',
+                        illumination_type: ''
+                    };
+                },
+
+                async submitForm() {
+                    this.loading = true;
+
+                    try {
+                        // Prepare testing parameters based on selected type
+                        let parameters = {};
+                        if (this.selectedTestingType === 'uv_vis_spectroscopy') {
+                            parameters = {
+                                wavelength_range: this.testingParameters.wavelength_range,
+                                solvent: this.testingParameters.solvent
+                            };
+                        } else if (this.selectedTestingType === 'ftir_spectroscopy') {
+                            parameters = {
+                                wavenumber_range: this.testingParameters.wavenumber_range,
+                                sample_preparation: this.testingParameters.sample_preparation
+                            };
+                        } else if (this.selectedTestingType === 'optical_microscopy') {
+                            parameters = {
+                                magnification: this.testingParameters.magnification,
+                                illumination_type: this.testingParameters.illumination_type
+                            };
+                        }
+
+                        const payload = {
+                            ...this.formData,
+                            testing_type: this.selectedTestingType,
+                            testing_parameters: parameters
+                        };
+
+                        const result = await window.LabGOS.submitTestingRequest(payload);
+
+                        if (result.success) {
+                            const requestId = result.data.request_id;
+                            // Inform user
+                            alert('✅ Pengajuan berhasil dikirim!\n\nID Pengujian: ' + requestId + '\n\nAnda akan diarahkan ke halaman tracking.');
+                            // Store minimal tracking data (fallback for page load)
+                            try {
+                                sessionStorage.setItem('testingTrackingData', JSON.stringify({ requestId }));
+                            } catch (e) { /* ignore storage errors */ }
+                            // Redirect to tracking page (structure used by tracking-testing page)
+                            window.location.href = `/layanan/testing/confirmation/${requestId}`;
+                        } else {
+                            let errorMessage = 'Terjadi kesalahan: ' + result.message;
+                            if (result.errors) {
+                                const errorDetails = Object.values(result.errors).flat();
+                                errorMessage += '\n\nDetail:\n' + errorDetails.join('\n');
+                            }
+                            alert(errorMessage);
+                        }
+                    } catch (error) {
+                        console.error('Submit error:', error);
+                        let errorMessage = '❌ Terjadi kesalahan saat mengirim pengajuan.';
+
+                        if (error.status === 422 && error.response && error.response.data) {
+                            const responseData = error.response.data;
+                            errorMessage = responseData.message || 'Validation error';
+
+                            if (responseData.errors) {
+                                const errorDetails = Object.values(responseData.errors).flat();
+                                errorMessage += '\n\nDetail:\n' + errorDetails.join('\n');
+                            }
+                        }
+
+                        alert(errorMessage);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                resetForm() {
+                    this.formData = {
+                        client_name: '',
+                        client_email: '',
+                        client_phone: '',
+                        client_organization: '',
+                        client_address: '',
+                        sample_name: '',
+                        sample_description: '',
+                        sample_quantity: '',
+                        sample_delivery_schedule: '',
+                        urgent_request: false
+                    };
+                    this.selectedTestingType = '';
+                    this.updateTestingParameters();
+                },
+
+                closeModal() {
+                    this.showModal = false;
+                    if (!this.loading) {
+                        this.resetForm();
+                    }
                 }
-            } catch (error) {
-                alert('Terjadi kesalahan saat mengirim pengajuan');
             }
-        });
+        }
     </script>
 </x-public.layouts.main>

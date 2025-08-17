@@ -99,6 +99,8 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
         ->name('borrow.cancel');
     Route::delete('/visit/{requestId}/cancel', [TrackingController::class, 'cancelVisitRequest'])
         ->name('visit.cancel');
+    Route::delete('/testing/{requestId}/cancel', [TrackingController::class, 'cancelTestingRequest'])
+        ->name('testing.cancel');
 });
 
 // WhatsApp integration

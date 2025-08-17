@@ -39,15 +39,13 @@ class TestingRequestTrackingResource extends JsonResource
                 'urgent_request' => $this->urgent_request,
             ],
             'schedule' => [
-                'preferred_date' => $this->preferred_date?->format('Y-m-d'),
-                'estimated_duration_hours' => $this->estimated_duration_hours,
-                'actual_start_date' => $this->actual_start_date?->format('Y-m-d'),
-                'actual_completion_date' => $this->actual_completion_date?->format('Y-m-d'),
-                'actual_duration_hours' => $this->actual_duration_hours,
+                'sample_delivery_schedule' => $this->sample_delivery_schedule?->format('Y-m-d'),
+                'estimated_duration' => $this->estimated_duration,
+                'estimated_completion_date' => $this->estimated_completion_date?->format('Y-m-d'),
+                'completion_date' => $this->completion_date?->format('Y-m-d'),
             ],
             'cost' => [
-                'estimate' => $this->cost_estimate,
-                'final' => $this->final_cost,
+                'cost' => $this->cost,
             ],
             'results' => [
                 'summary' => $this->result_summary,
@@ -90,20 +88,11 @@ class TestingRequestTrackingResource extends JsonResource
             ];
         }
         
-        if ($this->actual_start_date) {
-            $timeline[] = [
-                'status' => 'started',
-                'label' => 'Testing Started',
-                'date' => $this->actual_start_date->format('Y-m-d'),
-                'active' => true,
-            ];
-        }
-        
-        if ($this->actual_completion_date) {
+        if ($this->completion_date) {
             $timeline[] = [
                 'status' => 'completed',
                 'label' => 'Testing Completed',
-                'date' => $this->actual_completion_date->format('Y-m-d'),
+                'date' => $this->completion_date->format('Y-m-d'),
                 'active' => true,
             ];
         }

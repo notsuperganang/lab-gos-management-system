@@ -231,6 +231,26 @@ const LabGOS = {
         return await this.request(`/visits/available-slots?${searchParams.toString()}`);
     },
     
+    // Submit testing request
+    async submitTestingRequest(payload) {
+        return await this.request('/requests/testing', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    },
+    
+    // Track testing request
+    async getTestingRequest(requestId) {
+        return await this.request(`/tracking/testing/${requestId}`);
+    },
+    
+    // Cancel testing request
+    async cancelTestingRequest(requestId) {
+        return await this.request(`/tracking/testing/${requestId}/cancel`, {
+            method: 'DELETE'
+        });
+    },
+    
     // Get site settings with caching
     async getSiteSettings() {
         // Simple caching mechanism (5 minutes)

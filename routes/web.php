@@ -58,5 +58,10 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     })->name('kunjungan.confirmation');
     
     Route::get('/pengujian', [PublicPageController::class, 'testingService'])->name('pengujian');
+    
+    // Testing tracking route (with dynamic testing ID)
+    Route::get('/testing/confirmation/{testingId}', function ($testingId) {
+        return view('public.layanan.tracking-testing', ['testingId' => $testingId]);
+    })->name('testing.confirmation');
 });
 
