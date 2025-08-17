@@ -1182,19 +1182,19 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                             const response = await window.LabGOS.cancelTestingRequest(this.testingId);
 
                             if (response.success) {
-                                // Show success message
-                                alert('✅ Permohonan pengujian berhasil dibatalkan.\n\nHalaman tracking akan ditutup dan Anda akan diarahkan ke halaman pengujian.');
-
-                                // Clear tracking data from session storage
-                                sessionStorage.removeItem('testingTrackingData');
-
-                                // Redirect to testing request page
-                                window.location.href = '/layanan/pengujian';
-
+                                // Update local state to cancelled (optimistic UI)
+                                this.testingData.status = 'cancelled';
+                                // Inform user
+                                alert('✅ Permohonan pengujian berhasil dibatalkan.');
+                                // Restore button appearance but keep disabled since status changed
+                                event.target.innerHTML = originalText;
+                                // Re-run status steps builder if exists
+                                if (typeof this.setupStatusSteps === 'function') {
+                                    this.setupStatusSteps();
+                                }
                             } else {
                                 // Show error message from API
                                 alert('❌ ' + (response.message || 'Gagal membatalkan permohonan.'));
-
                                 // Restore button
                                 event.target.innerHTML = originalText;
                                 event.target.disabled = false;
