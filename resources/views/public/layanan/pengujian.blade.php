@@ -795,8 +795,8 @@
                                 sessionStorage.setItem('testingTrackingData', JSON.stringify({ requestId }));
                             } catch (e) { /* ignore storage errors */ }
                             // Redirect to tracking page (structure used by tracking-testing page)
-                            // Redirect to tracking testing page with query parameter rid
-                            window.location.href = `/layanan/tracking-testing?rid=${requestId}`;
+                            // Redirect to tracking pengujian page with query parameter rid (route updated)
+                            window.location.href = `/layanan/tracking-pengujian?rid=${requestId}`;
                         } else {
                             let errorMessage = 'Terjadi kesalahan: ' + result.message;
                             if (result.errors) {
