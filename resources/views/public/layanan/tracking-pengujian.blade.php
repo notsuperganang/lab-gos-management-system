@@ -509,6 +509,8 @@
                 error: null,
                 siteSettings: null,
                 adminPhone: null,
+                // Timeline steps initialization to prevent undefined access in template
+                statusSteps: [],
 
                 // Cooldown system
                 lastMessageTime: 0,
@@ -927,6 +929,11 @@
                 },
 
                 getProgressHeight() {
+                    // Guard against undefined or empty steps during initial render
+                    if (!this.statusSteps || this.statusSteps.length === 0) {
+                        return 0;
+                    }
+
                     const completedSteps = this.statusSteps.filter(step => step.status === 'completed').length;
                     const currentStep = this.statusSteps.findIndex(step => step.status === 'current');
                     const rejectedStep = this.statusSteps.findIndex(step => step.status === 'rejected');
