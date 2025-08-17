@@ -16,7 +16,7 @@
                 <div class="flex items-center space-x-3 mb-6">
                     <img src="/assets/images/logo-fisika-putih.png"
                         alt="Logo Fisika FMIPA USK"
-                        class="h-12 w-auto transform hover:rotate-12 transition-transform duration-500">
+                        class="h-12 w-auto transform">
                     <div>
                         <h3 class="text-xl font-bold">{{ $labConfig['name'] ?? 'Lab GOS' }}</h3>
                         <p class="text-blue-200">{{ $labConfig['code'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}</p>

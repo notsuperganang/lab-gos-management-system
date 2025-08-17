@@ -116,8 +116,175 @@
         </div>
     </section>
 
+    <!-- Tata Cara Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div x-data="{ animated: false }" 
+                 x-scroll-animate="animated = true"
+                 :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+                 class="text-center mb-12 transition-all duration-1000 ease-out">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">
+                    <span class="relative inline-block">
+                        📋 Tata Cara Kunjungan
+                        <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
+                    </span>
+                </h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">
+                    Ikuti langkah-langkah berikut untuk mengajukan kunjungan laboratorium
+                </p>
+            </div>
+            
+            <!-- Timeline Tata Cara Kunjungan -->
+            <div x-data="{ animated: false }" 
+                 x-scroll-animate="animated = true"
+                 :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
+                 class="bg-gray-50 rounded-2xl shadow-lg p-8 transition-all duration-1000 ease-out">
+                
+                <!-- Timeline Container -->
+                <div class="relative">
+                    <!-- Timeline Steps -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                        
+                        <!-- Progress Line (Horizontal) - positioned relative to the circles -->
+                        <div class="hidden md:block absolute top-12 left-0 right-0 h-1 bg-gray-200 rounded-full" 
+                             style="left: calc(25% / 2 + 3rem); right: calc(25% / 2 + 3rem);"></div>
+                        <div class="hidden md:block absolute top-12 h-1 bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-3000 ease-out" 
+                             style="left: calc(25% / 2 + 3rem); right: calc(25% / 2 + 3rem);"></div>
+
+                        <!-- Step 1: Isi Form Permohonan -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-edit text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    1
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-primary transition-colors duration-300">
+                                Isi Form Permohonan
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Lengkapi form dengan data kontak, tujuan kunjungan, jadwal, dan upload surat resmi instansi
+                            </p>
+                        </div>
+
+                        <!-- Step 2: Menunggu Persetujuan -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-clock text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    2
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-yellow-600 transition-colors duration-300">
+                                Menunggu Persetujuan
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Admin laboratorium akan review permohonan dan jadwal yang diminta serta memberikan persetujuan
+                            </p>
+                        </div>
+
+                        <!-- Step 3: Konfirmasi Kehadiran -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-phone text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    3
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-green-600 transition-colors duration-300">
+                                Konfirmasi Kehadiran
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Konfirmasi kedatangan H-1 melalui WhatsApp dan siapkan peserta sesuai protokol laboratorium
+                            </p>
+                        </div>
+
+                        <!-- Step 4: Pelaksanaan Kunjungan -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-users text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    4
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors duration-300">
+                                Pelaksanaan Kunjungan
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Kunjungan dilaksanakan sesuai jadwal dengan didampingi staff laboratorium dan mengisi buku tamu
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Status Information Cards -->
+                    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- Status Information -->
+                        <div class="bg-gradient-to-r from-blue-50 to-primary/10 rounded-xl p-6 border border-blue-100">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white mr-3">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">Status Tracking</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Pantau status permohonan kunjungan Anda secara real-time melalui halaman tracking dengan ID yang diberikan.
+                            </p>
+                        </div>
+
+                        <!-- Required Documents -->
+                        <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-6 border border-red-200">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center text-white mr-3">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">Surat Resmi</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Wajib melampirkan surat permohonan resmi dari instansi dengan kop surat dan tanda tangan pimpinan.
+                            </p>
+                        </div>
+
+                        <!-- Attendance Confirmation -->
+                        <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white mr-3">
+                                    <i class="fab fa-whatsapp"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">Konfirmasi H-1</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Hubungi admin melalui WhatsApp dari halaman tracking untuk konfirmasi kehadiran H-1 sebelum kunjungan.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="mt-10 text-center">
+                        <a href="#form-kunjungan" 
+                           class="inline-flex items-center bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-arrow-down mr-3"></i>
+                            Mulai Isi Form Kunjungan
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Form Kunjungan -->
-    <section class="py-20 bg-white">
+    <section id="form-kunjungan" class="py-20 bg-white">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div x-data="formKunjungan()" class="bg-white rounded-3xl shadow-2xl overflow-hidden">

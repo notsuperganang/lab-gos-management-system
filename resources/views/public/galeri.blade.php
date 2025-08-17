@@ -281,79 +281,66 @@
 
     <!-- Gallery Modal -->
     <div x-data="{ showModal: false, currentImage: '', currentTitle: '', currentDescription: '' }" 
-         x-show="showModal" 
          x-cloak
          @open-gallery-modal.window="showModal = true; currentImage = $event.detail.image; currentTitle = $event.detail.title; currentDescription = $event.detail.description;"
-         @keydown.escape.window="showModal = false"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+         @keydown.escape.window="showModal = false">
         
-        <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto"
-             x-show="showModal"
-             x-transition:enter="transition ease-out duration-500 delay-100"
-             x-transition:enter-start="opacity-0 scale-75 translate-y-8"
+        <!-- Modal Backdrop -->
+        <div x-show="showModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black bg-opacity-75 z-50"
+             @click="showModal = false"></div>
+        
+        <!-- Modal Content -->
+        <div x-show="showModal" 
+             x-transition:enter="transition ease-out duration-400"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-300"
+             x-transition:leave="transition ease-in duration-250"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-             x-transition:leave-end="opacity-0 scale-95 translate-y-4">
-            <div class="relative">
-                <button @click="showModal = false" 
-                        class="absolute top-4 right-4 z-10 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300 transform hover:scale-110"
-                        x-show="showModal"
-                        x-transition:enter="transition ease-out duration-700 delay-300"
-                        x-transition:enter-start="opacity-0 rotate-90 scale-50"
-                        x-transition:enter-end="opacity-100 rotate-0 scale-100">
-                    <i class="fas fa-times"></i>
-                </button>
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
+            
+            <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto pointer-events-auto"
+                 @click.stop>
+                <div class="relative">
+                    <!-- Close Button -->
+                    <button @click="showModal = false" 
+                            class="absolute top-4 right-4 z-10 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+                        <i class="fas fa-times"></i>
+                    </button>
 
-                <div class="relative h-96 md:h-[500px] overflow-hidden rounded-t-3xl"
-                     x-show="showModal"
-                     x-transition:enter="transition ease-out duration-600 delay-200"
-                     x-transition:enter-start="opacity-0 scale-110"
-                     x-transition:enter-end="opacity-100 scale-100">
-                    <img :src="currentImage" :alt="currentTitle" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
+                    <!-- Image -->
+                    <div class="relative h-96 md:h-[500px] overflow-hidden rounded-t-3xl">
+                        <img :src="currentImage" :alt="currentTitle" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
 
-                <div class="p-6 md:p-8"
-                     x-show="showModal"
-                     x-transition:enter="transition ease-out duration-700 delay-400"
-                     x-transition:enter-start="opacity-0 translate-y-6"
-                     x-transition:enter-end="opacity-100 translate-y-0">
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4" 
-                        x-text="currentTitle"
-                        x-show="showModal"
-                        x-transition:enter="transition ease-out duration-800 delay-500"
-                        x-transition:enter-start="opacity-0 translate-x-4"
-                        x-transition:enter-end="opacity-100 translate-x-0"></h3>
-                    <p class="text-gray-600 leading-relaxed mb-6" 
-                       x-text="currentDescription" 
-                       x-show="currentDescription && showModal"
-                       x-transition:enter="transition ease-out duration-800 delay-600"
-                       x-transition:enter-start="opacity-0 translate-x-4"
-                       x-transition:enter-end="opacity-100 translate-x-0"></p>
-                    
-                    <div class="flex items-center justify-between"
-                         x-show="showModal"
-                         x-transition:enter="transition ease-out duration-800 delay-700"
-                         x-transition:enter-start="opacity-0 translate-y-4"
-                         x-transition:enter-end="opacity-100 translate-y-0">
-                        <div class="flex items-center space-x-4">
-                            <button @click="shareGalleryItem(currentTitle, currentImage)" 
-                                    class="flex items-center text-primary hover:text-secondary transition-all duration-300 transform hover:scale-105">
-                                <i class="fas fa-share mr-2"></i>
-                                Bagikan
+                    <!-- Content -->
+                    <div class="p-6 md:p-8">
+                        <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4" x-text="currentTitle"></h3>
+                        <p class="text-gray-600 leading-relaxed mb-6" 
+                           x-text="currentDescription" 
+                           x-show="currentDescription"></p>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <button @click="shareGalleryItem(currentTitle, currentImage)" 
+                                        class="flex items-center text-primary hover:text-secondary transition-all duration-300 transform hover:scale-105">
+                                    <i class="fas fa-share mr-2"></i>
+                                    Bagikan
+                                </button>
+                            </div>
+                            <button @click="showModal = false" 
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                Tutup
                             </button>
                         </div>
-                        <button @click="showModal = false" 
-                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-xl transition-all duration-300 transform hover:scale-105">
-                            Tutup
-                        </button>
                     </div>
                 </div>
             </div>

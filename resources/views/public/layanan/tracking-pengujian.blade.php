@@ -473,12 +473,16 @@
                                 <span x-show="currentStatus === 'rejected'" class="text-red-600 font-semibold">Sudah ditolak</span>
                             </p>
                             <button @click="cancelTesting()"
-                                    :disabled="['completed', 'cancelled', 'rejected'].includes(currentStatus)"
+                                    :disabled="['completed', 'cancelled', 'rejected'].includes(currentStatus) || cancelling"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="['completed', 'cancelled', 'rejected'].includes(currentStatus) ?
+                                    :class="['completed', 'cancelled', 'rejected'].includes(currentStatus) || cancelling ?
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
                                            'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl'">
-                                <span x-show="['pending', 'approved', 'in_progress'].includes(currentStatus)">Batalkan</span>
+                                <span x-show="['pending', 'approved', 'in_progress'].includes(currentStatus) && !cancelling">Batalkan</span>
+                                <span x-show="cancelling" class="flex items-center justify-center">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                    Membatalkan...
+                                </span>
                                 <span x-show="currentStatus === 'completed'">Tidak Tersedia</span>
                                 <span x-show="currentStatus === 'cancelled'">Sudah Dibatalkan</span>
                                 <span x-show="currentStatus === 'rejected'">Sudah Ditolak</span>
@@ -512,6 +516,9 @@
                 // Timeline steps initialization to prevent undefined access in template
                 statusSteps: [],
 
+                // Cancel state management
+                cancelling: false,
+
                 // Cooldown system
                 lastMessageTime: 0,
                 cooldownDuration: 300000, // 5 minutes in milliseconds
@@ -537,26 +544,34 @@
                     // Load site settings for admin contact
                     await this.loadSiteSettings();
 
-                    // Get testing ID from URL
-                    const urlPath = window.location.pathname;
-                    const testingIdMatch = urlPath.match(/\/confirmation\/([^\/]+)$/);
+                    // Get testing ID from URL query parameter 'rid' 
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const testingId = urlParams.get('rid');
 
-                    if (testingIdMatch) {
-                        const testingId = testingIdMatch[1];
+                    if (testingId) {
                         await this.loadTestingData(testingId);
                     } else {
-                        // Try to get from sessionStorage (from previous page)
-                        const storedData = sessionStorage.getItem('testingTrackingData');
-                        if (storedData) {
-                            try {
-                                const data = JSON.parse(storedData);
-                                await this.loadTestingData(data.requestId);
-                            } catch (error) {
-                                console.error('Failed to parse stored testing tracking data:', error);
-                                this.error = 'Gagal memuat data tracking';
-                            }
+                        // Fallback: Try to get from URL path (for old confirmation links)
+                        const urlPath = window.location.pathname;
+                        const testingIdMatch = urlPath.match(/\/confirmation\/([^\/]+)$/);
+                        
+                        if (testingIdMatch) {
+                            const pathTestingId = testingIdMatch[1];
+                            await this.loadTestingData(pathTestingId);
                         } else {
-                            this.error = 'ID pengujian tidak ditemukan';
+                            // Last resort: Try sessionStorage (from previous page)
+                            const storedData = sessionStorage.getItem('testingTrackingData');
+                            if (storedData) {
+                                try {
+                                    const data = JSON.parse(storedData);
+                                    await this.loadTestingData(data.requestId);
+                                } catch (error) {
+                                    console.error('Failed to parse stored testing tracking data:', error);
+                                    this.error = 'Gagal memuat data tracking';
+                                }
+                            } else {
+                                this.error = 'ID pengujian tidak ditemukan. Silakan akses halaman ini dari form pengajuan atau masukkan ID yang valid.';
+                            }
                         }
                     }
 
@@ -1164,57 +1179,53 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                 },
 
                 async cancelTesting() {
-                    if (['completed', 'cancelled', 'rejected'].includes(this.currentStatus)) {
-                        alert('Pengujian dengan status ini tidak dapat dibatalkan. Hubungi admin untuk informasi lebih lanjut.');
+                    // Prevent double-clicks and check status
+                    if (this.cancelling || ['completed', 'cancelled', 'rejected'].includes(this.currentStatus)) {
                         return;
                     }
 
                     const confirmation = confirm('Apakah Anda yakin ingin membatalkan permohonan pengujian ini?\n\nPermohonan yang sudah dibatalkan tidak dapat dikembalikan.');
 
-                    if (confirmation) {
-                        try {
-                            // Show loading state
-                            const originalText = event.target.innerHTML;
-                            event.target.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Membatalkan...';
-                            event.target.disabled = true;
+                    if (!confirmation) {
+                        return;
+                    }
 
-                            // Call cancel API
-                            const response = await window.LabGOS.cancelTestingRequest(this.testingId);
+                    // Set cancelling state to prevent double requests
+                    this.cancelling = true;
 
-                            if (response.success) {
-                                // Update local state to cancelled (optimistic UI)
-                                this.testingData.status = 'cancelled';
-                                // Inform user
-                                alert('✅ Permohonan pengujian berhasil dibatalkan.');
-                                // Restore button appearance but keep disabled since status changed
-                                event.target.innerHTML = originalText;
-                                // Re-run status steps builder if exists
-                                if (typeof this.setupStatusSteps === 'function') {
-                                    this.setupStatusSteps();
-                                }
-                            } else {
-                                // Show error message from API
-                                alert('❌ ' + (response.message || 'Gagal membatalkan permohonan.'));
-                                // Restore button
-                                event.target.innerHTML = originalText;
-                                event.target.disabled = false;
+                    try {
+                        // Call cancel API
+                        const response = await window.LabGOS.cancelTestingRequest(this.testingId);
+
+                        if (response.success) {
+                            // Update local state to cancelled (optimistic UI)
+                            this.testingData.status = 'cancelled';
+                            
+                            // Re-run status steps builder if exists
+                            if (typeof this.setupStatusSteps === 'function') {
+                                this.setupStatusSteps();
                             }
-
-                        } catch (error) {
-                            console.error('Error canceling testing:', error);
-
-                            // Show user-friendly error message
-                            let errorMessage = 'Terjadi kesalahan saat membatalkan permohonan.';
-                            if (error.response && error.response.data && error.response.data.message) {
-                                errorMessage = error.response.data.message;
-                            }
-
-                            alert('❌ ' + errorMessage + '\n\nSilakan coba lagi atau hubungi admin jika masalah berlanjut.');
-
-                            // Restore button
-                            event.target.innerHTML = originalText;
-                            event.target.disabled = false;
+                            
+                            // Inform user
+                            alert('✅ Permohonan pengujian berhasil dibatalkan.');
+                        } else {
+                            // Show error message from API
+                            alert('❌ ' + (response.message || 'Gagal membatalkan permohonan.'));
                         }
+
+                    } catch (error) {
+                        console.error('Error canceling testing:', error);
+
+                        // Show user-friendly error message
+                        let errorMessage = 'Terjadi kesalahan saat membatalkan permohonan.';
+                        if (error.response && error.response.data && error.response.data.message) {
+                            errorMessage = error.response.data.message;
+                        }
+
+                        alert('❌ ' + errorMessage + '\n\nSilakan coba lagi atau hubungi admin jika masalah berlanjut.');
+                    } finally {
+                        // Always reset cancelling state
+                        this.cancelling = false;
                     }
                 },
 

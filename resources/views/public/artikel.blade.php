@@ -277,35 +277,53 @@
                             <div class="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
                         </span>
                     </h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                        <div class="p-4">
-                            @if($currentCategory)
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+                        @php
+                            $totalArticles = \App\Models\Article::published()->count();
+                            $researchCount = \App\Models\Article::published()->byCategory('research')->count();
+                            $newsCount = \App\Models\Article::published()->byCategory('news')->count();
+                            $announcementCount = \App\Models\Article::published()->byCategory('announcement')->count();
+                            $publicationCount = \App\Models\Article::published()->byCategory('publication')->count();
+                        @endphp
+                        
+                        @if($currentCategory)
+                            <div class="p-4">
                                 <div class="text-3xl font-bold text-primary mb-2">{{ $others->total() + (($featured && $featured->category === $currentCategory) ? 1 : 0) }}</div>
                                 <div class="text-gray-600">{{ $categories[$currentCategory] ?? 'Artikel' }}</div>
-                            @else
-                                <div class="text-3xl font-bold text-primary mb-2">{{ \App\Models\Article::published()->count() }}</div>
+                            </div>
+                        @else
+                            <div class="p-4">
+                                <div class="text-3xl font-bold text-primary mb-2">{{ $totalArticles }}</div>
                                 <div class="text-gray-600">Total Artikel</div>
+                            </div>
+                            
+                            @if($researchCount > 0)
+                            <div class="p-4">
+                                <div class="text-3xl font-bold text-blue-500 mb-2">{{ $researchCount }}</div>
+                                <div class="text-gray-600">Penelitian</div>
+                            </div>
                             @endif
-                        </div>
-                        @if(!$currentCategory)
-                            @foreach($categories as $key => $label)
-                                @php 
-                                    $count = \App\Models\Article::published()->byCategory($key)->count();
-                                    $color = match($key) {
-                                        'research' => 'text-blue-500',
-                                        'news' => 'text-green-500', 
-                                        'announcement' => 'text-purple-500',
-                                        'publication' => 'text-orange-500',
-                                        default => 'text-gray-500'
-                                    };
-                                @endphp
-                                @if($count > 0)
-                                <div class="p-4">
-                                    <div class="text-3xl font-bold {{ $color }} mb-2">{{ $count }}</div>
-                                    <div class="text-gray-600">{{ $label }}</div>
-                                </div>
-                                @endif
-                            @endforeach
+                            
+                            @if($newsCount > 0)
+                            <div class="p-4">
+                                <div class="text-3xl font-bold text-green-500 mb-2">{{ $newsCount }}</div>
+                                <div class="text-gray-600">Berita</div>
+                            </div>
+                            @endif
+                            
+                            @if($announcementCount > 0)
+                            <div class="p-4">
+                                <div class="text-3xl font-bold text-purple-500 mb-2">{{ $announcementCount }}</div>
+                                <div class="text-gray-600">Pengumuman</div>
+                            </div>
+                            @endif
+                            
+                            @if($publicationCount > 0)
+                            <div class="p-4">
+                                <div class="text-3xl font-bold text-orange-500 mb-2">{{ $publicationCount }}</div>
+                                <div class="text-gray-600">Publikasi</div>
+                            </div>
+                            @endif
                         @endif
                     </div>
                 </div>

@@ -56,24 +56,175 @@
                 </p>
             </div>
             
-            <!-- Placeholder untuk diagram -->
+            <!-- Timeline Tata Cara Peminjaman -->
             <div x-data="{ animated: false }" 
                  x-scroll-animate="animated = true"
                  :class="animated ? 'opacity-100 scale-100' : 'opacity-0 scale-95'"
                  class="bg-white rounded-2xl shadow-lg p-8 transition-all duration-1000 ease-out">
-                <div class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
-                    <div class="text-center">
-                        <i class="fas fa-image text-gray-400 text-4xl mb-4"></i>
-                        <p class="text-gray-500 font-medium">Diagram Tata Cara Peminjaman</p>
-                        <p class="text-gray-400 text-sm mt-2">Akan diisi dengan diagram horizontal dari Canva</p>
+                
+                <!-- Timeline Container -->
+                <div class="relative">
+                    <!-- Timeline Steps -->
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 relative">
+                        
+                        <!-- Progress Line (Horizontal) - positioned relative to the circles -->
+                        <div class="hidden md:block absolute top-12 left-0 right-0 h-1 bg-gray-200 rounded-full" 
+                             style="left: calc(20% / 2 + 3rem); right: calc(20% / 2 + 3rem);"></div>
+                        <div class="hidden md:block absolute top-12 h-1 bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-3000 ease-out" 
+                             style="left: calc(20% / 2 + 3rem); right: calc(20% / 2 + 3rem);"></div>
+
+                        <!-- Step 1: Pilih Peralatan -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-search text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    1
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-primary transition-colors duration-300">
+                                Pilih Peralatan
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Browsing katalog peralatan dan tambahkan ke keranjang sesuai kebutuhan penelitian
+                            </p>
+                        </div>
+
+                        <!-- Step 2: Isi Form Peminjaman -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-edit text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    2
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-green-600 transition-colors duration-300">
+                                Isi Form Peminjaman
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Lengkapi data anggota, supervisor, tujuan penelitian, dan jadwal peminjaman
+                            </p>
+                        </div>
+
+                        <!-- Step 3: Menunggu Persetujuan -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-clock text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    3
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-yellow-600 transition-colors duration-300">
+                                Menunggu Persetujuan
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Admin laboratorium akan review permohonan dan memberikan persetujuan
+                            </p>
+                        </div>
+
+                        <!-- Step 4: Ambil Peralatan -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-hand-holding text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    4
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors duration-300">
+                                Ambil Peralatan
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Datang ke laboratorium untuk mengambil peralatan yang telah disetujui
+                            </p>
+                        </div>
+
+                        <!-- Step 5: Pengembalian -->
+                        <div class="text-center group">
+                            <div class="relative mx-auto mb-4 w-24 h-24">
+                                <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-all duration-300 relative z-10">
+                                    <i class="fas fa-undo text-2xl"></i>
+                                </div>
+                                <div class="absolute -top-1 -right-1 w-8 h-8 bg-secondary text-gray-800 rounded-full flex items-center justify-center font-bold text-sm z-20">
+                                    5
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2 group-hover:text-red-600 transition-colors duration-300">
+                                Pengembalian
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Kembalikan peralatan tepat waktu dalam kondisi baik sesuai jadwal
+                            </p>
+                        </div>
+
                     </div>
+
+                    <!-- Status Information Cards -->
+                    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- Status Information -->
+                        <div class="bg-gradient-to-r from-blue-50 to-primary/10 rounded-xl p-6 border border-blue-100">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white mr-3">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">Status Tracking</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Pantau status permohonan Anda secara real-time melalui halaman tracking dengan ID yang diberikan.
+                            </p>
+                        </div>
+
+                        <!-- WhatsApp Contact -->
+                        <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white mr-3">
+                                    <i class="fab fa-whatsapp"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">Kontak Admin</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Hubungi admin melalui WhatsApp dari halaman tracking untuk pertanyaan atau bantuan.
+                            </p>
+                        </div>
+
+                        <!-- Important Notes -->
+                        <div class="bg-gradient-to-r from-yellow-50 to-secondary/20 rounded-xl p-6 border border-yellow-200">
+                            <div class="flex items-center mb-3">
+                                <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white mr-3">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h4 class="font-bold text-gray-800">Penting</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Pastikan data supervisor valid dan peralatan dikembalikan tepat waktu untuk menghindari sanksi.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="mt-10 text-center">
+                        <a href="#main-content" 
+                           class="inline-flex items-center bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-arrow-down mr-3"></i>
+                            Mulai Pilih Peralatan
+                        </a>
+                    </div>
+
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Main Content -->
-    <section class="py-20 bg-white">
+    <section id="main-content" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             <!-- Filter & Equipment Section -->
