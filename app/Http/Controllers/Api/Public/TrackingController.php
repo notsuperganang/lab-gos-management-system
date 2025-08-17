@@ -311,29 +311,52 @@ class TrackingController extends Controller
             ]
         ];
 
+        // Build timeline based on current status progression
         if ($request->reviewed_at) {
+            // Add the review step (approved/rejected)
+            if (in_array($request->status, ['approved', 'sample_received', 'in_progress', 'completed'])) {
+                $timeline[] = [
+                    'status' => 'approved',
+                    'label' => 'Approved',
+                    'date' => $request->reviewed_at->format('Y-m-d H:i:s'),
+                    'active' => true,
+                ];
+            } elseif ($request->status === 'rejected') {
+                $timeline[] = [
+                    'status' => 'rejected',
+                    'label' => 'Rejected',
+                    'date' => $request->reviewed_at->format('Y-m-d H:i:s'),
+                    'active' => true,
+                ];
+            }
+        }
+
+        // Add sample received step
+        if (in_array($request->status, ['sample_received', 'in_progress', 'completed'])) {
             $timeline[] = [
-                'status' => $request->status,
-                'label' => ucfirst($request->status),
-                'date' => $request->reviewed_at->format('Y-m-d H:i:s'),
+                'status' => 'sample_received',
+                'label' => 'Sample Received',
+                'date' => $request->reviewed_at ? $request->reviewed_at->format('Y-m-d H:i:s') : null,
                 'active' => true,
             ];
         }
 
-        if ($request->actual_start_date) {
+        // Add testing in progress step
+        if (in_array($request->status, ['in_progress', 'completed'])) {
             $timeline[] = [
-                'status' => 'started',
-                'label' => 'Testing Started',
-                'date' => $request->actual_start_date->format('Y-m-d'),
+                'status' => 'in_progress',
+                'label' => 'Testing in Progress',
+                'date' => $request->reviewed_at ? $request->reviewed_at->format('Y-m-d H:i:s') : null,
                 'active' => true,
             ];
         }
 
-        if ($request->actual_completion_date) {
+        // Add completion step
+        if ($request->status === 'completed') {
             $timeline[] = [
                 'status' => 'completed',
                 'label' => 'Testing Completed',
-                'date' => $request->actual_completion_date->format('Y-m-d'),
+                'date' => $request->completion_date ? $request->completion_date->format('Y-m-d') : null,
                 'active' => true,
             ];
         }

@@ -144,6 +144,7 @@ class TestingRequest extends Model
             'pending' => 'Pending',
             'approved' => 'Approved',
             'rejected' => 'Rejected',
+            'sample_received' => 'Sample Received',
             'in_progress' => 'In Progress',
             'completed' => 'Completed',
             'cancelled' => 'Cancelled',
@@ -234,17 +235,6 @@ class TestingRequest extends Model
         return $types[$this->testing_type] ?? $this->testing_type;
     }
 
-    /**
-     * Get the actual duration in hours.
-     */
-    public function getActualDurationHoursAttribute()
-    {
-        if ($this->actual_start_date && $this->actual_completion_date) {
-            return $this->actual_start_date->diffInHours($this->actual_completion_date);
-        }
-
-        return null;
-    }
 
     /**
      * Get the progress percentage.
@@ -253,8 +243,9 @@ class TestingRequest extends Model
     {
         return match($this->status) {
             'pending' => 0,
-            'approved' => 25,
-            'in_progress' => 50,
+            'approved' => 20,
+            'sample_received' => 40,
+            'in_progress' => 70,
             'completed' => 100,
             'rejected', 'cancelled' => 0,
             default => 0,
@@ -308,7 +299,8 @@ class TestingRequest extends Model
     {
         $validTransitions = [
             'pending' => ['approved', 'rejected', 'cancelled'],
-            'approved' => ['in_progress', 'cancelled'],
+            'approved' => ['sample_received', 'cancelled'],
+            'sample_received' => ['in_progress', 'cancelled'],
             'in_progress' => ['completed', 'cancelled'],
             'rejected' => [], // Final state
             'completed' => [], // Final state
@@ -330,6 +322,10 @@ class TestingRequest extends Model
                 'cancelled' => 'Cancel'
             ],
             'approved' => [
+                'sample_received' => 'Mark Sample Received',
+                'cancelled' => 'Cancel'
+            ],
+            'sample_received' => [
                 'in_progress' => 'Start Testing',
                 'cancelled' => 'Cancel'
             ],

@@ -340,27 +340,62 @@ Content-Type: application/json
 
 {
   "client_name": "Dr. Sample Analyst",
+  "client_organization": "Research Institute",
   "client_email": "analyst@company.com",
   "client_phone": "+6281234567890",
-  "institution": "Research Institute",
-  "testing_type": "ftir",
-  "sample_description": "Polymer composite material",
-  "sample_quantity": 2,
-  "parameters": {
+  "client_address": "Jl. Research No. 123, Jakarta 12345",
+  "sample_name": "Polymer Sample A",
+  "sample_description": "Polymer composite material for structural analysis",
+  "sample_quantity": "2 pieces (5g each)",
+  "testing_type": "ftir_spectroscopy",
+  "testing_parameters": {
     "wavenumber_range": "4000-400 cm⁻¹",
-    "resolution": "4 cm⁻¹",
-    "sample_preparation": "KBr pellet"
+    "sample_preparation": "KBr pellet method"
   },
-  "expected_results": "Identification of functional groups",
-  "urgency": "normal",
-  "additional_notes": "Samples are temperature sensitive"
+  "urgent_request": false,
+  "sample_delivery_schedule": "2025-08-25"
 }
 ```
 
-**Testing Type Requirements:**
-- **FTIR**: Requires `wavenumber_range`, `resolution`, `sample_preparation` in parameters
-- **UV-Vis**: Requires `wavelength_range`, `solvent`, `concentration` in parameters  
-- **Optical**: Requires `magnification`, `illumination_type`, `image_format` in parameters
+**📝 Field Requirements:**
+- **client_name**: Required, 2-255 characters
+- **client_organization**: Required, 3-255 characters
+- **client_email**: Required, valid email format
+- **client_phone**: Required, 10-20 characters
+- **client_address**: Required, 10-500 characters
+- **sample_name**: Required, 2-255 characters
+- **sample_description**: Required, 10-1000 characters
+- **sample_quantity**: Required, 1-100 characters (description format)
+- **testing_type**: Required, valid testing type
+- **testing_parameters**: Optional array, max 20 parameters
+- **urgent_request**: Optional boolean, default false
+- **sample_delivery_schedule**: Required date, 3 days to 3 months advance
+
+**Available Testing Types:**
+- `uv_vis_spectroscopy` - UV-Vis Spectroscopy
+- `ftir_spectroscopy` - FTIR Spectroscopy  
+- `optical_microscopy` - Optical Microscopy
+- `custom` - Custom Testing
+
+**Testing Parameter Requirements:**
+- **uv_vis_spectroscopy**: Requires `wavelength_range`, `solvent`
+- **ftir_spectroscopy**: Requires `wavenumber_range`, `sample_preparation`
+- **optical_microscopy**: Requires `magnification`, `illumination_type`
+- **custom**: No specific parameter requirements
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Sample testing request submitted successfully",
+  "data": {
+    "request_id": "TR20250825001",
+    "status": "pending",
+    "submitted_at": "2025-08-15 10:30:00",
+    "tracking_url": "http://localhost:8000/api/tracking/testing/TR20250825001"
+  }
+}
+```
 
 ### 🔍 Request Tracking
 
@@ -379,45 +414,97 @@ GET /api/tracking/visit/{request_id}
 GET /api/tracking/testing/{request_id}
 ```
 
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Testing request details retrieved successfully",
+  "data": {
+    "request_id": "TR20250825001",
+    "status": "approved",
+    "status_label": "Disetujui",
+    "status_color": "success",
+    "progress_percentage": 60,
+    "client": {
+      "name": "Dr. Sample Analyst",
+      "organization": "Research Institute",
+      "email": "analyst@company.com",
+      "phone": "+6281234567890",
+      "address": "Jl. Research No. 123, Jakarta 12345"
+    },
+    "sample": {
+      "name": "Polymer Sample A",
+      "description": "Polymer composite material for structural analysis",
+      "quantity": "2 pieces (5g each)"
+    },
+    "testing": {
+      "type": "ftir_spectroscopy",
+      "type_label": "FTIR Spectroscopy",
+      "parameters": {
+        "wavenumber_range": "4000-400 cm⁻¹",
+        "sample_preparation": "KBr pellet method"
+      },
+      "urgent_request": false
+    },
+    "schedule": {
+      "sample_delivery_schedule": "2025-08-25",
+      "estimated_duration": 5,
+      "estimated_completion_date": "2025-08-30",
+      "completion_date": null
+    },
+    "cost": {
+      "cost": 200000
+    },
+    "results": {
+      "summary": null,
+      "files": null
+    },
+    "submitted_at": "2025-08-15 10:30:00",
+    "reviewed_at": "2025-08-15 14:20:00",
+    "reviewer": {
+      "name": "Dr. Lab Admin"
+    },
+    "assigned_to": {
+      "name": "Lab Technician"
+    },
+    "approval_notes": "Approved for standard testing procedure",
+    "is_overdue": false,
+    "timeline": [
+      {
+        "status": "submitted",
+        "label": "Request Submitted",
+        "date": "2025-08-15 10:30:00",
+        "active": true
+      },
+      {
+        "status": "approved",
+        "label": "Approved",
+        "date": "2025-08-15 14:20:00",
+        "active": true
+      }
+    ]
+  }
+}
+```
+
+#### Cancel Testing Request
+```http
+DELETE /api/tracking/testing/{request_id}/cancel
+```
+
 #### Cancel Borrow Request
 ```http
 DELETE /api/tracking/borrow/{request_id}/cancel
 ```
 
-**Response:**
+**Cancel Response:**
 ```json
 {
   "success": true,
+  "message": "Request cancelled successfully",
   "data": {
-    "request_id": "BR20250820001",
-    "status": "approved",
-    "current_step": 2,
-    "total_steps": 5,
-    "timeline": [
-      {
-        "step": 1,
-        "title": "Request Submitted",
-        "status": "completed",
-        "date": "2025-08-15 10:30:00"
-      },
-      {
-        "step": 2,
-        "title": "Under Review",
-        "status": "completed",
-        "date": "2025-08-15 14:20:00"
-      },
-      {
-        "step": 3,
-        "title": "Approved",
-        "status": "current",
-        "date": "2025-08-15 16:45:00"
-      }
-    ],
-    "details": {
-      "supervisor_name": "Dr. Jane Smith",
-      "borrow_date": "2025-08-20",
-      "equipment_count": 1
-    }
+    "request_id": "TR20250825001",
+    "status": "cancelled"
   }
 }
 ```
@@ -933,8 +1020,21 @@ class LabGOSAPI {
     });
   }
 
+  async submitTestingRequest(data) {
+    return this.request('/requests/testing', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async trackRequest(type, requestId) {
     return this.request(`/tracking/${type}/${requestId}`);
+  }
+
+  async cancelTestingRequest(requestId) {
+    return this.request(`/tracking/testing/${requestId}/cancel`, {
+      method: 'DELETE',
+    });
   }
 
   // Admin methods (require authentication)
@@ -961,15 +1061,38 @@ const equipment = await api.getEquipment({
 });
 
 // Submit borrow request
-const requestData = {
+const borrowRequestData = {
   members: [{ name: "John", nim: "123", study_program: "Physics" }],
   supervisor_name: "Dr. Smith",
   // ... other fields
 };
-const result = await api.submitBorrowRequest(requestData);
+const borrowResult = await api.submitBorrowRequest(borrowRequestData);
+
+// Submit testing request
+const testingRequestData = {
+  client_name: "Dr. Research",
+  client_organization: "University Lab",
+  client_email: "research@university.ac.id",
+  client_phone: "+6281234567890",
+  client_address: "University Campus, Room 301",
+  sample_name: "Polymer Sample",
+  sample_description: "Thermoplastic polymer for analysis",
+  sample_quantity: "3 pieces",
+  testing_type: "ftir_spectroscopy",
+  testing_parameters: {
+    wavenumber_range: "4000-400 cm⁻¹",
+    sample_preparation: "KBr pellet"
+  },
+  urgent_request: false,
+  sample_delivery_schedule: "2025-08-25"
+};
+const testingResult = await api.submitTestingRequest(testingRequestData);
 
 // Track request
-const tracking = await api.trackRequest('borrow', 'BR20250820001');
+const tracking = await api.trackRequest('testing', 'TR20250825001');
+
+// Cancel testing request
+const cancelResult = await api.cancelTestingRequest('TR20250825001');
 ```
 
 ### React Hook Example

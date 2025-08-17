@@ -11,6 +11,7 @@ CREATE TABLE users (
     avatar_path VARCHAR(500) NULL,
     is_active BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP NULL,
+    remember_token VARCHAR(100) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -110,6 +111,8 @@ CREATE TABLE equipment (
     next_maintenance_date DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_equipment_category (category_id),
+    INDEX idx_equipment_status (status),
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
 );
 
@@ -118,7 +121,7 @@ CREATE TABLE borrow_requests (
     request_id VARCHAR(20) UNIQUE NOT NULL,
     status ENUM('pending', 'approved', 'rejected', 'active', 'completed', 'cancelled') DEFAULT 'pending',
     -- Borrower Info
-    members JSON NOT NULL,
+    members LONGTEXT NOT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
     supervisor_name VARCHAR(255) NOT NULL,
     supervisor_nip VARCHAR(50) NULL,
     supervisor_email VARCHAR(255) NOT NULL,
@@ -127,8 +130,8 @@ CREATE TABLE borrow_requests (
     purpose TEXT NOT NULL,
     borrow_date DATE NOT NULL,
     return_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
+    start_time TIME NULL,
+    end_time TIME NULL,
     -- System Fields
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP NULL,
@@ -136,6 +139,7 @@ CREATE TABLE borrow_requests (
     approval_notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_borrow_requests_status (status),
     FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
@@ -158,7 +162,7 @@ CREATE TABLE borrow_request_items (
 CREATE TABLE visit_requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     request_id VARCHAR(20) UNIQUE NOT NULL,
-    status ENUM('pending', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
+    status ENUM('pending', 'under_review', 'approved', 'ready', 'completed', 'rejected', 'cancelled') DEFAULT 'pending',
     -- Contact Info
     visitor_name VARCHAR(255) NOT NULL,
     visitor_email VARCHAR(255) NOT NULL,
@@ -167,12 +171,13 @@ CREATE TABLE visit_requests (
     -- Visit Info
     visit_purpose ENUM('study-visit', 'research', 'learning', 'internship', 'others') NOT NULL,
     visit_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
+    start_time TIME NULL,
+    end_time TIME NULL,
+    visit_time ENUM('morning', 'afternoon') NOT NULL,
     group_size INT NOT NULL,
     purpose_description TEXT NULL,
     special_requirements TEXT NULL,
-    equipment_needed JSON NULL,
+    equipment_needed LONGTEXT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
     -- Documents
     request_letter_path VARCHAR(500) NULL,
     approval_letter_path VARCHAR(500) NULL,
@@ -181,8 +186,10 @@ CREATE TABLE visit_requests (
     reviewed_at TIMESTAMP NULL,
     reviewed_by BIGINT UNSIGNED NULL,
     approval_notes TEXT NULL,
+    agreement_accepted BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_visit_requests_status (status),
     FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
@@ -202,18 +209,16 @@ CREATE TABLE testing_requests (
     sample_description TEXT NOT NULL,
     sample_quantity VARCHAR(100) NOT NULL,
     testing_type ENUM('uv_vis_spectroscopy', 'ftir_spectroscopy', 'optical_microscopy', 'custom') NOT NULL,
-    testing_parameters JSON NULL,
+    testing_parameters LONGTEXT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
     urgent_request BOOLEAN DEFAULT FALSE,
     -- Schedule
-    preferred_date DATE NOT NULL,
-    estimated_duration_hours INT NULL,
-    actual_start_date DATE NULL,
-    actual_completion_date DATE NULL,
+    sample_delivery_schedule DATE NOT NULL,
+    estimated_duration SMALLINT NULL,
+    completion_date DATE NULL,
     -- Results
-    result_files_path JSON NULL,
+    result_files_path LONGTEXT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
     result_summary TEXT NULL,
-    cost_estimate DECIMAL(15,2) NULL,
-    final_cost DECIMAL(15,2) NULL,
+    cost DECIMAL(15,2) NULL,
     -- System Fields
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP NULL,
@@ -222,11 +227,77 @@ CREATE TABLE testing_requests (
     approval_notes TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_testing_requests_status (status),
     FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 6. SYSTEM & LOGGING
+-- 6. PERMISSIONS (Spatie Laravel Permission)
+CREATE TABLE permissions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    guard_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY permissions_name_guard_name_unique (name, guard_name)
+);
+
+CREATE TABLE roles (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    guard_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY roles_name_guard_name_unique (name, guard_name)
+);
+
+CREATE TABLE model_has_permissions (
+    permission_id BIGINT UNSIGNED NOT NULL,
+    model_type VARCHAR(255) NOT NULL,
+    model_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (permission_id, model_id, model_type),
+    INDEX model_has_permissions_model_id_model_type_index (model_id, model_type),
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE model_has_roles (
+    role_id BIGINT UNSIGNED NOT NULL,
+    model_type VARCHAR(255) NOT NULL,
+    model_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (role_id, model_id, model_type),
+    INDEX model_has_roles_model_id_model_type_index (model_id, model_type),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE role_has_permissions (
+    permission_id BIGINT UNSIGNED NOT NULL,
+    role_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (permission_id, role_id),
+    INDEX role_has_permissions_role_id_foreign (role_id),
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+-- 7. SYSTEM & LOGGING
+CREATE TABLE activity_log (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    log_name VARCHAR(255) NULL,
+    description TEXT NOT NULL,
+    subject_type VARCHAR(255) NULL,
+    event VARCHAR(255) NULL,
+    subject_id BIGINT UNSIGNED NULL,
+    causer_type VARCHAR(255) NULL,
+    causer_id BIGINT UNSIGNED NULL,
+    properties LONGTEXT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
+    batch_uuid CHAR(36) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX activity_log_log_name_index (log_name),
+    INDEX subject (subject_type, subject_id),
+    INDEX causer (causer_type, causer_id)
+);
+
+-- Additional activity logs table if it exists separately
 CREATE TABLE activity_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     log_name VARCHAR(255) NULL,
@@ -235,7 +306,7 @@ CREATE TABLE activity_logs (
     subject_id BIGINT UNSIGNED NULL,
     causer_type VARCHAR(255) NULL,
     causer_id BIGINT UNSIGNED NULL,
-    properties JSON NULL,
+    properties LONGTEXT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
     batch_uuid CHAR(36) NULL,
     event VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -255,12 +326,84 @@ CREATE TABLE notifications (
     INDEX idx_notifiable (notifiable_type, notifiable_id)
 );
 
--- INDEXES FOR PERFORMANCE
-CREATE INDEX idx_equipment_category ON equipment(category_id);
-CREATE INDEX idx_equipment_status ON equipment(status);
-CREATE INDEX idx_borrow_requests_status ON borrow_requests(status);
-CREATE INDEX idx_visit_requests_status ON visit_requests(status);
-CREATE INDEX idx_testing_requests_status ON testing_requests(status);
-CREATE INDEX idx_articles_published ON articles(is_published, published_at);
-CREATE INDEX idx_staff_active ON staff_members(is_active, sort_order);
-CREATE INDEX idx_galleries_category ON galleries(category, sort_order);
+-- 8. LARAVEL SYSTEM TABLES
+CREATE TABLE sessions (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id BIGINT UNSIGNED NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    payload LONGTEXT NOT NULL,
+    last_activity INT NOT NULL,
+    INDEX sessions_user_id_index (user_id),
+    INDEX sessions_last_activity_index (last_activity)
+);
+
+CREATE TABLE cache (
+    `key` VARCHAR(255) PRIMARY KEY,
+    value MEDIUMTEXT NOT NULL,
+    expiration INT NOT NULL
+);
+
+CREATE TABLE cache_locks (
+    `key` VARCHAR(255) PRIMARY KEY,
+    owner VARCHAR(255) NOT NULL,
+    expiration INT NOT NULL
+);
+
+CREATE TABLE jobs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    queue VARCHAR(255) NOT NULL,
+    payload LONGTEXT NOT NULL,
+    attempts TINYINT UNSIGNED NOT NULL,
+    reserved_at INT UNSIGNED NULL,
+    available_at INT UNSIGNED NOT NULL,
+    created_at INT UNSIGNED NOT NULL,
+    INDEX jobs_queue_index (queue)
+);
+
+CREATE TABLE job_batches (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    total_jobs INT NOT NULL,
+    pending_jobs INT NOT NULL,
+    failed_jobs INT NOT NULL,
+    failed_job_ids LONGTEXT NOT NULL,
+    options MEDIUMTEXT NULL,
+    cancelled_at INT NULL,
+    created_at INT NOT NULL,
+    finished_at INT NULL
+);
+
+CREATE TABLE failed_jobs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(255) UNIQUE NOT NULL,
+    connection TEXT NOT NULL,
+    queue TEXT NOT NULL,
+    payload LONGTEXT NOT NULL,
+    exception LONGTEXT NOT NULL,
+    failed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE personal_access_tokens (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    tokenable_type VARCHAR(255) NOT NULL,
+    tokenable_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    token VARCHAR(64) UNIQUE NOT NULL,
+    abilities TEXT NULL,
+    last_used_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX personal_access_tokens_tokenable_type_tokenable_id_index (tokenable_type, tokenable_id)
+);
+
+CREATE TABLE password_reset_tokens (
+    email VARCHAR(255) PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NULL
+);
+
+-- PERFORMANCE INDEXES
+-- Note: Most indexes are already defined inline with table definitions above
+-- Additional composite indexes for specific query patterns can be added here if needed

@@ -614,7 +614,7 @@ class RequestManagementController extends Controller
                     'testing_type_label' => $request->testing_type_label,
                     'urgent_request' => $request->urgent_request,
                     'preferred_date' => $request->preferred_date?->format('Y-m-d'),
-                    'cost_estimate' => $request->cost_estimate,
+                    'cost' => $request->cost,
                     'submitted_at' => $request->submitted_at->format('Y-m-d H:i:s'),
                     'reviewed_at' => $request->reviewed_at?->format('Y-m-d H:i:s'),
                     'reviewer' => $request->reviewer ? [
@@ -708,7 +708,7 @@ class RequestManagementController extends Controller
                 'testing_parameters' => 'sometimes|array',
                 'preferred_date' => 'sometimes|date|after:today',
                 'estimated_duration_hours' => 'sometimes|integer|min:1|max:168',
-                'cost_estimate' => 'sometimes|numeric|min:0',
+                'cost' => 'sometimes|numeric|min:0',
                 'assigned_to' => 'sometimes|nullable|exists:users,id',
                 'approval_notes' => 'sometimes|nullable|string|max:1000',
             ]);
@@ -757,7 +757,7 @@ class RequestManagementController extends Controller
             
             $validated = $request->validate([
                 'approval_notes' => 'nullable|string|max:1000',
-                'cost_estimate' => 'nullable|numeric|min:0',
+                'cost' => 'nullable|numeric|min:0',
                 'estimated_duration_hours' => 'nullable|integer|min:1|max:168',
                 'assigned_to' => 'nullable|exists:users,id',
             ]);
@@ -772,8 +772,8 @@ class RequestManagementController extends Controller
             ];
             
             // Add optional fields if provided
-            if (isset($validated['cost_estimate'])) {
-                $updateData['cost_estimate'] = $validated['cost_estimate'];
+            if (isset($validated['cost'])) {
+                $updateData['cost'] = $validated['cost'];
             }
             
             if (isset($validated['estimated_duration_hours'])) {

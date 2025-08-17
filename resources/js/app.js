@@ -240,8 +240,13 @@ const LabGOS = {
     },
     
     // Track testing request
-    async getTestingRequest(requestId) {
+    async trackTesting(requestId) {
         return await this.request(`/tracking/testing/${requestId}`);
+    },
+    
+    // Alias for consistency
+    async getTestingRequest(requestId) {
+        return await this.trackTesting(requestId);
     },
     
     // Cancel testing request

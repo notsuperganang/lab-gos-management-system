@@ -357,24 +357,59 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-90"
-             class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+             class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-screen overflow-y-auto border border-gray-100">
 
-            <div class="p-8">
+            <div class="p-8 bg-gradient-to-r from-primary/5 to-secondary/5">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800">
-                        <i class="fas fa-vial text-primary mr-2"></i>
-                        Formulir Pengujian Sampel
-                    </h3>
-                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-300">
+                    <div>
+                        <h3 class="text-3xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-vial text-primary mr-3"></i>
+                            Formulir Pengujian Sampel
+                        </h3>
+                        <p class="text-gray-600">Lengkapi informasi berikut untuk mengajukan pengujian sampel</p>
+                    </div>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-300 p-2 hover:bg-gray-100 rounded-full">
                         <i class="fas fa-times text-2xl"></i>
                     </button>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Progress Indicator -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-center space-x-4 mb-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                            <span class="ml-2 text-sm font-medium text-gray-700">Klien</span>
+                        </div>
+                        <div class="w-16 h-1 bg-gray-200 rounded"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                            <span class="ml-2 text-sm font-medium text-gray-700">Sampel</span>
+                        </div>
+                        <div class="w-16 h-1 bg-gray-200 rounded"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                            <span class="ml-2 text-sm font-medium text-gray-700">Pengujian</span>
+                        </div>
+                        <div class="w-16 h-1 bg-gray-200 rounded"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+                            <span class="ml-2 text-sm font-medium text-gray-700">Biaya</span>
+                        </div>
+                        <div class="w-16 h-1 bg-gray-200 rounded"></div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold">5</div>
+                            <span class="ml-2 text-sm font-medium text-gray-700">Jadwal</span>
+                        </div>
+                    </div>
                 </div>
 
                 <form @submit.prevent="submitForm()" id="testingForm">
                     <!-- Client Information Section -->
                     <div class="mb-8">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
-                            <i class="fas fa-user text-primary mr-2"></i>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-t-lg p-3 -mx-3 border-blue-200">
+                            <i class="fas fa-user text-blue-600 mr-2"></i>
                             Informasi Klien
                         </h4>
 
@@ -382,13 +417,13 @@
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Nama Lengkap *</label>
                                 <input type="text" x-model="formData.client_name" required
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                        placeholder="Masukkan nama lengkap">
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Email *</label>
                                 <input type="email" x-model="formData.client_email" required
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                        placeholder="nama@email.com">
                             </div>
                         </div>
@@ -397,13 +432,13 @@
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">No. Telepon *</label>
                                 <input type="tel" x-model="formData.client_phone" required
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                        placeholder="+62812xxxxxxxx">
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Organisasi/Institusi *</label>
                                 <input type="text" x-model="formData.client_organization" required
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                        placeholder="Nama universitas/perusahaan">
                             </div>
                         </div>
@@ -411,15 +446,15 @@
                         <div class="mb-4">
                             <label class="block text-gray-700 font-semibold mb-2">Alamat Lengkap *</label>
                             <textarea x-model="formData.client_address" required rows="3"
-                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                       placeholder="Alamat lengkap untuk pengiriman hasil"></textarea>
                         </div>
                     </div>
 
                     <!-- Sample Information Section -->
                     <div class="mb-8">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
-                            <i class="fas fa-flask text-primary mr-2"></i>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 bg-gradient-to-r from-orange-50 to-red-50 rounded-t-lg p-3 -mx-3 border-orange-200">
+                            <i class="fas fa-flask text-orange-600 mr-2"></i>
                             Informasi Sampel
                         </h4>
 
@@ -427,13 +462,13 @@
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Nama Sampel *</label>
                                 <input type="text" x-model="formData.sample_name" required
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                        placeholder="Contoh: Sampel Polimer A">
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Jumlah Sampel *</label>
                                 <input type="text" x-model="formData.sample_quantity" required
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                        placeholder="Contoh: 10 gram, 5 ml, 3 buah">
                             </div>
                         </div>
@@ -441,14 +476,14 @@
                         <div class="mb-4">
                             <label class="block text-gray-700 font-semibold mb-2">Deskripsi Sampel *</label>
                             <textarea x-model="formData.sample_description" required rows="3"
-                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm"
                                       placeholder="Jelaskan karakteristik sampel, cara preparasi, dan informasi penting lainnya"></textarea>
                         </div>
                     </div>
 
                     <!-- Testing Information Section -->
                     <div class="mb-8">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-t-lg p-3 -mx-3 border-primary/20">
                             <i class="fas fa-microscope text-primary mr-2"></i>
                             Informasi Pengujian
                         </h4>
@@ -456,7 +491,7 @@
                         <div class="mb-4">
                             <label class="block text-gray-700 font-semibold mb-2">Jenis Pengujian *</label>
                             <select x-model="selectedTestingType" @change="updateTestingParameters()" required
-                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 <option value="">Pilih Jenis Pengujian</option>
                                 <option value="uv_vis_spectroscopy">UV-Vis Spectroscopy</option>
                                 <option value="ftir_spectroscopy">FTIR Spectroscopy</option>
@@ -472,12 +507,12 @@
                                 <div>
                                     <input type="text" x-model="testingParameters.wavelength_range"
                                            placeholder="Rentang panjang gelombang (nm)"
-                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 </div>
                                 <div>
                                     <input type="text" x-model="testingParameters.solvent"
                                            placeholder="Jenis pelarut"
-                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 </div>
                             </div>
                         </div>
@@ -488,12 +523,12 @@
                                 <div>
                                     <input type="text" x-model="testingParameters.wavenumber_range"
                                            placeholder="Rentang bilangan gelombang (cm⁻¹)"
-                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 </div>
                                 <div>
                                     <input type="text" x-model="testingParameters.sample_preparation"
                                            placeholder="Metode preparasi sampel"
-                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 </div>
                             </div>
                         </div>
@@ -504,12 +539,55 @@
                                 <div>
                                     <input type="text" x-model="testingParameters.magnification"
                                            placeholder="Perbesaran yang diinginkan"
-                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 </div>
                                 <div>
                                     <input type="text" x-model="testingParameters.illumination_type"
                                            placeholder="Jenis penerangan"
-                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cost Information Section -->
+                    <div class="mb-8" x-show="selectedTestingType">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg p-3 -mx-3 border-green-200">
+                            <i class="fas fa-calculator text-green-600 mr-2"></i>
+                            Informasi Biaya
+                        </h4>
+
+                        <div>
+                            <!-- Base Cost Card (single full-width) -->
+                            <div class="w-full bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 shadow-sm hover:shadow-md transition-all duration-300">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-tag text-green-600 text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-semibold text-gray-800">Biaya Dasar</h5>
+                                            <p class="text-sm text-gray-600" x-text="getTestingTypeLabel()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-green-600" x-text="formatCurrency(getBaseCost())"></div>
+                                    <p class="text-sm text-gray-500" x-text="estimatedDurationText"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Note -->
+                        <div class="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <div class="flex items-start">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-2 mt-1"></i>
+                                <div class="text-sm text-gray-600">
+                                    <p class="font-medium text-gray-700 mb-1">Catatan Biaya:</p>
+                                    <ul class="space-y-1 text-xs">
+                                        <li>• Biaya dapat berubah berdasarkan kompleksitas sampel</li>
+                                        <li>• Biaya final akan dikonfirmasi setelah evaluasi sampel oleh admin melalui whatsapp</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -517,8 +595,8 @@
 
                     <!-- Schedule Information Section -->
                     <div class="mb-8">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
-                            <i class="fas fa-calendar text-primary mr-2"></i>
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-lg p-3 -mx-3 border-purple-200">
+                            <i class="fas fa-calendar text-purple-600 mr-2"></i>
                             Jadwal Pengantaran
                         </h4>
 
@@ -527,7 +605,7 @@
                                 <label class="block text-gray-700 font-semibold mb-2">Jadwal Pengantaran Sampel *</label>
                                 <input type="date" x-model="formData.sample_delivery_schedule" required
                                        :min="minDate" :max="maxDate"
-                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300 bg-white shadow-sm">
                                 <p class="text-sm text-gray-500 mt-1">Minimal 3 hari dari sekarang</p>
                             </div>
                             <div>
@@ -545,14 +623,14 @@
                                        class="mr-3 w-5 h-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary">
                                 <span class="text-gray-700 font-semibold">Pengujian Mendesak</span>
                             </label>
-                            <p class="text-sm text-gray-500 mt-1">Untuk pengujian dalam 1-7 hari (biaya tambahan mungkin berlaku)</p>
+                            <p class="text-sm text-gray-500 mt-1">Untuk pengujian dalam 1-7 hari</p>
                         </div>
                     </div>
 
                     <!-- Submit Button -->
                     <div class="flex gap-4">
                         <button type="submit" :disabled="loading"
-                                class="flex-1 bg-primary hover:bg-blue-800 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:transform-none">
+                                class="flex-1 bg-gradient-to-r from-primary to-blue-700 hover:from-blue-700 hover:to-blue-900 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:transform-none shadow-lg hover:shadow-xl disabled:shadow-none">
                             <span x-show="!loading">
                                 <i class="fas fa-paper-plane mr-2"></i>
                                 Kirim Pengajuan
@@ -563,7 +641,7 @@
                             </span>
                         </button>
                         <button type="button" @click="closeModal()" :disabled="loading"
-                                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-300 disabled:bg-gray-100">
+                                class="px-6 py-4 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 disabled:bg-gray-100 shadow-sm hover:shadow-md">
                             Batal
                         </button>
                     </div>
@@ -620,6 +698,37 @@
                     }
                     const config = this.testingTypeConfig[this.selectedTestingType];
                     return config ? `${config.duration_days} hari kerja` : '';
+                },
+
+                // Cost calculation methods
+                getTestingTypeLabel() {
+                    const labels = {
+                        'uv_vis_spectroscopy': 'UV-Vis Spectroscopy',
+                        'ftir_spectroscopy': 'FTIR Spectroscopy',
+                        'optical_microscopy': 'Optical Microscopy',
+                        'custom': 'Custom Testing'
+                    };
+                    return labels[this.selectedTestingType] || '';
+                },
+
+                getBaseCost() {
+                    if (!this.selectedTestingType) {
+                        return 0;
+                    }
+                    const config = this.testingTypeConfig[this.selectedTestingType];
+                    return config ? config.cost : 0;
+                },
+
+                formatCurrency(amount) {
+                    if (!amount || amount === 0) {
+                        return 'Rp 0';
+                    }
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(amount);
                 },
 
                 get minDate() {
@@ -686,7 +795,8 @@
                                 sessionStorage.setItem('testingTrackingData', JSON.stringify({ requestId }));
                             } catch (e) { /* ignore storage errors */ }
                             // Redirect to tracking page (structure used by tracking-testing page)
-                            window.location.href = `/layanan/testing/confirmation/${requestId}`;
+                            // Redirect to tracking testing page with query parameter rid
+                            window.location.href = `/layanan/tracking-testing?rid=${requestId}`;
                         } else {
                             let errorMessage = 'Terjadi kesalahan: ' + result.message;
                             if (result.errors) {
