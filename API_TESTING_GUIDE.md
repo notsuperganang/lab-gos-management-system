@@ -328,6 +328,8 @@ php artisan migrate:fresh --seed
 
 ---
 
+STABLE
+
 ## 📞 **Need Help?**
 
 If you encounter any issues:
