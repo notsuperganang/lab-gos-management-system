@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use App\Models\BlockedTimeSlot;
 
 class VisitSlotsService
 {
@@ -29,6 +30,10 @@ class VisitSlotsService
         
         // Filter out slots that conflict with existing bookings
         $availableSlots = $this->filterConflictingSlots($baseSlots, $existingBookings);
+        
+        // NEW: Also filter out admin-blocked slots
+        $blockedSlots = $this->getBlockedSlots($date);
+        $availableSlots = $this->filterBlockedSlots($availableSlots, $blockedSlots);
         
         return $availableSlots;
     }
@@ -199,6 +204,7 @@ class VisitSlotsService
         $slotStart = $this->timeToMinutes($startTime);
         $slotEnd = $this->timeToMinutes($endTime);
         
+        // Check existing bookings
         foreach ($existingBookings as $booking) {
             // Skip bookings with null or empty time values
             if (!$booking['start_time'] || !$booking['end_time']) {
@@ -218,6 +224,204 @@ class VisitSlotsService
             }
         }
         
+        // NEW: Check admin-blocked slots
+        $blockedSlots = $this->getBlockedSlots($date);
+        foreach ($blockedSlots as $blockedSlot) {
+            $blockedStart = $this->timeToMinutes($blockedSlot['start_time']);
+            $blockedEnd = $this->timeToMinutes($blockedSlot['end_time']);
+            
+            if ($this->timeSlotsOverlap($slotStart, $slotEnd, $blockedStart, $blockedEnd)) {
+                return false;
+            }
+        }
+        
         return true;
+    }
+
+    /**
+     * Get admin-blocked slots for a specific date.
+     *
+     * @param string $date
+     * @return array
+     */
+    protected function getBlockedSlots(string $date): array
+    {
+        return BlockedTimeSlot::forDate($date)
+            ->select(['start_time', 'end_time', 'reason', 'id'])
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Filter out admin-blocked slots from available slots.
+     *
+     * @param array $baseSlots
+     * @param array $blockedSlots
+     * @return array
+     */
+    protected function filterBlockedSlots(array $baseSlots, array $blockedSlots): array
+    {
+        if (empty($blockedSlots)) {
+            return $baseSlots;
+        }
+
+        $availableSlots = [];
+
+        foreach ($baseSlots as $slot) {
+            $slotStart = $this->timeToMinutes($slot['start']);
+            $slotEnd = $this->timeToMinutes($slot['end']);
+
+            $isBlocked = false;
+
+            foreach ($blockedSlots as $blockedSlot) {
+                $blockedStart = $this->timeToMinutes($blockedSlot['start_time']);
+                $blockedEnd = $this->timeToMinutes($blockedSlot['end_time']);
+
+                // Check if the slot overlaps with this blocked slot
+                if ($this->timeSlotsOverlap($slotStart, $slotEnd, $blockedStart, $blockedEnd)) {
+                    $isBlocked = true;
+                    break;
+                }
+            }
+
+            if (!$isBlocked) {
+                $availableSlots[] = $slot;
+            }
+        }
+
+        return $availableSlots;
+    }
+
+    /**
+     * Get all time slots for a specific date with their status.
+     * Used by admin calendar interface.
+     *
+     * @param string $date
+     * @return array
+     */
+    public function getAllSlotsWithStatus(string $date): array
+    {
+        // Generate all 1-hour slots for the day
+        $allSlots = $this->generateBaseTimeSlots(1);
+        
+        // Get existing bookings
+        $existingBookings = $this->getExistingBookings($date);
+        
+        // Get blocked slots
+        $blockedSlots = BlockedTimeSlot::forDate($date)
+            ->with('creator')
+            ->get()
+            ->toArray();
+
+        // Build status for each slot
+        $slotsWithStatus = [];
+        
+        foreach ($allSlots as $slot) {
+            $slotStart = $this->timeToMinutes($slot['start']);
+            $slotEnd = $this->timeToMinutes($slot['end']);
+            
+            $status = 'available';
+            $visitRequest = null;
+            $blockedInfo = null;
+
+            // Check if slot is booked
+            foreach ($existingBookings as $booking) {
+                if (!$booking['start_time'] || !$booking['end_time']) {
+                    continue;
+                }
+
+                $bookingStart = $this->timeToMinutes($booking['start_time']);
+                $bookingEnd = $this->timeToMinutes($booking['end_time']);
+
+                if ($this->timeSlotsOverlap($slotStart, $slotEnd, $bookingStart, $bookingEnd)) {
+                    $status = 'booked';
+                    $visitRequest = [
+                        'id' => $booking['id'] ?? null,
+                        'request_id' => $booking['request_id'] ?? null,
+                        'visitor_name' => $booking['visitor_name'] ?? null,
+                        'status' => $booking['status'] ?? null,
+                    ];
+                    break;
+                }
+            }
+
+            // Check if slot is blocked (only if not already booked)
+            if ($status !== 'booked') {
+                foreach ($blockedSlots as $blockedSlot) {
+                    $blockedStart = $this->timeToMinutes($blockedSlot['start_time']);
+                    $blockedEnd = $this->timeToMinutes($blockedSlot['end_time']);
+
+                    if ($this->timeSlotsOverlap($slotStart, $slotEnd, $blockedStart, $blockedEnd)) {
+                        $status = 'blocked';
+                        $blockedInfo = [
+                            'id' => $blockedSlot['id'],
+                            'reason' => $blockedSlot['reason'],
+                            'created_by' => $blockedSlot['creator']['name'] ?? 'Admin',
+                            'created_at' => $blockedSlot['created_at'] ?? null,
+                        ];
+                        break;
+                    }
+                }
+            }
+
+            $slotsWithStatus[] = [
+                'start_time' => $slot['start'],
+                'end_time' => $slot['end'],
+                'status' => $status,
+                'visit_request' => $visitRequest,
+                'blocked_info' => $blockedInfo,
+            ];
+        }
+
+        return $slotsWithStatus;
+    }
+
+    /**
+     * Get month summary with availability statistics.
+     *
+     * @param int $year
+     * @param int $month
+     * @return array
+     */
+    public function getMonthSummary(int $year, int $month): array
+    {
+        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+        
+        $summary = [];
+        $current = $startDate->copy();
+
+        while ($current->lte($endDate)) {
+            $dateString = $current->format('Y-m-d');
+            
+            // Skip weekends
+            if ($current->isWeekend()) {
+                $current->addDay();
+                continue;
+            }
+
+            // Get all slots for this date
+            $allSlots = $this->getAllSlotsWithStatus($dateString);
+            
+            $totalSlots = count($allSlots);
+            $availableSlots = count(array_filter($allSlots, fn($slot) => $slot['status'] === 'available'));
+            $bookedSlots = count(array_filter($allSlots, fn($slot) => $slot['status'] === 'booked'));
+            $blockedSlots = count(array_filter($allSlots, fn($slot) => $slot['status'] === 'blocked'));
+
+            $summary[] = [
+                'date' => $dateString,
+                'formatted_date' => $current->format('d M Y'),
+                'day_name' => $current->format('l'),
+                'total_slots' => $totalSlots,
+                'available_slots' => $availableSlots,
+                'booked_slots' => $bookedSlots,
+                'blocked_slots' => $blockedSlots,
+                'availability_percentage' => $totalSlots > 0 ? round(($availableSlots / $totalSlots) * 100, 1) : 0,
+            ];
+
+            $current->addDay();
+        }
+
+        return $summary;
     }
 }

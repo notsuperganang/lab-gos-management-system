@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\PublicPageController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Public pages routes
@@ -71,3 +73,137 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     })->name('tracking-pengujian');
 });
 
+// Default dashboard route (redirect to welcome for non-admin users)
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+| Protected admin routes that require authentication and admin role
+*/
+
+// Admin authentication routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    
+    // Admin dashboard and management routes
+    Route::prefix('admin')->name('admin.')->middleware(['role:admin|super_admin'])->group(function () {
+        
+        // Main Dashboard
+        Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.index');
+        
+        // PROFIL DAN PUBLIKASI (Profile & Publications)
+        Route::prefix('site-settings')->name('site-settings.')->group(function () {
+            Route::get('/', [AdminController::class, 'siteSettings'])->name('index');
+            Route::get('/edit', [AdminController::class, 'editSiteSettings'])->name('edit');
+            Route::put('/update', [AdminController::class, 'updateSiteSettings'])->name('update');
+        });
+        
+        Route::prefix('staff')->name('staff.')->group(function () {
+            Route::get('/', [AdminController::class, 'staffIndex'])->name('index');
+            Route::get('/create', [AdminController::class, 'staffCreate'])->name('create');
+            Route::post('/', [AdminController::class, 'staffStore'])->name('store');
+            Route::get('/{staff}', [AdminController::class, 'staffShow'])->name('show');
+            Route::get('/{staff}/edit', [AdminController::class, 'staffEdit'])->name('edit');
+            Route::put('/{staff}', [AdminController::class, 'staffUpdate'])->name('update');
+            Route::delete('/{staff}', [AdminController::class, 'staffDestroy'])->name('destroy');
+        });
+        
+        Route::prefix('articles')->name('articles.')->group(function () {
+            Route::get('/', [AdminController::class, 'articlesIndex'])->name('index');
+            Route::get('/create', [AdminController::class, 'articlesCreate'])->name('create');
+            Route::post('/', [AdminController::class, 'articlesStore'])->name('store');
+            Route::get('/{article}', [AdminController::class, 'articlesShow'])->name('show');
+            Route::get('/{article}/edit', [AdminController::class, 'articlesEdit'])->name('edit');
+            Route::put('/{article}', [AdminController::class, 'articlesUpdate'])->name('update');
+            Route::delete('/{article}', [AdminController::class, 'articlesDestroy'])->name('destroy');
+        });
+        
+        Route::prefix('gallery')->name('gallery.')->group(function () {
+            Route::get('/', [AdminController::class, 'galleryIndex'])->name('index');
+            Route::get('/create', [AdminController::class, 'galleryCreate'])->name('create');
+            Route::post('/', [AdminController::class, 'galleryStore'])->name('store');
+            Route::get('/{gallery}', [AdminController::class, 'galleryShow'])->name('show');
+            Route::get('/{gallery}/edit', [AdminController::class, 'galleryEdit'])->name('edit');
+            Route::put('/{gallery}', [AdminController::class, 'galleryUpdate'])->name('update');
+            Route::delete('/{gallery}', [AdminController::class, 'galleryDestroy'])->name('destroy');
+        });
+        
+        // SARANA DAN PENJADWALAN (Facilities & Scheduling)
+        Route::prefix('equipment')->name('equipment.')->group(function () {
+            Route::get('/', [AdminController::class, 'equipmentIndex'])->name('index');
+            Route::get('/create', [AdminController::class, 'equipmentCreate'])->name('create');
+            Route::post('/', [AdminController::class, 'equipmentStore'])->name('store');
+            Route::get('/{equipment}', [AdminController::class, 'equipmentShow'])->name('show');
+            Route::get('/{equipment}/edit', [AdminController::class, 'equipmentEdit'])->name('edit');
+            Route::put('/{equipment}', [AdminController::class, 'equipmentUpdate'])->name('update');
+            Route::delete('/{equipment}', [AdminController::class, 'equipmentDestroy'])->name('destroy');
+        });
+        
+        Route::prefix('visit-schedule')->name('visit-schedule.')->group(function () {
+            Route::get('/', [AdminController::class, 'visitScheduleIndex'])->name('index');
+            Route::get('/calendar', [AdminController::class, 'visitScheduleCalendar'])->name('calendar');
+            Route::post('/block-time', [AdminController::class, 'blockTimeSlot'])->name('block-time');
+            Route::delete('/unblock-time/{id}', [AdminController::class, 'unblockTimeSlot'])->name('unblock-time');
+        });
+        
+        // LAYANAN LABORATORIUM (Laboratory Services)
+        Route::prefix('borrowing')->name('borrowing.')->group(function () {
+            Route::get('/', [AdminController::class, 'borrowingIndex'])->name('index');
+            Route::get('/{request}', [AdminController::class, 'borrowingShow'])->name('show');
+            Route::put('/{request}/approve', [AdminController::class, 'borrowingApprove'])->name('approve');
+            Route::put('/{request}/reject', [AdminController::class, 'borrowingReject'])->name('reject');
+            Route::put('/{request}/complete', [AdminController::class, 'borrowingComplete'])->name('complete');
+        });
+        
+        Route::prefix('visits')->name('visits.')->group(function () {
+            Route::get('/', [AdminController::class, 'visitsIndex'])->name('index');
+            Route::get('/{request}', [AdminController::class, 'visitsShow'])->name('show');
+            Route::put('/{request}/approve', [AdminController::class, 'visitsApprove'])->name('approve');
+            Route::put('/{request}/reject', [AdminController::class, 'visitsReject'])->name('reject');
+            Route::put('/{request}/complete', [AdminController::class, 'visitsComplete'])->name('complete');
+        });
+        
+        Route::prefix('testing')->name('testing.')->group(function () {
+            Route::get('/', [AdminController::class, 'testingIndex'])->name('index');
+            Route::get('/{request}', [AdminController::class, 'testingShow'])->name('show');
+            Route::put('/{request}/approve', [AdminController::class, 'testingApprove'])->name('approve');
+            Route::put('/{request}/reject', [AdminController::class, 'testingReject'])->name('reject');
+            Route::put('/{request}/complete', [AdminController::class, 'testingComplete'])->name('complete');
+        });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Super Admin Routes
+    |--------------------------------------------------------------------------
+    | Protected super admin routes that require super admin role
+    */
+    
+    // Super Admin routes (only for super admin users)
+    Route::prefix('superadmin')->name('superadmin.')->middleware(['role:super_admin'])->group(function () {
+        
+        // User Management
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersIndex'])->name('index');
+            Route::get('/create', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersCreate'])->name('create');
+            Route::post('/', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersStore'])->name('store');
+            Route::get('/{user}', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersShow'])->name('show');
+            Route::get('/{user}/edit', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersEdit'])->name('edit');
+            Route::put('/{user}', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersUpdate'])->name('update');
+            Route::delete('/{user}', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersDestroy'])->name('destroy');
+            Route::put('/{user}/status', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersUpdateStatus'])->name('update-status');
+        });
+    });
+});
+
+require __DIR__.'/auth.php';

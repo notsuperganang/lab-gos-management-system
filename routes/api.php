@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\Admin\RequestManagementController;
 use App\Http\Controllers\Api\Admin\EquipmentManagementController;
 use App\Http\Controllers\Api\Admin\ContentManagementController;
 use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\ReportsController;
+use App\Http\Controllers\Api\Admin\CalendarController;
 use App\Http\Controllers\Api\SuperAdmin\UserManagementController;
 use App\Http\Controllers\Api\WhatsAppController;
 use Illuminate\Http\Request;
@@ -103,13 +105,6 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
         ->name('testing.cancel');
 });
 
-// WhatsApp integration
-Route::prefix('whatsapp')->name('api.whatsapp.')->group(function () {
-    Route::post('/confirm/{type}/{requestId}', [WhatsAppController::class, 'sendConfirmation'])
-        ->name('confirm');
-    Route::get('/health', [WhatsAppController::class, 'healthCheck'])
-        ->name('health');
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -236,6 +231,53 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('gallery.update');
         Route::delete('/gallery/{gallery}', [ContentManagementController::class, 'destroyGallery'])
             ->name('gallery.destroy');
+    });
+
+    // Reports and analytics
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/equipment-usage', [ReportsController::class, 'equipmentUsage'])
+            ->name('equipment-usage');
+        Route::get('/request-analytics', [ReportsController::class, 'requestAnalytics'])
+            ->name('request-analytics');
+    });
+
+
+    // Calendar management
+    Route::prefix('calendar')->name('calendar.')->group(function () {
+        // Day view - get all time slots for a specific date
+        Route::get('/day/{date}', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'dayView'])
+            ->name('day-view');
+
+        // Month view - get monthly summary of availability
+        Route::get('/month/{year}/{month}', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'monthView'])
+            ->name('month-view');
+
+        // Block time slots
+        Route::post('/block', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'blockSlot'])
+            ->name('block-slot');
+
+        // Unblock single time slot
+        Route::delete('/unblock/{blockedTimeSlot}', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'unblockSlot'])
+            ->name('unblock-slot');
+
+        // Bulk unblock multiple time slots
+        Route::delete('/bulk-unblock', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'bulkUnblock'])
+            ->name('bulk-unblock');
+
+        // List all blocked slots with filtering
+        Route::get('/blocked-slots', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'blockedSlotsList'])
+            ->name('blocked-slots-list');
+    });
+
+    // WhatsApp communication
+    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+        // Get admin templates for messaging users
+        Route::get('/templates', [\App\Http\Controllers\Api\WhatsAppController::class, 'adminTemplates'])
+            ->name('templates');
+
+        // Generate WhatsApp link for admin to message user
+        Route::post('/generate-link', [\App\Http\Controllers\Api\WhatsAppController::class, 'adminGenerateLink'])
+            ->name('generate-link');
     });
 });
 
