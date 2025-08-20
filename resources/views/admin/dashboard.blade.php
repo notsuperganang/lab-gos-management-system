@@ -405,19 +405,26 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('dashboardData', () => ({
-        // Inject data from Laravel to avoid undefined errors
-        stats: @js($stats ?? []),
-        recentActivities: @js($recentActivities ?? []),
+        // Initialize empty data - will be loaded via API
+        stats: {},
+        recentActivities: [],
         loading: false,
         chartsInitialized: false,
+        apiToken: localStorage.getItem('admin_token'),
         
         // Initialize when component is ready
-        init() {
-            console.log('Dashboard initialized with data:', {
-                stats: this.stats,
-                recentActivities: this.recentActivities,
-                activitiesCount: this.recentActivities?.length || 0
-            });
+        async init() {
+            console.log('Dashboard initializing...');
+            
+            // Check if user is authenticated
+            if (!this.apiToken) {
+                console.error('No admin token found, redirecting to login');
+                window.location.href = '/admin/login';
+                return;
+            }
+            
+            // Load dashboard data
+            await this.loadDashboardData();
             
             this.$nextTick(() => {
                 if (typeof Chart !== 'undefined') {
@@ -570,13 +577,98 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
-        // Dashboard refresh functionality
-        async refreshDashboard() {
+        // Load dashboard data from API
+        async loadDashboardData() {
             this.loading = true;
             try {
-                window.location.reload();
+                const response = await fetch('/api/admin/dashboard/stats?refresh_cache=false', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.apiToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        console.error('Unauthorized access, redirecting to login');
+                        localStorage.removeItem('admin_token');
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    this.stats = data.data;
+                    this.recentActivities = data.data.recent_activities || [];
+                    console.log('Dashboard data loaded successfully:', this.stats);
+                    
+                    // Reinitialize charts with new data
+                    this.chartsInitialized = false;
+                    this.$nextTick(() => {
+                        if (typeof Chart !== 'undefined') {
+                            this.initCharts();
+                        }
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to load dashboard data');
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                // Show user-friendly error message
+                alert('Failed to load dashboard data. Please refresh the page or contact support.');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Dashboard refresh functionality
+        async refreshDashboard() {
+            console.log('Refreshing dashboard...');
+            this.loading = true;
+            try {
+                // Force refresh cache
+                const response = await fetch('/api/admin/dashboard/stats?refresh_cache=true', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.apiToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        console.error('Unauthorized access, redirecting to login');
+                        localStorage.removeItem('admin_token');
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    this.stats = data.data;
+                    this.recentActivities = data.data.recent_activities || [];
+                    console.log('Dashboard refreshed successfully');
+                    
+                    // Reinitialize charts with new data
+                    this.chartsInitialized = false;
+                    this.$nextTick(() => {
+                        if (typeof Chart !== 'undefined') {
+                            this.initCharts();
+                        }
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to refresh dashboard');
+                }
             } catch (error) {
                 console.error('Failed to refresh dashboard:', error);
+                alert('Failed to refresh dashboard. Please try again.');
             } finally {
                 this.loading = false;
             }

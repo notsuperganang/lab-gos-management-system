@@ -325,6 +325,78 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('blocked-slots-list');
     });
 
+    // Profile management for authenticated admin users
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', function (Request $request) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $request->user()->load('roles:id,name'),
+                ],
+            ]);
+        })->name('show');
+
+        Route::put('/', function (Request $request) {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $request->user()->id,
+                'current_password' => 'nullable|string|min:8',
+                'password' => 'nullable|string|min:8|confirmed',
+            ]);
+
+            $user = $request->user();
+            
+            // Check current password if changing password
+            if ($request->filled('password')) {
+                if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Current password is incorrect',
+                        'errors' => ['current_password' => ['The current password is incorrect.']]
+                    ], 422);
+                }
+                $user->password = Hash::make($request->password);
+            }
+
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully',
+                'data' => [
+                    'user' => $user->load('roles:id,name'),
+                ],
+            ]);
+        })->name('update');
+
+        Route::post('/change-password', function (Request $request) {
+            $request->validate([
+                'current_password' => 'required|string',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $user = $request->user();
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect',
+                    'errors' => ['current_password' => ['The current password is incorrect.']]
+                ], 422);
+            }
+
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed successfully',
+            ]);
+        })->name('change-password');
+    });
+
     // WhatsApp communication
     Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
         // Get admin templates for messaging users
