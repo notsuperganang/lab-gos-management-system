@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\SuperAdmin\UserManagementController;
 use App\Http\Controllers\Api\WhatsAppController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +37,59 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// API Authentication endpoint for admin login
+Route::post('/admin/login', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid credentials',
+        ], 401);
+    }
+
+    // Check if user is admin or super_admin
+    if (!in_array($user->role, ['admin', 'super_admin'])) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized access - admin role required',
+        ], 403);
+    }
+
+    // Generate Sanctum token
+    $token = $user->createToken('admin-token')->plainTextToken;
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Login successful',
+        'data' => [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+            'token' => $token,
+            'token_type' => 'Bearer',
+        ]
+    ]);
+})->name('api.admin.login');
+
+// API Logout endpoint
+Route::middleware('auth:sanctum')->post('/admin/logout', function (Request $request) {
+    $request->user()->currentAccessToken()->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Logged out successfully',
+    ]);
+})->name('api.admin.logout');
 
 /*
 |--------------------------------------------------------------------------
@@ -114,7 +170,7 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
 | They provide CRUD operations for managing the laboratory system.
 */
 
-Route::middleware(['auth:sanctum,web', 'role:admin'])->prefix('admin')->name('api.admin.')->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.admin.')->group(function () {
 
     // Dashboard and statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'statistics'])

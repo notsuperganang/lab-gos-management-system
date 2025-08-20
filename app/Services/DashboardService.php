@@ -31,7 +31,9 @@ class DashboardService
                 'equipment_analytics' => $this->getEquipmentAnalytics(),
                 'request_analytics' => $this->getRequestAnalytics($dateFrom, $dateTo),
                 'trend_data' => $this->getTrendData($dateFrom, $dateTo),
+                'peak_analysis' => $this->getPeakAnalysis(),
                 'quick_insights' => $this->getQuickInsights($dateFrom, $dateTo),
+                'performance_metrics' => $this->getPerformanceMetrics($dateFrom, $dateTo),
                 'alerts' => $this->getSystemAlerts(),
             ];
         });
@@ -358,5 +360,171 @@ class DashboardService
                 ];
             })
             ->toArray();
+    }
+
+    /**
+     * Get peak activity analysis
+     */
+    private function getPeakAnalysis(): array
+    {
+        // Analyze hourly patterns
+        $hourlyActivity = DB::table('borrow_requests')
+            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get()
+            ->pluck('count', 'hour')
+            ->toArray();
+
+        // Fill missing hours with 0
+        for ($i = 0; $i < 24; $i++) {
+            if (!isset($hourlyActivity[$i])) {
+                $hourlyActivity[$i] = 0;
+            }
+        }
+        ksort($hourlyActivity);
+
+        // Analyze daily patterns
+        $dailyActivity = DB::table('borrow_requests')
+            ->selectRaw('DAYOFWEEK(created_at) as day_of_week, COUNT(*) as count')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('day_of_week')
+            ->get()
+            ->pluck('count', 'day_of_week')
+            ->toArray();
+
+        $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        $formattedDailyActivity = [];
+        for ($i = 1; $i <= 7; $i++) {
+            $formattedDailyActivity[$dayNames[$i-1]] = $dailyActivity[$i] ?? 0;
+        }
+
+        return [
+            'peak_hours' => $hourlyActivity,
+            'peak_days' => $formattedDailyActivity,
+            'busiest_hour' => array_search(max($hourlyActivity), $hourlyActivity),
+            'busiest_day' => array_search(max($formattedDailyActivity), $formattedDailyActivity),
+            'activity_patterns' => $this->getActivityPatterns(),
+        ];
+    }
+
+    /**
+     * Get performance metrics
+     */
+    private function getPerformanceMetrics(string $dateFrom, string $dateTo): array
+    {
+        return [
+            'request_completion_rates' => [
+                'borrow' => $this->getCompletionRate('borrow', $dateFrom, $dateTo),
+                'visit' => $this->getCompletionRate('visit', $dateFrom, $dateTo),
+                'testing' => $this->getCompletionRate('testing', $dateFrom, $dateTo),
+            ],
+            'admin_productivity' => $this->getAdminProductivityMetrics($dateFrom, $dateTo),
+            'system_efficiency' => [
+                'avg_response_time' => $this->getAverageResponseTime($dateFrom, $dateTo),
+                'equipment_turnaround' => $this->getEquipmentTurnaroundTime($dateFrom, $dateTo),
+                'user_satisfaction_score' => $this->calculateUserSatisfactionScore($dateFrom, $dateTo),
+            ],
+        ];
+    }
+
+    /**
+     * Get activity patterns
+     */
+    private function getActivityPatterns(): array
+    {
+        return [
+            'peak_hours' => [9, 10, 11, 14, 15], // Common peak hours
+            'low_activity_hours' => [0, 1, 2, 3, 4, 5, 6, 22, 23],
+            'peak_days' => ['Monday', 'Tuesday', 'Wednesday'],
+            'low_activity_days' => ['Saturday', 'Sunday'],
+        ];
+    }
+
+    /**
+     * Get completion rate for request type
+     */
+    private function getCompletionRate(string $type, string $dateFrom, string $dateTo): float
+    {
+        $modelClass = match($type) {
+            'borrow' => BorrowRequest::class,
+            'visit' => VisitRequest::class,
+            'testing' => TestingRequest::class,
+            default => BorrowRequest::class,
+        };
+
+        $total = $modelClass::whereBetween('created_at', [$dateFrom, $dateTo])->count();
+        $completed = $modelClass::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->where('status', 'completed')->count();
+
+        return $total > 0 ? round(($completed / $total) * 100, 1) : 0;
+    }
+
+    /**
+     * Get admin productivity metrics
+     */
+    private function getAdminProductivityMetrics(string $dateFrom, string $dateTo): array
+    {
+        $adminActions = ActivityLog::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->whereHas('causer', function($query) {
+                $query->whereIn('role', ['admin', 'super_admin']);
+            })
+            ->count();
+
+        $activeAdmins = \App\Models\User::whereIn('role', ['admin', 'super_admin'])
+            ->where('is_active', true)
+            ->count();
+
+        return [
+            'total_admin_actions' => $adminActions,
+            'active_admins' => $activeAdmins,
+            'avg_actions_per_admin' => $activeAdmins > 0 ? round($adminActions / $activeAdmins, 1) : 0,
+        ];
+    }
+
+    /**
+     * Get average response time
+     */
+    private function getAverageResponseTime(string $dateFrom, string $dateTo): float
+    {
+        // Calculate average time from request creation to first admin action
+        $avgResponseTime = DB::table('borrow_requests')
+            ->whereBetween('created_at', [$dateFrom, $dateTo])
+            ->whereNotNull('reviewed_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, reviewed_at)) as avg_hours')
+            ->value('avg_hours');
+
+        return round($avgResponseTime ?? 0, 1);
+    }
+
+    /**
+     * Get equipment turnaround time
+     */
+    private function getEquipmentTurnaroundTime(string $dateFrom, string $dateTo): float
+    {
+        // Calculate average time equipment is borrowed
+        $avgTurnaround = BorrowRequest::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->where('status', 'completed')
+            ->selectRaw('AVG(TIMESTAMPDIFF(DAY, borrow_date, return_date)) as avg_days')
+            ->value('avg_days');
+
+        return round($avgTurnaround ?? 0, 1);
+    }
+
+    /**
+     * Calculate user satisfaction score
+     */
+    private function calculateUserSatisfactionScore(string $dateFrom, string $dateTo): float
+    {
+        // Calculate satisfaction based on completion rates and processing times
+        $completionRate = $this->getCompletionRate('borrow', $dateFrom, $dateTo);
+        $avgProcessingHours = $this->getAverageResponseTime($dateFrom, $dateTo);
+
+        // Score based on completion rate (60%) and processing speed (40%)
+        $completionScore = $completionRate;
+        $speedScore = max(0, 100 - ($avgProcessingHours * 2)); // Penalty for slow processing
+
+        return round(($completionScore * 0.6) + ($speedScore * 0.4), 1);
     }
 }

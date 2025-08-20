@@ -114,7 +114,7 @@ class DashboardController extends Controller
                     'analytics' => $this->getActivityAnalytics($request),
                 ];
             });
-            
+
             return ApiResponse::paginated(
                 $result['logs'],
                 null,
@@ -129,12 +129,12 @@ class DashboardController extends Controller
                 ],
                 $result['transformed_data']
             );
-            
+
         } catch (\Exception $e) {
             return ApiResponse::error('Failed to retrieve activity logs', 500, null, $e->getMessage());
         }
     }
-    
+
     /**
      * Apply enhanced filters to activity log query
      */
@@ -144,48 +144,48 @@ class DashboardController extends Controller
         if ($request->filled('user_id')) {
             $query->where('causer_id', $request->get('user_id'));
         }
-        
+
         // Action filter
         if ($request->filled('action') || $request->filled('event')) {
             $action = $request->get('action') ?: $request->get('event');
             $query->where('event', 'like', "%{$action}%");
         }
-        
+
         // Model type filter
         if ($request->filled('model_type') || $request->filled('subject_type')) {
             $modelType = $request->get('model_type') ?: $request->get('subject_type');
             $query->where('subject_type', 'like', "%{$modelType}%");
         }
-        
+
         // Enhanced date filtering
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->get('date_from'));
         }
-        
+
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->get('date_to'));
         }
-        
+
         // Time range filters
         if ($request->filled('time_range')) {
             $this->applyTimeRangeFilter($query, $request->get('time_range'));
         }
-        
+
         // Priority/importance filter
         if ($request->filled('importance')) {
             $this->applyImportanceFilter($query, $request->get('importance'));
         }
-        
+
         // Enhanced search
         if ($request->filled('search')) {
             $this->applyAdvancedSearch($query, $request->get('search'));
         }
-        
+
         // IP address filter
         if ($request->filled('ip_address')) {
             $query->whereJsonContains('properties->ip_address', $request->get('ip_address'));
         }
-        
+
         // Admin actions only filter
         if ($request->boolean('admin_only', false)) {
             $query->whereHas('causer', function($q) {
@@ -193,14 +193,14 @@ class DashboardController extends Controller
             });
         }
     }
-    
+
     /**
      * Apply time range filter
      */
     private function applyTimeRangeFilter($query, string $timeRange): void
     {
         $now = now();
-        
+
         switch ($timeRange) {
             case 'today':
                 $query->whereDate('created_at', $now->toDateString());
@@ -236,7 +236,7 @@ class DashboardController extends Controller
                 break;
         }
     }
-    
+
     /**
      * Apply importance filter based on action type
      */
@@ -248,7 +248,7 @@ class DashboardController extends Controller
             'medium' => ['updated', 'created'],
             'low' => ['viewed', 'accessed', 'login'],
         ];
-        
+
         if (isset($importanceMap[$importance])) {
             $events = $importanceMap[$importance];
             $query->where(function($q) use ($events) {
@@ -258,7 +258,7 @@ class DashboardController extends Controller
             });
         }
     }
-    
+
     /**
      * Apply advanced search across multiple fields
      */
@@ -275,7 +275,7 @@ class DashboardController extends Controller
               });
         });
     }
-    
+
     /**
      * Transform activity logs with enhanced data
      */
@@ -283,7 +283,7 @@ class DashboardController extends Controller
     {
         return $logs->map(function ($log) {
             $properties = is_string($log->properties) ? json_decode($log->properties, true) : $log->properties;
-            
+
             return [
                 'id' => $log->id,
                 'event' => $log->event,
@@ -308,7 +308,7 @@ class DashboardController extends Controller
             ];
         })->toArray();
     }
-    
+
     /**
      * Get activity analytics
      */
@@ -316,10 +316,10 @@ class DashboardController extends Controller
     {
         $dateFrom = $request->get('date_from', now()->subDays(7)->format('Y-m-d'));
         $dateTo = $request->get('date_to', now()->format('Y-m-d'));
-        
+
         // Activity summary
         $totalActivities = ActivityLog::whereBetween('created_at', [$dateFrom, $dateTo])->count();
-        
+
         // Top users by activity
         $topUsers = ActivityLog::whereBetween('created_at', [$dateFrom, $dateTo])
             ->whereNotNull('causer_id')
@@ -337,7 +337,7 @@ class DashboardController extends Controller
                     'activity_count' => $item->activity_count,
                 ];
             });
-        
+
         // Activity by type
         $activityByType = ActivityLog::whereBetween('created_at', [$dateFrom, $dateTo])
             ->select('subject_type', DB::raw('count(*) as count'))
@@ -348,7 +348,7 @@ class DashboardController extends Controller
                 $modelName = class_basename($item->subject_type);
                 return [$modelName => $item->count];
             });
-        
+
         // Activity by event
         $activityByEvent = ActivityLog::whereBetween('created_at', [$dateFrom, $dateTo])
             ->select('event', DB::raw('count(*) as count'))
@@ -357,27 +357,27 @@ class DashboardController extends Controller
             ->limit(10)
             ->get()
             ->pluck('count', 'event');
-        
+
         // Daily activity trend
         $dailyTrend = [];
         $start = Carbon::parse($dateFrom);
         $end = Carbon::parse($dateTo);
-        
+
         while ($start <= $end) {
             $dayStart = $start->copy()->startOfDay();
             $dayEnd = $start->copy()->endOfDay();
-            
+
             $count = ActivityLog::whereBetween('created_at', [$dayStart, $dayEnd])->count();
-            
+
             $dailyTrend[] = [
                 'date' => $start->format('Y-m-d'),
                 'day_name' => $start->format('D'),
                 'activity_count' => $count,
             ];
-            
+
             $start->addDay();
         }
-        
+
         return [
             'summary' => [
                 'total_activities' => $totalActivities,
@@ -391,7 +391,7 @@ class DashboardController extends Controller
             'daily_trend' => $dailyTrend,
         ];
     }
-    
+
     /**
      * Get applied filters for response
      */
@@ -414,7 +414,7 @@ class DashboardController extends Controller
             'sort_direction' => $request->get('sort_direction', 'desc'),
         ];
     }
-    
+
     /**
      * Get export options
      */
@@ -433,7 +433,7 @@ class DashboardController extends Controller
             ],
         ];
     }
-    
+
     /**
      * Get log importance level
      */
@@ -442,37 +442,37 @@ class DashboardController extends Controller
         $criticalEvents = ['deleted', 'rejected', 'cancelled', 'failed'];
         $highEvents = ['approved', 'completed', 'activated', 'suspended'];
         $mediumEvents = ['updated', 'created', 'modified'];
-        
+
         foreach ($criticalEvents as $critical) {
             if (str_contains(strtolower($event), $critical)) {
                 return 'critical';
             }
         }
-        
+
         foreach ($highEvents as $high) {
             if (str_contains(strtolower($event), $high)) {
                 return 'high';
             }
         }
-        
+
         foreach ($mediumEvents as $medium) {
             if (str_contains(strtolower($event), $medium)) {
                 return 'medium';
             }
         }
-        
+
         return 'low';
     }
-    
+
     /**
      * Get log category
      */
     private function getLogCategory(?string $subjectType, string $event): string
     {
         if (!$subjectType) return 'system';
-        
+
         $modelName = class_basename($subjectType);
-        
+
         return match($modelName) {
             'BorrowRequest', 'VisitRequest', 'TestingRequest' => 'requests',
             'Equipment' => 'equipment',
@@ -481,7 +481,7 @@ class DashboardController extends Controller
             default => 'system',
         };
     }
-    
+
     /**
      * Get log icon
      */
@@ -500,7 +500,7 @@ class DashboardController extends Controller
             default => 'activity',
         };
     }
-    
+
     /**
      * Get log color
      */
@@ -528,33 +528,33 @@ class DashboardController extends Controller
             // Enhanced caching for notifications
             $cacheKey = 'notifications_' . md5(serialize($request->only(['type', 'is_read', 'priority', 'search'])));
             $cacheDuration = 120; // 2 minutes cache
-            
+
             if ($request->boolean('refresh_cache', false)) {
                 Cache::forget($cacheKey);
             }
-            
+
             $result = Cache::remember($cacheKey, $cacheDuration, function () use ($request) {
                 $query = Notification::orderBy('created_at', 'desc');
-                
+
                 // Enhanced filtering
                 $this->applyNotificationFilters($query, $request);
-                
+
                 $perPage = min($request->get('per_page', 15), 100);
                 $notifications = $query->paginate($perPage);
-                
+
                 // Transform data with enhanced information
                 $notificationData = $this->transformNotifications($notifications->getCollection());
-                
+
                 return [
                     'notifications' => $notifications,
                     'transformed_data' => $notificationData,
                 ];
             });
-            
+
             // Generate real-time system notifications (not cached)
             $systemNotifications = $this->generateEnhancedSystemNotifications();
             $criticalAlerts = $this->getCriticalAlerts();
-            
+
             return ApiResponse::paginated(
                 $result['notifications'],
                 null,
@@ -571,12 +571,12 @@ class DashboardController extends Controller
                 ],
                 $result['transformed_data']
             );
-            
+
         } catch (\Exception $e) {
             return ApiResponse::error('Failed to retrieve notifications', 500, null, $e->getMessage());
         }
     }
-    
+
     /**
      * Apply enhanced notification filters
      */
@@ -586,7 +586,7 @@ class DashboardController extends Controller
         if ($request->filled('type')) {
             $query->where('type', $request->get('type'));
         }
-        
+
         // Read status filter
         if ($request->filled('is_read')) {
             if ($request->boolean('is_read')) {
@@ -595,21 +595,21 @@ class DashboardController extends Controller
                 $query->whereNull('read_at');
             }
         }
-        
+
         // Priority filter
         if ($request->filled('priority')) {
             $query->whereJsonContains('data->priority', $request->get('priority'));
         }
-        
+
         // Date range filter
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->get('date_from'));
         }
-        
+
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->get('date_to'));
         }
-        
+
         // Enhanced search
         if ($request->filled('search')) {
             $search = $request->get('search');
@@ -621,7 +621,7 @@ class DashboardController extends Controller
             });
         }
     }
-    
+
     /**
      * Transform notifications with enhanced data
      */
@@ -629,7 +629,7 @@ class DashboardController extends Controller
     {
         return $notifications->map(function ($notification) {
             $data = is_string($notification->data) ? json_decode($notification->data, true) : $notification->data;
-            
+
             return [
                 'id' => $notification->id,
                 'type' => $notification->type,
@@ -652,30 +652,30 @@ class DashboardController extends Controller
             ];
         })->toArray();
     }
-    
+
     /**
      * Generate enhanced system notifications
      */
     private function generateEnhancedSystemNotifications(): array
     {
         $notifications = [];
-        
+
         // Priority system alerts
         $this->addPendingRequestAlerts($notifications);
         $this->addEquipmentAlerts($notifications);
         $this->addSystemHealthAlerts($notifications);
         $this->addPerformanceAlerts($notifications);
         $this->addSecurityAlerts($notifications);
-        
+
         // Sort by priority
         usort($notifications, function($a, $b) {
             $priorityOrder = ['urgent' => 4, 'high' => 3, 'medium' => 2, 'low' => 1];
             return ($priorityOrder[$b['priority']] ?? 0) <=> ($priorityOrder[$a['priority']] ?? 0);
         });
-        
+
         return array_slice($notifications, 0, 10); // Limit to top 10
     }
-    
+
     /**
      * Add pending request alerts
      */
@@ -685,7 +685,7 @@ class DashboardController extends Controller
         $overdueRequests = BorrowRequest::where('status', 'pending')
             ->where('created_at', '<=', now()->subDays(2))
             ->count();
-            
+
         if ($overdueRequests > 0) {
             $notifications[] = [
                 'type' => 'overdue_requests',
@@ -700,12 +700,12 @@ class DashboardController extends Controller
                 'expires_at' => now()->addHours(6)->format('Y-m-d H:i:s'),
             ];
         }
-        
+
         // High volume of pending requests
         $totalPending = BorrowRequest::where('status', 'pending')->count() +
                        VisitRequest::where('status', 'pending')->count() +
                        TestingRequest::where('status', 'pending')->count();
-                       
+
         if ($totalPending > 20) {
             $notifications[] = [
                 'type' => 'high_pending_volume',
@@ -720,7 +720,7 @@ class DashboardController extends Controller
             ];
         }
     }
-    
+
     /**
      * Add equipment alerts
      */
@@ -730,7 +730,7 @@ class DashboardController extends Controller
         $criticalMaintenance = Equipment::where('next_maintenance_date', '<=', now())
             ->where('status', 'active')
             ->count();
-            
+
         if ($criticalMaintenance > 0) {
             $notifications[] = [
                 'type' => 'critical_maintenance',
@@ -744,12 +744,12 @@ class DashboardController extends Controller
                 'created_at' => now()->format('Y-m-d H:i:s'),
             ];
         }
-        
+
         // Equipment out of stock
         $outOfStock = Equipment::where('status', 'active')
             ->where('available_quantity', 0)
             ->count();
-            
+
         if ($outOfStock > 0) {
             $notifications[] = [
                 'type' => 'equipment_out_of_stock',
@@ -764,7 +764,7 @@ class DashboardController extends Controller
             ];
         }
     }
-    
+
     /**
      * Add system health alerts
      */
@@ -772,7 +772,7 @@ class DashboardController extends Controller
     {
         // High system load (many pending actions)
         $pendingLoad = $this->getPendingActionsCount();
-        
+
         if ($pendingLoad > 50) {
             $notifications[] = [
                 'type' => 'high_system_load',
@@ -787,7 +787,7 @@ class DashboardController extends Controller
             ];
         }
     }
-    
+
     /**
      * Add performance alerts
      */
@@ -795,7 +795,7 @@ class DashboardController extends Controller
     {
         // Slow processing times
         $avgProcessingTime = $this->getAverageProcessingTime('borrow', now()->subDays(7)->format('Y-m-d'), now()->format('Y-m-d'));
-        
+
         if ($avgProcessingTime['average_hours'] > 48) {
             $notifications[] = [
                 'type' => 'slow_processing',
@@ -809,7 +809,7 @@ class DashboardController extends Controller
             ];
         }
     }
-    
+
     /**
      * Add security alerts
      */
@@ -818,12 +818,12 @@ class DashboardController extends Controller
         // Multiple failed login attempts (if implemented)
         // Unusual activity patterns
         // This would depend on your security monitoring implementation
-        
+
         // For now, check for inactive admins
         $inactiveAdmins = User::whereIn('role', ['admin', 'super_admin'])
             ->where('last_login_at', '<=', now()->subDays(30))
             ->count();
-            
+
         if ($inactiveAdmins > 0) {
             $notifications[] = [
                 'type' => 'inactive_admins',
@@ -838,19 +838,19 @@ class DashboardController extends Controller
             ];
         }
     }
-    
+
     /**
      * Get critical alerts that require immediate attention
      */
     private function getCriticalAlerts(): array
     {
         $alerts = [];
-        
+
         // System-critical issues only
         $overdueRequests = BorrowRequest::where('status', 'pending')
             ->where('created_at', '<=', now()->subDays(3))
             ->count();
-            
+
         if ($overdueRequests > 0) {
             $alerts[] = [
                 'type' => 'critical_overdue',
@@ -860,10 +860,10 @@ class DashboardController extends Controller
                 'requires_action' => true,
             ];
         }
-        
+
         return $alerts;
     }
-    
+
     /**
      * Get notification statistics
      */
@@ -887,7 +887,7 @@ class DashboardController extends Controller
                 ->pluck('count', 'type'),
         ];
     }
-    
+
     /**
      * Get notification filters for response
      */
@@ -902,7 +902,7 @@ class DashboardController extends Controller
             'search' => $request->get('search'),
         ];
     }
-    
+
     /**
      * Get notification settings
      */
@@ -922,7 +922,7 @@ class DashboardController extends Controller
             ],
         ];
     }
-    
+
     /**
      * Get notification category
      */
@@ -937,7 +937,7 @@ class DashboardController extends Controller
             default => 'general',
         };
     }
-    
+
     /**
      * Get notification icon
      */
@@ -1675,7 +1675,7 @@ class DashboardController extends Controller
     private function getAdminProductivityMetrics(string $dateFrom, string $dateTo): array
     {
         $adminActions = ActivityLog::whereBetween('created_at', [$dateFrom, $dateTo])
-            ->whereHas('user', function($query) {
+            ->whereHas('causer', function($query) {
                 $query->whereIn('role', ['admin', 'super_admin']);
             })
             ->count();
