@@ -114,7 +114,7 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
 | They provide CRUD operations for managing the laboratory system.
 */
 
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.admin.')->group(function () {
+Route::middleware(['auth:sanctum,web', 'role:admin'])->prefix('admin')->name('api.admin.')->group(function () {
 
     // Dashboard and statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'statistics'])

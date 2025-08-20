@@ -1366,17 +1366,18 @@ class DashboardController extends Controller
         // Most requested equipment
         $mostRequestedEquipment = DB::table('borrow_request_items')
             ->join('equipment', 'borrow_request_items.equipment_id', '=', 'equipment.id')
+            ->join('categories', 'equipment.category_id', '=', 'categories.id')
             ->join('borrow_requests', 'borrow_request_items.borrow_request_id', '=', 'borrow_requests.id')
             ->whereBetween('borrow_requests.created_at', [$dateFrom, $dateTo])
             ->select(
                 'equipment.id',
                 'equipment.name',
-                'equipment.category',
+                'categories.name as category',
                 DB::raw('COUNT(borrow_request_items.id) as request_count'),
                 DB::raw('SUM(borrow_request_items.quantity_requested) as total_quantity'),
                 DB::raw('AVG(borrow_request_items.quantity_requested) as avg_quantity')
             )
-            ->groupBy('equipment.id', 'equipment.name', 'equipment.category')
+            ->groupBy('equipment.id', 'equipment.name', 'categories.name')
             ->orderByDesc('request_count')
             ->limit(10)
             ->get();
@@ -1389,10 +1390,11 @@ class DashboardController extends Controller
         ];
 
         // Low stock alerts
-        $lowStockEquipment = Equipment::where('status', 'active')
+        $lowStockEquipment = Equipment::with('category:id,name')
+            ->where('status', 'active')
             ->whereRaw('available_quantity <= (total_quantity * 0.2)')
             ->where('available_quantity', '>', 0)
-            ->select('id', 'name', 'total_quantity', 'available_quantity', 'category')
+            ->select('id', 'name', 'total_quantity', 'available_quantity', 'category_id')
             ->orderBy('available_quantity')
             ->limit(10)
             ->get()
@@ -1400,7 +1402,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $equipment->id,
                     'name' => $equipment->name,
-                    'category' => $equipment->category,
+                    'category' => $equipment->category ? $equipment->category->name : 'Unknown',
                     'total_quantity' => $equipment->total_quantity,
                     'available_quantity' => $equipment->available_quantity,
                     'utilization_rate' => round((($equipment->total_quantity - $equipment->available_quantity) / $equipment->total_quantity) * 100, 1),
@@ -1612,8 +1614,8 @@ class DashboardController extends Controller
         };
 
         $processed = $modelClass::whereBetween('created_at', [$dateFrom, $dateTo])
-            ->whereNotNull('approved_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, approved_at)) as avg_hours')
+            ->whereNotNull('reviewed_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, reviewed_at)) as avg_hours')
             ->first();
 
         $avgHours = $processed->avg_hours ?? 0;
@@ -1694,8 +1696,8 @@ class DashboardController extends Controller
         // Calculate average time from request creation to first admin action
         $avgResponseTime = DB::table('borrow_requests')
             ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->whereNotNull('approved_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, approved_at)) as avg_hours')
+            ->whereNotNull('reviewed_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, reviewed_at)) as avg_hours')
             ->value('avg_hours');
 
         return round($avgResponseTime ?? 0, 1);

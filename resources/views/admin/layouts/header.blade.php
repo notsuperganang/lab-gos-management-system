@@ -274,38 +274,100 @@ function headerData() {
         
         async fetchNotificationsCount() {
             try {
-                const response = await fetch('/api/admin/notifications?per_page=1');
-                const data = await response.json();
-                if (data.success && data.meta && data.meta.statistics) {
-                    this.unreadCount = data.meta.statistics.total_unread || 0;
+                // Use AdminAPI client for proper authentication
+                if (typeof AdminAPI !== 'undefined') {
+                    const response = await AdminAPI.getNotifications();
+                    if (response && response.success) {
+                        // Count notifications or use provided count
+                        this.unreadCount = response.data?.length || 0;
+                    }
+                } else {
+                    // Fallback to direct fetch with proper headers
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const response = await fetch('/admin-api/notifications', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    // Check if response is JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        if (data.success) {
+                            this.unreadCount = data.data?.length || 0;
+                        }
+                    } else {
+                        console.warn('Non-JSON response for notifications, likely auth redirect');
+                        this.unreadCount = 0;
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching notifications count:', error);
+                this.unreadCount = 0;
             }
         },
         
         async fetchNotifications() {
             try {
-                const response = await fetch('/api/admin/notifications?per_page=10');
-                const data = await response.json();
-                if (data.success) {
-                    this.notifications = data.data || [];
-                    this.unreadCount = data.meta?.statistics?.total_unread || 0;
+                // Use AdminAPI client for proper authentication
+                if (typeof AdminAPI !== 'undefined') {
+                    const response = await AdminAPI.getNotifications();
+                    if (response && response.success) {
+                        this.notifications = response.data || [];
+                        // Update unread count from actual notification data
+                        this.unreadCount = this.notifications.filter(n => !n.is_read).length;
+                    }
+                } else {
+                    // Fallback to direct fetch with proper headers
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const response = await fetch('/admin-api/notifications', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    // Check if response is JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        if (data.success) {
+                            this.notifications = data.data || [];
+                            this.unreadCount = this.notifications.filter(n => !n.is_read).length;
+                        }
+                    } else {
+                        console.warn('Non-JSON response for notifications, likely auth redirect');
+                        this.notifications = [];
+                        this.unreadCount = 0;
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching notifications:', error);
                 this.notifications = [];
+                this.unreadCount = 0;
             }
         },
         
         async markAsRead(notificationId) {
             try {
-                await fetch(`/api/admin/notifications/${notificationId}/read`, {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                await fetch(`/admin-api/notifications/${notificationId}/read`, {
                     method: 'PUT',
                     headers: {
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
                 });
                 
                 // Update local state
@@ -321,12 +383,16 @@ function headerData() {
         
         async markAllAsRead() {
             try {
-                await fetch('/api/admin/notifications/mark-all-read', {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                await fetch('/admin-api/notifications/mark-all-read', {
                     method: 'PUT',
                     headers: {
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
                 });
                 
                 // Update local state

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\DashboardService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -19,9 +20,62 @@ class AdminController extends Controller
     /**
      * Show the admin dashboard.
      */
-    public function dashboard(): View
+    public function dashboard(DashboardService $dashboardService): View
     {
-        return view('admin.dashboard');
+        try {
+            // Default date range - last 30 days
+            $dateFrom = now()->subDays(30)->format('Y-m-d');
+            $dateTo = now()->format('Y-m-d');
+            
+            // Fetch dashboard statistics
+            $dashboardStats = $dashboardService->getDashboardStats($dateFrom, $dateTo);
+            
+            // Fetch recent activities (limit to 10 for initial load)
+            $recentActivities = $dashboardService->getRecentActivities(10);
+
+            // Prepare data for Alpine.js injection
+            $stats = [
+                'summary' => $dashboardStats['summary'] ?? [],
+                'equipment_analytics' => $dashboardStats['equipment_analytics'] ?? [],
+                'quick_insights' => $dashboardStats['quick_insights'] ?? [],
+                'alerts' => $dashboardStats['alerts'] ?? [],
+                'autoRefresh' => true
+            ];
+
+            return view('admin.dashboard', compact('stats', 'recentActivities'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Dashboard loading error: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'exception' => $e,
+            ]);
+
+            // Provide fallback empty data to prevent Alpine errors
+            $stats = [
+                'summary' => [
+                    'total_pending_requests' => 0,
+                    'total_equipment' => 0,
+                    'available_equipment' => 0,
+                    'equipment_utilization_rate' => 0,
+                    'total_active_requests' => 0,
+                    'pending_borrow_requests' => 0,
+                    'active_borrow_requests' => 0,
+                    'pending_visit_requests' => 0,
+                    'active_visit_requests' => 0,
+                    'pending_testing_requests' => 0,
+                    'active_testing_requests' => 0,
+                    'pending_trend' => 0
+                ],
+                'equipment_analytics' => [],
+                'quick_insights' => ['most_requested_equipment' => []],
+                'alerts' => [],
+                'autoRefresh' => true
+            ];
+            $recentActivities = [];
+
+            return view('admin.dashboard', compact('stats', 'recentActivities'))
+                ->with('error', 'Failed to load dashboard data. Please try refreshing the page.');
+        }
     }
 
     // PROFIL DAN PUBLIKASI (Profile & Publications)

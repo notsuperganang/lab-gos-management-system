@@ -26,7 +26,7 @@
 @endsection
 
 @section('content')
-<div x-data="dashboardData()" x-init="init()" class="space-y-8">
+<div x-data="dashboardData" x-ref="dashboard" class="space-y-8">
     
     <!-- Real-time Status Bar -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -38,15 +38,15 @@
                     <span class="text-sm text-green-600 font-medium">Operational</span>
                 </div>
                 <div class="text-sm text-gray-500">
-                    Last updated: <span x-text="lastUpdated"></span>
+                    Last updated: <span x-text="new Date().toLocaleTimeString('id-ID')"></span>
                 </div>
             </div>
             <div class="flex items-center space-x-4 text-sm text-gray-500">
-                <span>Auto-refresh: <span x-text="autoRefresh ? 'ON' : 'OFF'" 
-                      :class="autoRefresh ? 'text-green-600 font-medium' : 'text-gray-500'"></span></span>
-                <button @click="toggleAutoRefresh()" 
+                <span>Auto-refresh: <span x-text="(stats.autoRefresh !== undefined ? stats.autoRefresh : true) ? 'ON' : 'OFF'" 
+                      :class="(stats.autoRefresh !== undefined ? stats.autoRefresh : true) ? 'text-green-600 font-medium' : 'text-gray-500'"></span></span>
+                <button @click="stats.autoRefresh = !stats.autoRefresh" 
                         class="text-blue-600 hover:text-blue-500 font-medium">
-                    <span x-text="autoRefresh ? 'Disable' : 'Enable'"></span>
+                    <span x-text="(stats.autoRefresh !== undefined ? stats.autoRefresh : true) ? 'Disable' : 'Enable'"></span>
                 </button>
             </div>
         </div>
@@ -242,36 +242,35 @@
     </div>
 
     <!-- Charts and Analytics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Request Trends Chart -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-medium text-gray-900">Request Trends (Last 30 Days)</h3>
-                <div class="flex space-x-2">
-                    <button @click="updateChartRange('7d')"
-                            :class="chartRange === '7d' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'"
-                            class="px-3 py-1 rounded text-sm font-medium">7D</button>
-                    <button @click="updateChartRange('30d')"
-                            :class="chartRange === '30d' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'"
-                            class="px-3 py-1 rounded text-sm font-medium">30D</button>
-                </div>
+                <h3 class="text-lg font-medium text-gray-900">Request Trends</h3>
             </div>
             <div class="h-64">
                 <canvas id="requestTrendsChart"></canvas>
             </div>
         </div>
 
-        <!-- Equipment Status Chart -->
+        <!-- Equipment Usage Chart -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-medium text-gray-900">Equipment Status</h3>
-                <div class="text-sm text-gray-500">
-                    Total: <span x-text="stats.equipment_analytics?.total_count || 0"></span>
-                </div>
+                <h3 class="text-lg font-medium text-gray-900">Equipment Usage</h3>
             </div>
             <div class="h-64">
-                <canvas id="equipmentStatusChart"></canvas>
+                <canvas id="equipmentUsageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Distribution Chart -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900">Request Status</h3>
+            </div>
+            <div class="h-64">
+                <canvas id="statusDistributionChart"></canvas>
             </div>
         </div>
     </div>
@@ -360,7 +359,7 @@
             </div>
         </div>
         <div class="divide-y divide-gray-200">
-            <template x-for="activity in recentActivity" :key="activity.id">
+            <template x-for="activity in recentActivities" :key="activity.id">
                 <div class="px-6 py-4 hover:bg-gray-50">
                     <div class="flex items-start space-x-3">
                         <div class="flex-shrink-0">
@@ -383,219 +382,230 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm text-gray-900">
-                                <span class="font-medium" x-text="activity.user"></span>
-                                <span x-text="activity.description"></span>
+                                <span class="font-medium" x-text="activity.causer?.name || 'System'"></span>
+                                <span x-text="activity.description || activity.event || 'performed an action'"></span>
                             </p>
-                            <p class="text-xs text-gray-500" x-text="activity.time"></p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(activity.created_at)"></p>
                         </div>
                     </div>
                 </div>
             </template>
+            
+            <!-- Empty state -->
+            <div x-show="!recentActivities || recentActivities.length === 0" class="text-center py-8 text-gray-500">
+                <p class="text-sm">No recent activity</p>
+            </div>
         </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
+<style>[x-cloak] { display: none; }</style>
 <script>
-function dashboardData() {
-    return {
-        stats: {},
-        recentActivity: [],
-        lastUpdated: '',
-        autoRefresh: true,
-        refreshInterval: null,
-        chartRange: '30d',
-        requestTrendsChart: null,
-        equipmentStatusChart: null,
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dashboardData', () => ({
+        // Inject data from Laravel to avoid undefined errors
+        stats: @js($stats ?? []),
+        recentActivities: @js($recentActivities ?? []),
+        loading: false,
+        chartsInitialized: false,
         
-        async init() {
-            await this.loadDashboardData();
-            this.initCharts();
-            this.startAutoRefresh();
+        // Initialize when component is ready
+        init() {
+            console.log('Dashboard initialized with data:', {
+                stats: this.stats,
+                recentActivities: this.recentActivities,
+                activitiesCount: this.recentActivities?.length || 0
+            });
+            
+            this.$nextTick(() => {
+                if (typeof Chart !== 'undefined') {
+                    this.initCharts();
+                }
+            });
         },
         
-        async loadDashboardData() {
-            try {
-                const response = await this.$parent.apiCall('/api/admin/dashboard/stats');
-                this.stats = response.data;
-                this.lastUpdated = new Date().toLocaleTimeString('id-ID');
-                
-                // Load recent activity
-                await this.loadRecentActivity();
-                
-                // Update charts
-                this.updateCharts();
-                
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-            }
-        },
-        
-        async loadRecentActivity() {
-            try {
-                const response = await this.$parent.apiCall('/api/admin/activity-logs?per_page=10');
-                this.recentActivity = (response.data || []).map(log => ({
-                    id: log.id,
-                    type: this.getActivityType(log.event),
-                    user: log.user?.name || 'System',
-                    description: log.description,
-                    time: log.created_at_human
-                }));
-            } catch (error) {
-                console.error('Error loading recent activity:', error);
-                this.recentActivity = [];
-            }
-        },
-        
-        getActivityType(event) {
-            if (event.includes('approved')) return 'approved';
-            if (event.includes('rejected')) return 'rejected';
-            if (event.includes('created')) return 'created';
-            if (event.includes('updated')) return 'updated';
-            return 'created';
-        },
-        
+        // Chart initialization using real data
         initCharts() {
-            // Request Trends Chart
-            const trendsCtx = document.getElementById('requestTrendsChart').getContext('2d');
-            this.requestTrendsChart = new Chart(trendsCtx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Borrow Requests',
-                        data: [],
-                        borderColor: '#3B82F6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4
-                    }, {
-                        label: 'Visit Requests',
-                        data: [],
-                        borderColor: '#10B981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4
-                    }, {
-                        label: 'Testing Requests',
-                        data: [],
-                        borderColor: '#8B5CF6',
-                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#F3F4F6'
-                            }
+            if (this.chartsInitialized) return;
+            
+            try {
+                console.log('Initializing charts with real data:', this.stats);
+                
+                // Request Trends Chart - use real request data
+                const trendsCanvas = document.getElementById('requestTrendsChart');
+                if (trendsCanvas) {
+                    const requestData = this.getRequestTrendsData();
+                    new Chart(trendsCanvas.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: requestData.labels,
+                            datasets: [{
+                                label: 'Total Requests',
+                                data: requestData.values,
+                                borderColor: '#1E40AF',
+                                backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
                         },
-                        x: {
-                            grid: {
-                                color: '#F3F4F6'
-                            }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } }
                         }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
+                    });
                 }
-            });
-            
-            // Equipment Status Chart
-            const statusCtx = document.getElementById('equipmentStatusChart').getContext('2d');
-            this.equipmentStatusChart = new Chart(statusCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Active', 'Maintenance', 'Inactive'],
-                    datasets: [{
-                        data: [0, 0, 0],
-                        backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
+                
+                // Equipment Usage Chart - use real equipment data
+                const equipmentCanvas = document.getElementById('equipmentUsageChart');
+                if (equipmentCanvas) {
+                    const equipmentData = this.getEquipmentUsageData();
+                    new Chart(equipmentCanvas.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: equipmentData.labels,
+                            datasets: [{
+                                label: 'Equipment Count',
+                                data: equipmentData.values,
+                                backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } }
                         }
-                    }
+                    });
                 }
-            });
-        },
-        
-        updateCharts() {
-            if (!this.stats.trend_data) return;
-            
-            // Update request trends chart
-            const trendData = this.stats.trend_data.daily_trends || [];
-            const last30Days = trendData.slice(-30);
-            
-            this.requestTrendsChart.data.labels = last30Days.map(d => 
-                new Date(d.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' })
-            );
-            this.requestTrendsChart.data.datasets[0].data = last30Days.map(d => d.borrow_requests || 0);
-            this.requestTrendsChart.data.datasets[1].data = last30Days.map(d => d.visit_requests || 0);
-            this.requestTrendsChart.data.datasets[2].data = last30Days.map(d => d.testing_requests || 0);
-            this.requestTrendsChart.update();
-            
-            // Update equipment status chart
-            const statusData = this.stats.equipment_analytics?.status_distribution || {};
-            this.equipmentStatusChart.data.datasets[0].data = [
-                statusData.active || 0,
-                statusData.maintenance || 0,
-                statusData.inactive || 0
-            ];
-            this.equipmentStatusChart.update();
-        },
-        
-        async refreshDashboard() {
-            await this.loadDashboardData();
-            this.$parent.showToast('success', 'Dashboard Refreshed', 'Data has been updated successfully');
-        },
-        
-        startAutoRefresh() {
-            if (this.autoRefresh) {
-                this.refreshInterval = setInterval(() => {
-                    this.loadDashboardData();
-                }, 30000); // Refresh every 30 seconds
+                
+                // Status Distribution Chart - use real status data
+                const statusCanvas = document.getElementById('statusDistributionChart');
+                if (statusCanvas) {
+                    const statusData = this.getStatusDistributionData();
+                    new Chart(statusCanvas.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: statusData.labels,
+                            datasets: [{
+                                data: statusData.values,
+                                backgroundColor: ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '60%'
+                        }
+                    });
+                }
+                
+                this.chartsInitialized = true;
+                console.log('Charts initialized successfully with real data');
+            } catch (error) {
+                console.error('Chart initialization error:', error);
             }
         },
         
-        stopAutoRefresh() {
-            if (this.refreshInterval) {
-                clearInterval(this.refreshInterval);
-                this.refreshInterval = null;
-            }
+        // Get request trends data from stats
+        getRequestTrendsData() {
+            const summary = this.stats.summary || {};
+            return {
+                labels: ['Borrow', 'Visit', 'Testing'],
+                values: [
+                    (summary.pending_borrow_requests || 0) + (summary.active_borrow_requests || 0),
+                    (summary.pending_visit_requests || 0) + (summary.active_visit_requests || 0),
+                    (summary.pending_testing_requests || 0) + (summary.active_testing_requests || 0)
+                ]
+            };
         },
         
-        toggleAutoRefresh() {
-            this.autoRefresh = !this.autoRefresh;
-            if (this.autoRefresh) {
-                this.startAutoRefresh();
-            } else {
-                this.stopAutoRefresh();
-            }
+        // Get equipment usage data from stats
+        getEquipmentUsageData() {
+            const summary = this.stats.summary || {};
+            const total = summary.total_equipment || 1;
+            const available = summary.available_equipment || 0;
+            const inUse = Math.max(0, total - available);
+            
+            return {
+                labels: ['Available', 'In Use', 'Total'],
+                values: [available, inUse, total]
+            };
         },
         
-        updateChartRange(range) {
-            this.chartRange = range;
-            this.updateCharts();
+        // Get status distribution data from stats
+        getStatusDistributionData() {
+            const summary = this.stats.summary || {};
+            return {
+                labels: ['Pending', 'Active'],
+                values: [
+                    summary.total_pending_requests || 0,
+                    summary.total_active_requests || 0
+                ]
+            };
         },
         
+        // Utility functions
         getTrendColor(trend) {
             if (trend > 0) return 'text-red-600';
-            if (trend < 0) return 'text-green-600';
+            if (trend < 0) return 'text-green-600';  
             return 'text-gray-500';
+        },
+        
+        formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                console.warn('Error formatting date:', dateString);
+                return 'Invalid date';
+            }
+        },
+        
+        // Dashboard refresh functionality
+        async refreshDashboard() {
+            this.loading = true;
+            try {
+                window.location.reload();
+            } catch (error) {
+                console.error('Failed to refresh dashboard:', error);
+            } finally {
+                this.loading = false;
+            }
         }
+    }))
+});
+
+// Make functions globally available for compatibility
+window.getTrendColor = function(trend) {
+    if (trend > 0) return 'text-red-600';
+    if (trend < 0) return 'text-green-600';  
+    return 'text-gray-500';
+};
+
+window.formatDate = function(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return 'Invalid date';
     }
-}
+};
 </script>
 @endpush
+

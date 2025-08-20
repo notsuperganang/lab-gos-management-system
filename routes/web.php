@@ -206,4 +206,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+// Session-based API routes for admin dashboard
+Route::middleware(['auth', 'role:admin|super_admin'])->prefix('admin-api')->name('admin-api.')->group(function () {
+    // Dashboard and statistics with session auth using new controller
+    Route::get('/dashboard/stats', [\App\Http\Controllers\Admin\DashboardController::class, 'statistics'])
+        ->name('dashboard.stats');
+    Route::get('/activity-logs', [\App\Http\Controllers\Admin\DashboardController::class, 'activityLogs'])
+        ->name('activity-logs');
+    Route::get('/notifications', [\App\Http\Controllers\Admin\DashboardController::class, 'notifications'])
+        ->name('notifications');
+});
+
 require __DIR__.'/auth.php';

@@ -286,9 +286,9 @@ window.LabGOS = LabGOS;
 
 // Admin API Client
 const AdminAPI = {
-    baseURL: '/api/admin',
+    baseURL: '/admin-api',
 
-    // Helper method for making authenticated API requests
+    // Helper method for making session-authenticated API requests
     async request(endpoint, options = {}) {
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         const url = `${this.baseURL}${endpoint}`;
@@ -306,9 +306,39 @@ const AdminAPI = {
 
         try {
             const response = await fetch(url, config);
-            const data = await response.json();
+            
+            // Handle different content types
+            let data;
+            const contentType = response.headers.get('content-type');
+            
+            try {
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    // Server returned non-JSON response (likely HTML error page)
+                    const text = await response.text();
+                    console.error('Server returned non-JSON response:', text.substring(0, 200));
+                    
+                    data = {
+                        success: false,
+                        message: `Server error: Expected JSON but received ${contentType || 'unknown content type'}. This usually indicates a 404 or 500 error.`
+                    };
+                }
+            } catch (parseError) {
+                console.error('Failed to parse response:', parseError);
+                data = {
+                    success: false,
+                    message: `Failed to parse server response: ${parseError.message}`
+                };
+            }
 
             if (!response.ok) {
+                // Handle authentication errors specifically
+                if (response.status === 401) {
+                    console.warn('Authentication expired. Please log in again.');
+                    // Could redirect to login here if needed
+                }
+                
                 throw {
                     status: response.status,
                     response: { data }
@@ -317,6 +347,13 @@ const AdminAPI = {
 
             return data;
         } catch (error) {
+            // Log error for debugging
+            console.error('AdminAPI Request Error:', {
+                endpoint,
+                error: error.message || error,
+                status: error.status
+            });
+            
             if (error.response) {
                 throw error;
             }
@@ -324,6 +361,7 @@ const AdminAPI = {
                 status: 0,
                 response: {
                     data: {
+                        success: false,
                         message: 'Network error. Please check your connection.'
                     }
                 }
@@ -480,7 +518,31 @@ const AdminAPI = {
 // Expose AdminAPI to global window object
 window.AdminAPI = AdminAPI;
 
-// Admin App Alpine Component
+// Ensure AdminAPI is available before Alpine components
+if (typeof window.AdminAPI === 'undefined') {
+    console.error('AdminAPI failed to initialize');
+}
+
+// Export utility functions globally for Alpine templates
+window.getTrendColor = function(trend) {
+    if (trend > 0) return 'text-red-600';
+    if (trend < 0) return 'text-green-600';  
+    return 'text-gray-500';
+};
+
+window.formatDate = function(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+// Admin App Alpine Component with dependency checks
 function adminApp() {
     return {
         // Sidebar state
@@ -499,11 +561,27 @@ function adminApp() {
         notifications: [],
         unreadNotifications: 0,
 
-        // Initialize admin app
+        // Initialize admin app with dependency checks
         init() {
-            this.loadUser();
-            this.loadNotifications();
-            this.setupEventListeners();
+            console.log('Initializing adminApp...');
+            
+            // Check dependencies
+            if (typeof AdminAPI === 'undefined') {
+                console.error('AdminAPI not available during adminApp init');
+                this.showToast('System initialization error: API not available', 'error');
+                return;
+            }
+            
+            // Initialize components
+            try {
+                this.loadUser();
+                this.loadNotifications();
+                this.setupEventListeners();
+                console.log('adminApp initialized successfully');
+            } catch (error) {
+                console.error('Error initializing adminApp:', error);
+                this.showToast('System initialization error', 'error');
+            }
         },
 
         // Toggle sidebar collapse (desktop)
@@ -531,16 +609,36 @@ function adminApp() {
             }
         },
 
-        // Load notifications
+        // Load notifications with better error handling
         async loadNotifications() {
             try {
+                console.log('Loading notifications...');
                 const response = await AdminAPI.getNotifications();
-                if (response.success) {
-                    this.notifications = response.data.slice(0, 5);
-                    this.unreadNotifications = response.data.filter(n => !n.read_at).length;
+                
+                if (response && response.success) {
+                    // Handle different response formats
+                    const notificationData = response.data?.data || response.data || [];
+                    this.notifications = notificationData.slice(0, 5);
+                    this.unreadNotifications = notificationData.filter(n => !n.read_at).length;
+                    console.log(`Loaded ${this.notifications.length} notifications (${this.unreadNotifications} unread)`);
+                } else {
+                    console.warn('Invalid response format for notifications:', response);
+                    this.notifications = [];
+                    this.unreadNotifications = 0;
                 }
             } catch (error) {
                 console.error('Failed to load notifications:', error);
+                this.notifications = [];
+                this.unreadNotifications = 0;
+                
+                // Handle specific error cases
+                if (error.status === 401) {
+                    console.warn('Authentication required for notifications');
+                } else if (error.status === 404) {
+                    console.warn('Notifications endpoint not found');
+                } else if (error.status >= 400) {
+                    console.error('API error loading notifications:', error.response?.data?.message || 'Unknown error');
+                }
             }
         },
 
@@ -598,6 +696,13 @@ function adminApp() {
         formatNumber(number) {
             return new Intl.NumberFormat('id-ID').format(number);
         },
+        
+        // Get trend color for dashboard metrics
+        getTrendColor(trend) {
+            if (trend > 0) return 'text-red-600';
+            if (trend < 0) return 'text-green-600';  
+            return 'text-gray-500';
+        },
 
         // Set up global event listeners
         setupEventListeners() {
@@ -651,307 +756,5 @@ function adminApp() {
     };
 }
 
-// Dashboard Data Alpine Component
-function dashboardData() {
-    return {
-        // Stats data
-        stats: {
-            totalRequests: 0,
-            pendingApprovals: 0,
-            activeEquipment: 0,
-            completedThisMonth: 0
-        },
-
-        // Chart data
-        chartData: {
-            requestTrends: null,
-            equipmentUsage: null,
-            statusDistribution: null
-        },
-
-        // Recent activities
-        recentActivities: [],
-
-        // Quick stats changes
-        statsChanges: {
-            totalRequests: { value: 0, isPositive: true },
-            pendingApprovals: { value: 0, isPositive: false },
-            activeEquipment: { value: 0, isPositive: true },
-            completedThisMonth: { value: 0, isPositive: true }
-        },
-
-        // Loading states
-        loading: false,
-        chartsLoaded: false,
-
-        // Initialize dashboard
-        async init() {
-            this.loading = true;
-
-            try {
-                await this.loadDashboardData();
-                await this.loadRecentActivities();
-
-                this.$nextTick(() => {
-                    this.initCharts();
-                });
-            } catch (error) {
-                this.$root.handleApiError(error);
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        // Load dashboard statistics
-        async loadDashboardData() {
-            try {
-                const response = await AdminAPI.getDashboardStats();
-
-                if (response.success) {
-                    const data = response.data;
-
-                    // Update stats
-                    this.stats = {
-                        totalRequests: data.total_requests || 0,
-                        pendingApprovals: data.pending_approvals || 0,
-                        activeEquipment: data.active_equipment || 0,
-                        completedThisMonth: data.completed_this_month || 0
-                    };
-
-                    // Update changes (if provided)
-                    if (data.changes) {
-                        this.statsChanges = data.changes;
-                    }
-
-                    // Store chart data
-                    this.chartData = {
-                        requestTrends: data.request_trends || null,
-                        equipmentUsage: data.equipment_usage || null,
-                        statusDistribution: data.status_distribution || null
-                    };
-                }
-            } catch (error) {
-                throw error;
-            }
-        },
-
-        // Load recent activities
-        async loadRecentActivities() {
-            try {
-                const response = await AdminAPI.getActivityLogs(1, 5);
-
-                if (response.success) {
-                    this.recentActivities = response.data.data || [];
-                }
-            } catch (error) {
-                console.warn('Failed to load recent activities:', error);
-                this.recentActivities = [];
-            }
-        },
-
-        // Initialize charts
-        initCharts() {
-            if (typeof Chart === 'undefined') {
-                console.warn('Chart.js not loaded. Charts will not be displayed.');
-                return;
-            }
-
-            try {
-                // Request Trends Chart
-                if (this.chartData.requestTrends) {
-                    this.initRequestTrendsChart();
-                }
-
-                // Equipment Usage Chart
-                if (this.chartData.equipmentUsage) {
-                    this.initEquipmentUsageChart();
-                }
-
-                // Status Distribution Chart
-                if (this.chartData.statusDistribution) {
-                    this.initStatusDistributionChart();
-                }
-
-                this.chartsLoaded = true;
-            } catch (error) {
-                console.error('Failed to initialize charts:', error);
-            }
-        },
-
-        // Initialize request trends line chart
-        initRequestTrendsChart() {
-            const canvas = document.getElementById('requestTrendsChart');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const data = this.chartData.requestTrends;
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels || [],
-                    datasets: [{
-                        label: 'Total Requests',
-                        data: data.values || [],
-                        borderColor: '#1E40AF',
-                        backgroundColor: 'rgba(30, 64, 175, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#1E40AF',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        },
-
-        // Initialize equipment usage bar chart
-        initEquipmentUsageChart() {
-            const canvas = document.getElementById('equipmentUsageChart');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const data = this.chartData.equipmentUsage;
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels || [],
-                    datasets: [{
-                        label: 'Usage Count',
-                        data: data.values || [],
-                        backgroundColor: [
-                            '#1E40AF',
-                            '#10B981',
-                            '#F59E0B',
-                            '#EF4444',
-                            '#8B5CF6'
-                        ],
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        },
-
-        // Initialize status distribution doughnut chart
-        initStatusDistributionChart() {
-            const canvas = document.getElementById('statusDistributionChart');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const data = this.chartData.statusDistribution;
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.labels || [],
-                    datasets: [{
-                        data: data.values || [],
-                        backgroundColor: [
-                            '#10B981',
-                            '#F59E0B',
-                            '#EF4444',
-                            '#3B82F6',
-                            '#8B5CF6'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        },
-
-        // Refresh dashboard data
-        async refreshDashboard() {
-            this.loading = true;
-
-            try {
-                await this.loadDashboardData();
-                await this.loadRecentActivities();
-
-                // Reinitialize charts if needed
-                if (this.chartsLoaded) {
-                    this.destroyCharts();
-                    this.$nextTick(() => {
-                        this.initCharts();
-                    });
-                }
-
-                this.$root.showToast('Dashboard data refreshed', 'success');
-            } catch (error) {
-                this.$root.handleApiError(error);
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        // Destroy existing charts
-        destroyCharts() {
-            const chartCanvases = ['requestTrendsChart', 'equipmentUsageChart', 'statusDistributionChart'];
-
-            chartCanvases.forEach(canvasId => {
-                const canvas = document.getElementById(canvasId);
-                if (canvas) {
-                    const existingChart = Chart.getChart(canvas);
-                    if (existingChart) {
-                        existingChart.destroy();
-                    }
-                }
-            });
-
-            this.chartsLoaded = false;
-        }
-    };
-}
-
-// Make components globally available
+// Make the simplified adminApp globally available for basic functionality
 window.adminApp = adminApp;
-window.dashboardData = dashboardData;

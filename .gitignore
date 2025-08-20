@@ -127,6 +127,7 @@ docker-compose.override.yml
 *.pid
 *.seed
 *.pid.lock
+cookies.txt
 
 #Claude
 CLAUDE.md
