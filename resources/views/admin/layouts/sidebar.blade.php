@@ -69,14 +69,22 @@
                      x-transition:leave-end="opacity-0 transform scale-95"
                      class="ml-6 mt-2 space-y-1">
 
+                    @if(Route::has('admin.site-settings.index'))
                     <a href="{{ route('admin.site-settings.index') }}"
                        class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('admin.site-settings.*') ? 'bg-blue-800 text-white' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
+                    @else
+                    <span class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed">
+                    @endif
                         <svg class="mr-3 h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                         Konfigurasi Website
+                    @if(Route::has('admin.site-settings.index'))
                     </a>
+                    @else
+                    </span>
+                    @endif
 
                     <a href="{{ route('admin.staff.index') }}"
                        class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('admin.staff.*') ? 'bg-blue-800 text-white' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
@@ -178,13 +186,21 @@
                      x-transition:leave-end="opacity-0 transform scale-95"
                      class="ml-6 mt-2 space-y-1">
 
+                    @if(Route::has('admin.borrowing.index'))
                     <a href="{{ route('admin.borrowing.index') }}"
                        class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('admin.borrowing.*') ? 'bg-blue-800 text-white' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
+                    @else
+                    <span class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed">
+                    @endif
                         <svg class="mr-3 h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
                         Kelola Peminjaman Alat
+                    @if(Route::has('admin.borrowing.index'))
                     </a>
+                    @else
+                    </span>
+                    @endif
 
                     <a href="{{ route('admin.visits.index') }}"
                        class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('admin.visits.*') ? 'bg-blue-800 text-white' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
@@ -212,8 +228,12 @@
                     <span x-show="sidebarOpen" x-transition>Administration</span>
                 </h3>
 
+                @if(Route::has('superadmin.users.index'))
                 <a href="{{ route('superadmin.users.index') }}"
                    class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('superadmin.users.*') ? 'bg-blue-800 text-white' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
+                @else
+                <span class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed">
+                @endif
                     <svg class="mr-3 h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
                     </svg>
@@ -221,7 +241,11 @@
                           :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
                         <span x-show="sidebarOpen" x-transition>User Management</span>
                     </span>
+                @if(Route::has('superadmin.users.index'))
                 </a>
+                @else
+                </span>
+                @endif
             </div>
             @endif
         </nav>

@@ -224,16 +224,39 @@
                         
                         <hr class="my-2">
                         
-                        <form method="POST" action="{{ route('logout') }}" class="block">
-                            @csrf
-                            <button type="submit" 
-                                    class="w-full flex items-center px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-md">
-                                <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                </svg>
-                                Sign out
-                            </button>
-                        </form>
+                        <button type="button" onclick="logout()" 
+                                class="w-full flex items-center px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-md">
+                            <svg class="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            Sign out
+                        </button>
+
+                        <script>
+                        async function logout() {
+                            const token = localStorage.getItem('admin_token');
+                            if (!token) {
+                                window.location.href = '/admin/login';
+                                return;
+                            }
+
+                            try {
+                                await fetch('/api/admin/logout', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json'
+                                    }
+                                });
+                            } catch (error) {
+                                console.error('Logout error:', error);
+                            } finally {
+                                localStorage.removeItem('admin_token');
+                                window.location.href = '/admin/login';
+                            }
+                        }
+                        </script>
                     </div>
                 </div>
             </div>

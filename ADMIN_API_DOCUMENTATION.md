@@ -9,38 +9,44 @@ This document provides comprehensive documentation for all Admin API endpoints i
 - [Response Format](#response-format)
 - [Error Handling](#error-handling)
 - [Dashboard API](#dashboard-api)
+- [Authentication API](#authentication-api)
 
 ## Authentication
 
-All Admin API endpoints require session-based authentication with admin or super_admin role.
+All Admin API endpoints require Sanctum Bearer token authentication with admin or super_admin role.
 
 ### Requirements
-- Valid session cookie (`lab_g_o_s-_u_s_k_session`)
-- CSRF token in request headers (`X-CSRF-TOKEN`)
+- Valid Sanctum Bearer token obtained from `/api/admin/login`
 - Admin or Super Admin role
+- Token included in Authorization header
+
+### Login Process
+1. Login via `/api/admin/login` with email and password
+2. Receive Bearer token in response
+3. Include token in all subsequent API calls
 
 ### Headers
 ```http
 Accept: application/json
 Content-Type: application/json
-X-CSRF-TOKEN: {csrf_token}
-X-Requested-With: XMLHttpRequest
+Authorization: Bearer {bearer_token}
 ```
 
 ### Authentication Errors
 ```json
 {
-  "message": "Unauthenticated."
+  "success": false,
+  "message": "Unauthenticated"
 }
 ```
 
 ## Base URL
 
 ```
-/admin-api
+/api/admin
 ```
 
-All admin endpoints are prefixed with `/admin-api` and use session-based authentication.
+All admin endpoints are prefixed with `/api/admin` and use Sanctum Bearer token authentication.
 
 ## Response Format
 
@@ -109,9 +115,9 @@ The Dashboard API provides comprehensive statistics and analytics for the admin 
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/admin-api/dashboard/stats` | Get dashboard statistics |
-| `GET` | `/admin-api/activity-logs` | Get activity logs |
-| `GET` | `/admin-api/notifications` | Get admin notifications |
+| `GET` | `/api/admin/dashboard/stats` | Get dashboard statistics |
+| `GET` | `/api/admin/activity-logs` | Get activity logs |
+| `GET` | `/api/admin/notifications` | Get admin notifications |
 
 ---
 
@@ -122,7 +128,7 @@ Retrieves comprehensive dashboard statistics including request summaries, equipm
 ### Request
 
 ```http
-GET /admin-api/dashboard/stats
+GET /api/admin/dashboard/stats
 ```
 
 ### Query Parameters
@@ -143,12 +149,10 @@ GET /admin-api/dashboard/stats
 ### Example Request
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/admin-api/dashboard/stats?date_from=2025-08-01&date_to=2025-08-19&refresh_cache=1" \
+curl -X GET "http://127.0.0.1:8000/api/admin/dashboard/stats?date_from=2025-08-01&date_to=2025-08-19&refresh_cache=1" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: {csrf_token}" \
-  -H "X-Requested-With: XMLHttpRequest" \
-  -b cookies.txt
+  -H "Authorization: Bearer {bearer_token}"
 ```
 
 ### Response
@@ -311,7 +315,7 @@ Retrieves paginated activity logs with optional filtering.
 ### Request
 
 ```http
-GET /admin-api/activity-logs
+GET /api/admin/activity-logs
 ```
 
 ### Query Parameters
@@ -329,12 +333,10 @@ GET /admin-api/activity-logs
 ### Example Request
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/admin-api/activity-logs?per_page=5&type=created" \
+curl -X GET "http://127.0.0.1:8000/api/admin/activity-logs?per_page=5&type=created" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: {csrf_token}" \
-  -H "X-Requested-With: XMLHttpRequest" \
-  -b cookies.txt
+  -H "Authorization: Bearer {bearer_token}"
 ```
 
 ### Response
@@ -392,18 +394,16 @@ Retrieves admin notifications (placeholder endpoint for future implementation).
 ### Request
 
 ```http
-GET /admin-api/notifications
+GET /api/admin/notifications
 ```
 
 ### Example Request
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/admin-api/notifications" \
+curl -X GET "http://127.0.0.1:8000/api/admin/notifications" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-TOKEN: {csrf_token}" \
-  -H "X-Requested-With: XMLHttpRequest" \
-  -b cookies.txt
+  -H "Authorization: Bearer {bearer_token}"
 ```
 
 ### Response
@@ -481,13 +481,99 @@ this.stats.quick_insights.most_requested_equipment
 }
 ```
 
+# Authentication API
+
+The Authentication API provides login and logout functionality for admin users using Sanctum Bearer tokens.
+
+## Admin Login
+
+Login endpoint for admin and super admin users.
+
+### Request
+```http
+POST /api/admin/login
+```
+
+### Request Body
+```json
+{
+  "email": "admin@example.com",
+  "password": "password"
+}
+```
+
+### Example Request
+```bash
+curl -X POST "http://127.0.0.1:8000/api/admin/login" \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "ganangsetyohadi@gmail.com",
+    "password": "password"
+  }'
+```
+
+### Success Response
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "Ganang Setyo Hadi S.Kom",
+      "email": "ganangsetyohadi@gmail.com",
+      "role": "super_admin"
+    },
+    "token": "1|abc123...",
+    "token_type": "Bearer"
+  }
+}
+```
+
+## Admin Logout
+
+Logout endpoint that invalidates the current Bearer token.
+
+### Request
+```http
+POST /api/admin/logout
+```
+
+### Headers
+```http
+Authorization: Bearer {bearer_token}
+```
+
+### Example Request
+```bash
+curl -X POST "http://127.0.0.1:8000/api/admin/logout" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer {bearer_token}"
+```
+
+### Success Response
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
 ---
 
 ## Changelog
 
+### Version 1.1.0 - 2025-08-20
+- **BREAKING**: Migrated from session-based to Sanctum Bearer token authentication
+- Updated all endpoints to use `/api/admin` prefix instead of `/admin-api`
+- Added login/logout endpoints for token management
+- Improved security with stateless token authentication
+- Updated documentation examples and headers
+
 ### Version 1.0.0 - 2025-08-19
 - Initial dashboard API implementation
-- Session-based authentication
+- Session-based authentication (deprecated)
 - Comprehensive dashboard statistics
 - Activity logs with filtering
 - Basic notifications endpoint

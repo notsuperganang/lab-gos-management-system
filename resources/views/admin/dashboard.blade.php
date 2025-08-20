@@ -180,10 +180,14 @@
                     <span class="text-sm font-medium text-green-600" x-text="stats.summary?.active_borrow_requests || 0"></span>
                 </div>
                 <div class="pt-2 border-t">
+                    @if(Route::has('admin.borrowing.index'))
                     <a href="{{ route('admin.borrowing.index') }}" 
                        class="text-sm text-blue-600 hover:text-blue-500 font-medium">
                         Manage Borrowing →
                     </a>
+                    @else
+                    <span class="text-sm text-gray-400">Manage Borrowing</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -206,10 +210,14 @@
                     <span class="text-sm font-medium text-green-600" x-text="stats.summary?.active_visit_requests || 0"></span>
                 </div>
                 <div class="pt-2 border-t">
+                    @if(Route::has('admin.visits.index'))
                     <a href="{{ route('admin.visits.index') }}" 
                        class="text-sm text-blue-600 hover:text-blue-500 font-medium">
                         Manage Visits →
                     </a>
+                    @else
+                    <span class="text-sm text-gray-400">Manage Visits</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -232,10 +240,14 @@
                     <span class="text-sm font-medium text-green-600" x-text="stats.summary?.active_testing_requests || 0"></span>
                 </div>
                 <div class="pt-2 border-t">
+                    @if(Route::has('admin.testing.index'))
                     <a href="{{ route('admin.testing.index') }}" 
                        class="text-sm text-blue-600 hover:text-blue-500 font-medium">
                         Manage Testing →
                     </a>
+                    @else
+                    <span class="text-sm text-gray-400">Manage Testing</span>
+                    @endif
                 </div>
             </div>
         </div>
