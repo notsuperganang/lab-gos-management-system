@@ -544,7 +544,7 @@
                     // Load site settings for admin contact
                     await this.loadSiteSettings();
 
-                    // Get testing ID from URL query parameter 'rid' 
+                    // Get testing ID from URL query parameter 'rid'
                     const urlParams = new URLSearchParams(window.location.search);
                     const testingId = urlParams.get('rid');
 
@@ -554,7 +554,7 @@
                         // Fallback: Try to get from URL path (for old confirmation links)
                         const urlPath = window.location.pathname;
                         const testingIdMatch = urlPath.match(/\/confirmation\/([^\/]+)$/);
-                        
+
                         if (testingIdMatch) {
                             const pathTestingId = testingIdMatch[1];
                             await this.loadTestingData(pathTestingId);
@@ -1200,12 +1200,12 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                         if (response.success) {
                             // Update local state to cancelled (optimistic UI)
                             this.testingData.status = 'cancelled';
-                            
+
                             // Re-run status steps builder if exists
                             if (typeof this.setupStatusSteps === 'function') {
                                 this.setupStatusSteps();
                             }
-                            
+
                             // Inform user
                             alert('✅ Permohonan pengujian berhasil dibatalkan.');
                         } else {

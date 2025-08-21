@@ -99,12 +99,24 @@ class StaffMember extends Model
      */
     public function getPhotoUrlAttribute()
     {
-        if ($this->photo_path) {
-            return asset('storage/' . $this->photo_path);
+        // Treat 'bodong' (invalid placeholder from seed) or empty as no photo
+        $path = $this->photo_path;
+        if ($path && strtolower($path) !== 'bodong') {
+            // Only return storage asset if file actually exists to avoid 403
+            $full = storage_path('app/public/' . $path);
+            if (is_file($full)) {
+                return asset('storage/' . $path);
+            }
         }
-
-        return asset('images/default-avatar.png');
+        // Fallback placeholder requested
+        return asset('assets/images/placeholder.svg');
     }
+
+    // NOTE: If you see 403 responses for storage/staff/*.jpg ensure:
+    // 1. File actually exists under storage/app/public/staff
+    // 2. Symlink public/storage -> storage/app/public is present (php artisan storage:link)
+    // 3. Web server / filesystem permissions allow read (chmod o+r on files)
+    // Laravel's local file serving aborts(403) when the path resolves outside the configured directory or missing.
 
     /**
      * Check if staff member has research interests.
@@ -112,6 +124,18 @@ class StaffMember extends Model
     public function hasResearchInterests(): bool
     {
         return !empty($this->research_interests);
+    }
+
+    /**
+     * Determine if the staff member has a valid photo file (not 'bodong' and exists).
+     */
+    public function hasValidPhoto(): bool
+    {
+        $path = $this->photo_path;
+        if (!$path || strtolower($path) === 'bodong') {
+            return false;
+        }
+        return is_file(storage_path('app/public/' . $path));
     }
 
     /**

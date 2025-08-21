@@ -142,7 +142,7 @@ GET /api/admin/dashboard/stats
 ### Validation Rules
 
 - `date_from` must be a valid date
-- `date_to` must be a valid date 
+- `date_to` must be a valid date
 - `date_from` must be before or equal to `date_to`
 - `refresh_cache` must be a boolean value
 
@@ -474,7 +474,115 @@ this.stats.quick_insights.most_requested_equipment
 }
 ```
 
-### Authorization Error  
+### Authorization Error
+## Articles Management
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/admin/content/articles | List articles with filters & pagination |
+| POST | /api/admin/content/articles | Create new article |
+| GET | /api/admin/content/articles/{id} | Retrieve single article |
+| PUT | /api/admin/content/articles/{id} | Update article |
+| DELETE | /api/admin/content/articles/{id} | Delete article |
+
+All endpoints require Authorization: Bearer <admin_token> and role admin or super_admin.
+
+### Query Parameters (GET index)
+- search: string (search in title, excerpt, content)
+- category: research|news|announcement|publication
+- is_published: 1|0
+- author: partial author_name match
+- page: integer
+- per_page: integer (max 100)
+
+### Request: Create Article (multipart/form-data)
+Field | Type | Required | Notes
+----- | ---- | -------- | -----
+title | string | yes | max 255
+excerpt | string | no | max 500
+content | string | yes | HTML/Markdown
+category | enum | yes | research, news, announcement, publication
+tags[] | string[] | no | up to 10 items, each max 50 chars
+is_published | boolean | no | default false
+is_featured | boolean | no | only one featured globally (DB constraint)
+published_at | datetime | no | default now if is_published=true and omitted
+featured_image | file(image) | no | jpeg/png/jpg/gif/webp <=5MB
+
+### Request: Update Article (multipart/form-data)
+Same as create; additionally support:
+- _method=PUT when using POST override
+- remove_featured_image=1 to delete existing image
+
+### Response: Paginated List
+{
+  "success": true,
+  "message": "Articles retrieved successfully",
+  "data": [ ArticleResource, ... ],
+  "pagination": {
+    "total": int,
+    "per_page": int,
+    "current_page": int,
+    "last_page": int,
+    "from": int,
+    "to": int
+  },
+  "meta": {
+    "filters": { search, category, is_published, author },
+    "categories": { "research": "Riset", ... }
+  }
+}
+
+### ArticleResource Structure
+Field | Type | Description
+----- | ---- | -----------
+id | int | Article ID
+title | string | Title
+slug | string | Unique slug
+excerpt | string | Excerpt or generated summary
+content | string | Raw stored content
+featured_image_path | string|null | Storage path
+featured_image_url | string | Public URL or placeholder
+author_name | string | Stored author name
+category | string | Category key
+category_label | string | Localized label
+tags | string[] | Tags array
+is_published | boolean | Publication flag
+published_at | ISO datetime|null | Publication timestamp
+published_at_formatted | string|null | Y-m-d H:i:s
+published_by | int|null | Publisher user ID
+publisher | object|null | { id, name, email }
+views_count | int | View counter
+reading_time | int | Estimated minutes
+status | string | Published|Draft
+status_badge | object | { text, color }
+created_at / updated_at | ISO datetime | Timestamps
+created_at_formatted / updated_at_formatted | string | Formatted timestamps
+created_at_human / updated_at_human | string | Human diff
+word_count | int | Word count of content
+character_count | int | Character length
+has_featured_image | boolean | Derived
+tag_count | int | Tag length
+is_recent | boolean | Created < 7 days
+can_edit | boolean | Permission flag
+can_delete | boolean | Permission flag
+can_publish | boolean | Permission flag
+
+### Errors
+Validation errors return 422 with structure:
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": { field: [messages...] }
+}
+
+Generic failures return 500 with message and optional debug info.
+
+### Notes
+- Only one article can be featured at a time (enforced via virtual column + unique index + model saving logic).
+- Slug auto-generated server-side; UI shows preview but server authoritative.
+- Removing featured image sets path to null and deletes old file.
 ```json
 {
   "message": "This action is unauthorized."

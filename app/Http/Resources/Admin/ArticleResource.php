@@ -27,6 +27,7 @@ class ArticleResource extends JsonResource
             'category_label' => $this->category_label,
             'tags' => $this->tags ?? [],
             'is_published' => $this->is_published,
+            'is_featured' => $this->is_featured,
             'published_at' => $this->published_at?->toISOString(),
             'published_at_formatted' => $this->published_at?->format('Y-m-d H:i:s'),
             'published_by' => $this->published_by,
@@ -54,9 +55,31 @@ class ArticleResource extends JsonResource
             'has_featured_image' => !empty($this->featured_image_path),
             'tag_count' => count($this->tags ?? []),
             'is_recent' => $this->created_at->gt(now()->subDays(7)),
-            'can_edit' => $request->user()->hasRole(['admin', 'superadmin']),
-            'can_delete' => $request->user()->hasRole(['admin', 'superadmin']),
-            'can_publish' => $request->user()->hasRole(['admin', 'superadmin']),
+            'can_edit' => $this->userCanManage($request),
+            'can_delete' => $this->userCanManage($request),
+            'can_publish' => $this->userCanManage($request),
         ];
+    }
+
+    /**
+     * Determine if the request user can manage article resources.
+     */
+    private function userCanManage(Request $request): bool
+    {
+        $user = $request->user();
+        if (!$user) {
+            return false;
+        }
+
+        $role = strtolower($user->role ?? '');
+        if (in_array($role, ['admin', 'super_admin'])) {
+            return true;
+        }
+
+        if (method_exists($user, 'hasRole') && $user->hasRole(['admin', 'super_admin', 'superadmin'])) {
+            return true;
+        }
+
+        return false;
     }
 }

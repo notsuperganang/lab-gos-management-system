@@ -21,7 +21,6 @@ use App\Models\{
 class ValidateDatabase extends Command
 {
     protected $signature = 'db:validate {--detailed : Show detailed output}';
-
     protected $description = 'Validate database structure and relationships for Lab GOS Management System';
 
     public function handle()

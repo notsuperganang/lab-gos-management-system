@@ -13,7 +13,23 @@ class StaffRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['admin', 'superadmin']);
+        $user = $this->user();
+        if (!$user) {
+            return false;
+        }
+
+        // Prefer direct role column (matches login & middleware logic)
+        $role = strtolower($user->role ?? '');
+        if (in_array($role, ['admin', 'super_admin'])) {
+            return true;
+        }
+
+        // Fallback to Spatie roles if used; accept both naming variants
+        if (method_exists($user, 'hasRole') && $user->hasRole(['admin', 'super_admin', 'superadmin'])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -25,7 +41,7 @@ class StaffRequest extends FormRequest
     {
         $isUpdating = $this->isMethod('PUT') || $this->isMethod('PATCH');
         $staffId = $isUpdating ? $this->route('staff')->id : null;
-        
+
         return [
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
@@ -36,8 +52,8 @@ class StaffRequest extends FormRequest
                 'nullable',
                 'email',
                 'max:255',
-                $isUpdating 
-                    ? 'unique:staff_members,email,' . $staffId 
+                $isUpdating
+                    ? 'unique:staff_members,email,' . $staffId
                     : 'unique:staff_members,email'
             ],
             'phone' => 'nullable|string|max:20',
@@ -94,16 +110,31 @@ class StaffRequest extends FormRequest
                     $validator->errors()->add('phone', 'Phone number must be between 8-20 digits.');
                 }
             }
-            
+
+            // Enforce only one Kepala Laboratorium
+            if ($this->filled('staff_type') && $this->get('staff_type') === \App\Enums\StaffType::KEPALA_LABORATORIUM->value) {
+                $query = \App\Models\StaffMember::where('staff_type', \App\Enums\StaffType::KEPALA_LABORATORIUM);
+                // Exclude current record when updating
+                if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
+                    $current = $this->route('staff');
+                    if ($current) {
+                        $query->where('id', '!=', $current->id);
+                    }
+                }
+                if ($query->exists()) {
+                    $validator->errors()->add('staff_type', 'Hanya boleh ada 1 Kepala Laboratorium.');
+                }
+            }
+
             // Validate sort order uniqueness for active staff
             if ($this->filled('sort_order') && $this->boolean('is_active', true)) {
                 $query = \App\Models\StaffMember::where('sort_order', $this->get('sort_order'))
                     ->where('is_active', true);
-                
+
                 if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
                     $query->where('id', '!=', $this->route('staff')->id);
                 }
-                
+
                 if ($query->exists()) {
                     $validator->errors()->add('sort_order', 'This sort order is already taken by another active staff member.');
                 }

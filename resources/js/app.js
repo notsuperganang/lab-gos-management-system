@@ -286,21 +286,20 @@ window.LabGOS = LabGOS;
 
 // Admin API Client
 const AdminAPI = {
-    baseURL: '/admin-api',
+    baseURL: '/api/admin',
 
-    // Helper method for making session-authenticated API requests
+    // Helper method for making Sanctum Bearer token authenticated API requests
     async request(endpoint, options = {}) {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
         const url = `${this.baseURL}${endpoint}`;
 
         const config = {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': token,
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
                 ...options.headers
             },
-            credentials: 'same-origin',
             ...options
         };
 
@@ -512,6 +511,135 @@ const AdminAPI = {
             method: 'PUT',
             body: JSON.stringify({ is_active: isActive })
         });
+    },
+
+    // Site Settings Management (Content Management)
+    async getSiteSettings(filters = {}) {
+        const params = new URLSearchParams(filters).toString();
+        return await this.request(`/content/site-settings${params ? '?' + params : ''}`);
+    },
+
+    async updateSiteSettings(settingsData) {
+        return await this.request('/content/site-settings', {
+            method: 'PUT',
+            body: JSON.stringify({ settings: settingsData })
+        });
+    },
+
+    // Content Management - Articles
+    async getArticles(filters = {}) {
+        const params = new URLSearchParams(filters).toString();
+        return await this.request(`/content/articles${params ? '?' + params : ''}`);
+    },
+
+    async getArticle(id) {
+        return await this.request(`/content/articles/${id}`);
+    },
+
+    async createArticle(data) {
+        // Handle form data for file uploads
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        return await this.request('/content/articles', {
+            method: 'POST',
+            headers: {
+                // Remove Content-Type to allow browser to set boundary for FormData
+                'Accept': 'application/json',
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
+            },
+            body: data // Should be FormData for file uploads
+        });
+    },
+
+    async updateArticle(id, data) {
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        return await this.request(`/content/articles/${id}`, {
+            method: 'PUT',
+            headers: data instanceof FormData ? {
+                'Accept': 'application/json',
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
+            } : undefined,
+            body: data
+        });
+    },
+
+    async deleteArticle(id) {
+        return await this.request(`/content/articles/${id}`, { method: 'DELETE' });
+    },
+
+    // Content Management - Staff
+    async getStaff(filters = {}) {
+        const params = new URLSearchParams(filters).toString();
+        return await this.request(`/content/staff${params ? '?' + params : ''}`);
+    },
+
+    async getStaffMember(id) {
+        return await this.request(`/content/staff/${id}`);
+    },
+
+    async createStaffMember(data) {
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        return await this.request('/content/staff', {
+            method: 'POST',
+            headers: data instanceof FormData ? {
+                'Accept': 'application/json',
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
+            } : undefined,
+            body: data
+        });
+    },
+
+    async updateStaffMember(id, data) {
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        return await this.request(`/content/staff/${id}`, {
+            method: 'PUT',
+            headers: data instanceof FormData ? {
+                'Accept': 'application/json',
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
+            } : undefined,
+            body: data
+        });
+    },
+
+    async deleteStaffMember(id) {
+        return await this.request(`/content/staff/${id}`, { method: 'DELETE' });
+    },
+
+    // Content Management - Gallery
+    async getGallery(filters = {}) {
+        const params = new URLSearchParams(filters).toString();
+        return await this.request(`/content/gallery${params ? '?' + params : ''}`);
+    },
+
+    async getGalleryItem(id) {
+        return await this.request(`/content/gallery/${id}`);
+    },
+
+    async createGalleryItem(data) {
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        return await this.request('/content/gallery', {
+            method: 'POST',
+            headers: data instanceof FormData ? {
+                'Accept': 'application/json',
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
+            } : undefined,
+            body: data
+        });
+    },
+
+    async updateGalleryItem(id, data) {
+        const bearerToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+        return await this.request(`/content/gallery/${id}`, {
+            method: 'PUT',
+            headers: data instanceof FormData ? {
+                'Accept': 'application/json',
+                'Authorization': bearerToken ? `Bearer ${bearerToken}` : '',
+            } : undefined,
+            body: data
+        });
+    },
+
+    async deleteGalleryItem(id) {
+        return await this.request(`/content/gallery/${id}`, { method: 'DELETE' });
     }
 };
 

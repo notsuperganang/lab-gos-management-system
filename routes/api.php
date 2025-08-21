@@ -84,7 +84,7 @@ Route::post('/admin/login', function (Request $request) {
 // API Logout endpoint
 Route::middleware('auth:sanctum')->post('/admin/logout', function (Request $request) {
     $request->user()->currentAccessToken()->delete();
-    
+
     return response()->json([
         'success' => true,
         'message' => 'Logged out successfully',
@@ -170,7 +170,7 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
 | They provide CRUD operations for managing the laboratory system.
 */
 
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.admin.')->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->name('api.admin.')->group(function () {
 
     // Dashboard and statistics
     Route::get('/dashboard/stats', [DashboardController::class, 'statistics'])
@@ -179,6 +179,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
         ->name('activity-logs');
     Route::get('/notifications', [DashboardController::class, 'notifications'])
         ->name('notifications');
+    Route::post('/notifications/{notification}/read', [DashboardController::class, 'markNotificationAsRead'])
+        ->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllNotificationsAsRead'])
+        ->name('notifications.mark-all-read');
 
     // Request management
     Route::prefix('requests')->name('requests.')->group(function () {
@@ -277,6 +281,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ->name('site-settings.update');
 
         // Gallery
+        // Gallery specific routes (must come before parameterized routes)
+        Route::put('/gallery/reorder', [ContentManagementController::class, 'reorderGallery'])
+            ->name('gallery.reorder');
+        Route::get('/gallery/featured-slots', [ContentManagementController::class, 'getFeaturedSlots'])
+            ->name('gallery.featured-slots.get');
+        Route::put('/gallery/featured-slots', [ContentManagementController::class, 'updateFeaturedSlots'])
+            ->name('gallery.featured-slots.update');
+        
+        // Gallery CRUD routes
         Route::get('/gallery', [ContentManagementController::class, 'gallery'])
             ->name('gallery.index');
         Route::post('/gallery', [ContentManagementController::class, 'storeGallery'])
@@ -345,7 +358,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->name('api.ad
             ]);
 
             $user = $request->user();
-            
+
             // Check current password if changing password
             if ($request->filled('password')) {
                 if (!$request->filled('current_password') || !Hash::check($request->current_password, $user->password)) {

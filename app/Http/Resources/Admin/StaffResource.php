@@ -18,6 +18,8 @@ class StaffResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'position' => $this->position,
+            'staff_type' => $this->staff_type?->value,
+            'staff_type_label' => $this->staff_type?->label(),
             'specialization' => $this->specialization,
             'education' => $this->education,
             'email' => $this->email,
@@ -29,11 +31,11 @@ class StaffResource extends JsonResource
             'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
             'status' => $this->is_active ? 'Active' : 'Inactive',
-            'status_badge' => $this->is_active 
-                ? ['text' => 'Active', 'color' => 'success'] 
+            'status_badge' => $this->is_active
+                ? ['text' => 'Active', 'color' => 'success']
                 : ['text' => 'Inactive', 'color' => 'secondary'],
             'full_contact' => $this->full_contact,
-            'has_photo' => !empty($this->photo_path),
+            'has_photo' => $this->resource->hasValidPhoto(),
             'has_bio' => !empty($this->bio),
             'has_research_interests' => $this->hasResearchInterests(),
             'has_contact_info' => !empty($this->email) || !empty($this->phone),
@@ -46,9 +48,9 @@ class StaffResource extends JsonResource
             'updated_at_human' => $this->updated_at->diffForHumans(),
             'is_recent' => $this->created_at->gt(now()->subDays(7)),
             'profile_completeness' => $this->calculateProfileCompleteness(),
-            'can_edit' => $request->user()->hasRole(['admin', 'superadmin']),
-            'can_delete' => $request->user()->hasRole(['admin', 'superadmin']),
-            'can_manage_status' => $request->user()->hasRole(['admin', 'superadmin']),
+            'can_edit' => $this->userCanManage($request),
+            'can_delete' => $this->userCanManage($request),
+            'can_manage_status' => $this->userCanManage($request),
         ];
     }
 
@@ -72,7 +74,29 @@ class StaffResource extends JsonResource
         ];
 
         $completedFields = array_filter($fields);
-        
+
         return round((count($completedFields) / count($fields)) * 100);
+    }
+
+    /**
+     * Determine if the request user can manage staff resources.
+     */
+    private function userCanManage(Request $request): bool
+    {
+        $user = $request->user();
+        if (!$user) {
+            return false;
+        }
+
+        $role = strtolower($user->role ?? '');
+        if (in_array($role, ['admin', 'super_admin'])) {
+            return true;
+        }
+
+        if (method_exists($user, 'hasRole') && $user->hasRole(['admin', 'super_admin', 'superadmin'])) {
+            return true;
+        }
+
+        return false;
     }
 }

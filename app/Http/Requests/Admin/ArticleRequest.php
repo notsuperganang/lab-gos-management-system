@@ -11,7 +11,23 @@ class ArticleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['admin', 'superadmin']);
+        $user = $this->user();
+        if (!$user) {
+            return false;
+        }
+
+        // Prefer direct role column consistency (avoids mismatch with 'super_admin')
+        $role = strtolower($user->role ?? '');
+        if (in_array($role, ['admin', 'super_admin'])) {
+            return true;
+        }
+
+        // Fallback to Spatie roles if installed
+        if (method_exists($user, 'hasRole') && $user->hasRole(['admin', 'super_admin', 'superadmin'])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -22,7 +38,7 @@ class ArticleRequest extends FormRequest
     public function rules(): array
     {
         $isUpdating = $this->isMethod('PUT') || $this->isMethod('PATCH');
-        
+
         return [
             'title' => 'required|string|max:255',
             'excerpt' => 'nullable|string|max:500',
@@ -74,7 +90,7 @@ class ArticleRequest extends FormRequest
                 // If publishing without specific date, use current time
                 $this->merge(['published_at' => now()]);
             }
-            
+
             // Validate tags format
             if ($this->has('tags') && is_array($this->get('tags'))) {
                 foreach ($this->get('tags') as $index => $tag) {

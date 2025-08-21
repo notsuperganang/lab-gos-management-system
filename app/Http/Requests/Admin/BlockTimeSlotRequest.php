@@ -13,7 +13,8 @@ class BlockTimeSlotRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['admin', 'superadmin']);
+        $user = $this->user();
+        return $user && in_array($user->role, ['admin', 'super_admin']);
     }
 
     /**

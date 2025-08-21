@@ -30,11 +30,50 @@ class PublicPageController extends Controller
             ->select('id', 'title', 'slug', 'excerpt', 'featured_image_path', 'published_at', 'category')
             ->get();
 
-        // Get gallery items for homepage (reduced to 4 items)
-        $galleryItems = Gallery::orderBy('sort_order')
-            ->take(4)
-            ->select('id', 'title', 'image_path', 'description', 'category')
-            ->get();
+        // Get gallery items for homepage using featured slots system
+        $galleryItems = collect();
+        
+        // Try to get featured slots from site settings
+        $featuredSetting = SiteSetting::where('key', 'homepage_gallery_slots')->first();
+        
+        if ($featuredSetting && $featuredSetting->content) {
+            $slots = json_decode($featuredSetting->content, true);
+            
+            if (json_last_error() === JSON_ERROR_NONE && is_array($slots)) {
+                // Get gallery items for each configured slot (1-4)
+                for ($i = 1; $i <= 4; $i++) {
+                    if (isset($slots[$i]) && $slots[$i]) {
+                        $gallery = Gallery::active()
+                            ->where('id', $slots[$i])
+                            ->select('id', 'title', 'image_path', 'description', 'category')
+                            ->first();
+                        
+                        if ($gallery) {
+                            $galleryItems->push($gallery);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Fallback: if no featured slots configured or insufficient items, fill with sort_order
+        if ($galleryItems->count() < 4) {
+            $excludeIds = $galleryItems->pluck('id')->toArray();
+            
+            $fallbackItems = Gallery::active()
+                ->when(!empty($excludeIds), function($query) use ($excludeIds) {
+                    return $query->whereNotIn('id', $excludeIds);
+                })
+                ->orderBy('sort_order')
+                ->take(4 - $galleryItems->count())
+                ->select('id', 'title', 'image_path', 'description', 'category')
+                ->get();
+                
+            $galleryItems = $galleryItems->concat($fallbackItems);
+        }
+        
+        // Ensure we have exactly 4 items or less
+        $galleryItems = $galleryItems->take(4);
 
         // Get site settings and lab configuration
         $siteSettings = SiteSetting::all()->pluck('value', 'key');

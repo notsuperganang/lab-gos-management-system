@@ -99,10 +99,14 @@ class Gallery extends Model
     public function getImageUrlAttribute()
     {
         if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
+            // Check if file exists in storage
+            $fullPath = storage_path('app/public/' . $this->image_path);
+            if (file_exists($fullPath)) {
+                return asset('storage/' . $this->image_path);
+            }
         }
 
-        return asset('images/placeholder.jpg');
+        return asset('assets/images/placeholder.svg');
     }
 
     /**
@@ -120,5 +124,47 @@ class Gallery extends Model
     public function getImageAltAttribute()
     {
         return $this->alt_text ?: $this->title;
+    }
+
+    /**
+     * Get the next available sort order for a category.
+     * 
+     * @param string $category
+     * @param int|null $excludeId Exclude this ID when checking (for updates)
+     * @return int
+     */
+    public static function getNextAvailableSortOrder(string $category, ?int $excludeId = null): int
+    {
+        $query = static::where('category', $category)
+                      ->where('is_active', true);
+        
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+        
+        $maxSortOrder = $query->max('sort_order');
+        
+        return ($maxSortOrder ?? 0) + 1;
+    }
+
+    /**
+     * Check if a sort order is available in a category.
+     * 
+     * @param string $category
+     * @param int $sortOrder
+     * @param int|null $excludeId Exclude this ID when checking (for updates)
+     * @return bool
+     */
+    public static function isSortOrderAvailable(string $category, int $sortOrder, ?int $excludeId = null): bool
+    {
+        $query = static::where('category', $category)
+                      ->where('sort_order', $sortOrder)
+                      ->where('is_active', true);
+        
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+        
+        return !$query->exists();
     }
 }

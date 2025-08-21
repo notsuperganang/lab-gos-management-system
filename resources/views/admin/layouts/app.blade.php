@@ -13,16 +13,48 @@
     
     <!-- Chart.js for dashboard charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    
-    <!-- Alpine.js CDN -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Tailwind CSS only (no conflicting JS) -->
-    @if(app()->environment('production'))
-        @vite(['resources/css/app.css'])
-    @else
-        <link rel="stylesheet" href="{{ asset('build/assets/app-RF4t3PKI.css') }}">
-    @endif
+    <!-- Vite Assets (CSS and JS) - must load before Alpine.js -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- AdminAPI Availability Check -->
+    <script>
+        console.log('Admin layout: checking AdminAPI availability...');
+        // Wait for AdminAPI to be available before starting Alpine
+        function waitForAdminAPI() {
+            return new Promise((resolve) => {
+                if (typeof window.AdminAPI !== 'undefined') {
+                    console.log('AdminAPI already available');
+                    resolve();
+                } else {
+                    console.log('Waiting for AdminAPI to load...');
+                    const checkInterval = setInterval(() => {
+                        if (typeof window.AdminAPI !== 'undefined') {
+                            console.log('AdminAPI became available');
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 50);
+                    
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        clearInterval(checkInterval);
+                        console.error('AdminAPI failed to load within 10 seconds');
+                        resolve(); // Resolve anyway to not block Alpine
+                    }, 10000);
+                }
+            });
+        }
+        
+        // Wait for AdminAPI before loading Alpine
+        document.addEventListener('DOMContentLoaded', async () => {
+            await waitForAdminAPI();
+            console.log('Loading Alpine.js now...');
+        });
+    </script>
+    
+    <!-- Alpine.js CDN - loads after AdminAPI is available -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <!-- Minimal Alpine Components for Layout -->
     <script>
@@ -54,15 +86,107 @@
                 }
             }));
             
-            // Minimal header component  
+            // Header component with notifications
             Alpine.data('headerData', () => ({
                 currentTime: new Date().toLocaleTimeString(),
+                notifications: [],
                 unreadCount: 0,
+                loading: false,
+                open: false, // Notification dropdown state
+                apiToken: localStorage.getItem('admin_token'),
                 
                 init() {
+                    // Update time every second
                     setInterval(() => {
                         this.currentTime = new Date().toLocaleTimeString();
                     }, 1000);
+                    
+                    // Load notifications on init
+                    this.loadNotifications();
+                    
+                    // Auto-refresh notifications every 30 seconds
+                    setInterval(() => {
+                        this.loadNotifications();
+                    }, 30000);
+                },
+
+                async loadNotifications() {
+                    if (!this.apiToken) return;
+                    
+                    try {
+                        const response = await fetch('/api/admin/notifications', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${this.apiToken}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                this.notifications = data.data || [];
+                                this.unreadCount = this.notifications.filter(n => !n.is_read).length;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading notifications:', error);
+                    }
+                },
+
+                async markAsRead(notificationId) {
+                    if (!this.apiToken) return;
+                    
+                    try {
+                        const response = await fetch(`/api/admin/notifications/${notificationId}/read`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${this.apiToken}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            // Update local state
+                            const notification = this.notifications.find(n => n.id === notificationId);
+                            if (notification) {
+                                notification.is_read = true;
+                                this.unreadCount = this.notifications.filter(n => !n.is_read).length;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error marking notification as read:', error);
+                    }
+                },
+
+                async markAllAsRead() {
+                    if (!this.apiToken || this.unreadCount === 0) return;
+                    
+                    try {
+                        const response = await fetch('/api/admin/notifications/mark-all-read', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${this.apiToken}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            // Update local state
+                            this.notifications.forEach(n => n.is_read = true);
+                            this.unreadCount = 0;
+                        }
+                    } catch (error) {
+                        console.error('Error marking all notifications as read:', error);
+                    }
+                },
+
+                // Alias function for header dropdown compatibility
+                fetchNotifications() {
+                    return this.loadNotifications();
                 }
             }));
             

@@ -11,7 +11,8 @@ class GalleryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['admin', 'superadmin']);
+        $user = $this->user();
+        return $user && in_array($user->role, ['admin', 'super_admin']);
     }
 
     /**
@@ -62,6 +63,38 @@ class GalleryRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Auto-handle sort_order based on category
+        if ($this->filled('category') && $this->boolean('is_active', true)) {
+            $category = $this->get('category');
+            $excludeId = null;
+            
+            // For updates, exclude current item
+            if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
+                $excludeId = $this->route('gallery')->id ?? null;
+            }
+            
+            // If no sort_order provided, auto-generate
+            if (!$this->filled('sort_order')) {
+                $nextSortOrder = \App\Models\Gallery::getNextAvailableSortOrder($category, $excludeId);
+                $this->merge(['sort_order' => $nextSortOrder]);
+            } else {
+                // If sort_order provided but conflicts, auto-resolve
+                $requestedSortOrder = (int) $this->get('sort_order');
+                
+                if (!\App\Models\Gallery::isSortOrderAvailable($category, $requestedSortOrder, $excludeId)) {
+                    // Find next available sort order
+                    $nextSortOrder = \App\Models\Gallery::getNextAvailableSortOrder($category, $excludeId);
+                    $this->merge(['sort_order' => $nextSortOrder]);
+                }
+            }
+        }
+    }
+
+    /**
      * Configure the validator instance.
      */
     public function withValidator($validator): void
@@ -92,20 +125,7 @@ class GalleryRequest extends FormRequest
                 }
             }
             
-            // Validate sort order uniqueness for active gallery items in same category
-            if ($this->filled('sort_order') && $this->filled('category') && $this->boolean('is_active', true)) {
-                $query = \App\Models\Gallery::where('category', $this->get('category'))
-                    ->where('sort_order', $this->get('sort_order'))
-                    ->where('is_active', true);
-                
-                if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-                    $query->where('id', '!=', $this->route('gallery')->id);
-                }
-                
-                if ($query->exists()) {
-                    $validator->errors()->add('sort_order', 'This sort order is already taken by another active item in the same category.');
-                }
-            }
+            // Note: sort_order uniqueness validation removed since we auto-handle conflicts in prepareForValidation
         });
     }
 

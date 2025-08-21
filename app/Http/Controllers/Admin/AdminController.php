@@ -26,10 +26,10 @@ class AdminController extends Controller
             // Default date range - last 30 days
             $dateFrom = now()->subDays(30)->format('Y-m-d');
             $dateTo = now()->format('Y-m-d');
-            
+
             // Fetch dashboard statistics
             $dashboardStats = $dashboardService->getDashboardStats($dateFrom, $dateTo);
-            
+
             // Fetch recent activities (limit to 10 for initial load)
             $recentActivities = $dashboardService->getRecentActivities(10);
 
@@ -43,7 +43,7 @@ class AdminController extends Controller
             ];
 
             return view('admin.dashboard', compact('stats', 'recentActivities'));
-            
+
         } catch (\Exception $e) {
             \Log::error('Dashboard loading error: ' . $e->getMessage(), [
                 'user_id' => auth()->id(),

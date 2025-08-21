@@ -46,22 +46,29 @@ CREATE TABLE staff_members (
 );
 
 CREATE TABLE articles (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
+    slug VARCHAR(255) NOT NULL,
     excerpt TEXT NULL,
     content LONGTEXT NULL,
     featured_image_path VARCHAR(500) NULL,
-    author_name VARCHAR(255) NOT NULL, -- Manual input by admin
-    category ENUM('research', 'news', 'announcement', 'publication') DEFAULT 'news',
-    tags JSON NULL,
-    is_published BOOLEAN DEFAULT FALSE,
+    author_name VARCHAR(255) NOT NULL,
+    category ENUM('research','news','announcement','publication') NOT NULL DEFAULT 'news',
+    tags LONGTEXT NULL,
+    is_published TINYINT(1) NOT NULL DEFAULT 0,
+    is_featured TINYINT(1) NOT NULL DEFAULT 0,
     published_at TIMESTAMP NULL,
-    published_by BIGINT UNSIGNED NULL, -- Track which admin published
-    views_count INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (published_by) REFERENCES users(id) ON DELETE SET NULL
+    published_by BIGINT(20) UNSIGNED NULL,
+    views_count INT(11) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    featured_lock TINYINT(4) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY (slug),
+    UNIQUE KEY (featured_lock),
+    KEY (is_published),
+    KEY (is_featured),
+    KEY (published_by)
 );
 
 CREATE TABLE galleries (

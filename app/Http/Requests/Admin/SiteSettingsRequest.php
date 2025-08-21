@@ -11,7 +11,14 @@ class SiteSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['admin', 'superadmin']);
+        $user = $this->user();
+        if (!$user) {
+            return false;
+        }
+        
+        // Use same logic as RoleMiddleware - check role field directly
+        $userRole = strtolower($user->role ?? '');
+        return in_array($userRole, ['admin', 'super_admin']);
     }
 
     /**

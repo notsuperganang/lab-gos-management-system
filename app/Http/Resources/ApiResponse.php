@@ -79,6 +79,8 @@ class ApiResponse
                 'from' => $paginator->firstItem(),
                 'to' => $paginator->lastItem(),
                 'has_more_pages' => $paginator->hasMorePages(),
+                'prev_page_url' => $paginator->previousPageUrl(),
+                'next_page_url' => $paginator->nextPageUrl(),
             ]
         ];
 

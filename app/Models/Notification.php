@@ -21,6 +21,7 @@ class Notification extends Model
         'notifiable_id',
         'data',
         'read_at',
+        'is_read',
     ];
 
     /**
@@ -33,6 +34,7 @@ class Notification extends Model
         return [
             'data' => 'array',
             'read_at' => 'datetime',
+            'is_read' => 'boolean',
         ];
     }
 

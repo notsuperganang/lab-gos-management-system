@@ -12,7 +12,8 @@ class UserCreateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->hasRole('superadmin');
+        $user = $this->user();
+        return $user && $user->role === 'super_admin';
     }
 
     /**

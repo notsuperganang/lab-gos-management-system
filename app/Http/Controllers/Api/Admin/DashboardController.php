@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiResponse;
+use App\Http\Resources\NotificationResource;
 use App\Models\BorrowRequest;
 use App\Models\VisitRequest;
 use App\Models\TestingRequest;
@@ -557,7 +558,7 @@ class DashboardController extends Controller
 
             return ApiResponse::paginated(
                 $result['notifications'],
-                null,
+                NotificationResource::class,
                 'Notifications retrieved successfully',
                 [
                     'filters' => $this->getNotificationFilters($request),
@@ -1748,5 +1749,54 @@ class DashboardController extends Controller
 
         // Score based on daily average (normalized to 0-100 scale)
         return min(100, round($dailyAverage * 10, 1));
+    }
+
+    /**
+     * Mark a specific notification as read
+     */
+    public function markNotificationAsRead(Request $request, $notificationId): JsonResponse
+    {
+        try {
+            $notification = Notification::findOrFail($notificationId);
+            
+            $notification->update([
+                'is_read' => true,
+                'read_at' => now()
+            ]);
+
+            // Clear notifications cache
+            Cache::forget('notifications_' . md5(serialize($request->only(['type', 'is_read', 'priority', 'search']))));
+
+            return ApiResponse::success('Notification marked as read', [
+                'notification' => $notification
+            ]);
+
+        } catch (\Exception $e) {
+            return ApiResponse::error('Failed to mark notification as read', 500, null, $e->getMessage());
+        }
+    }
+
+    /**
+     * Mark all notifications as read for current user
+     */
+    public function markAllNotificationsAsRead(Request $request): JsonResponse
+    {
+        try {
+            $updated = Notification::where('is_read', false)
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now()
+                ]);
+
+            // Clear notifications cache
+            Cache::forget('notifications_' . md5(serialize($request->only(['type', 'is_read', 'priority', 'search']))));
+
+            return ApiResponse::success('All notifications marked as read', [
+                'updated_count' => $updated
+            ]);
+
+        } catch (\Exception $e) {
+            return ApiResponse::error('Failed to mark all notifications as read', 500, null, $e->getMessage());
+        }
     }
 }
