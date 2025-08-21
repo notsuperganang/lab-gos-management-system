@@ -604,10 +604,6 @@ document.addEventListener('alpine:init', () => {
                 this.meta.categories = response.meta?.categories || {};
                 this.pagination = response.meta?.pagination || this.pagination;
                 
-                // Debug pagination data
-                console.log('Pagination data:', this.pagination);
-                console.log('Items count:', this.items.length);
-                
             } catch (error) {
                 console.error('Fetch items error:', error);
                 
