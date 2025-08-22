@@ -235,6 +235,10 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
         Route::delete('/categories/{category}', [EquipmentManagementController::class, 'destroyCategory'])
             ->name('categories.destroy');
 
+        // Equipment summary statistics
+        Route::get('/summary', [EquipmentManagementController::class, 'summary'])
+            ->name('summary');
+        
         // Equipment CRUD (specific routes come after more general ones)
         Route::get('/', [EquipmentManagementController::class, 'index'])
             ->name('index');

@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiResponse;
+use App\Http\Resources\EquipmentResource;
+use App\Http\Requests\Admin\EquipmentStoreRequest;
+use App\Http\Requests\Admin\EquipmentUpdateRequest;
 use App\Models\Equipment;
 use App\Models\Category;
+use App\Models\BorrowRequestItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -178,30 +182,118 @@ class EquipmentManagementController extends Controller
     }
     
     /**
-     * Create new equipment
+     * Get equipment summary statistics
      */
-    public function store(Request $request): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'category_id' => 'required|exists:categories,id',
-                'model' => 'nullable|string|max:255',
-                'manufacturer' => 'nullable|string|max:255',
-                'specifications' => 'nullable|array',
-                'total_quantity' => 'required|integer|min:1',
-                'available_quantity' => 'required|integer|min:0|lte:total_quantity',
-                'status' => 'required|string|in:active,maintenance,retired',
-                'condition_status' => 'required|string|in:excellent,good,fair,poor',
-                'purchase_date' => 'nullable|date|before_or_equal:today',
-                'purchase_price' => 'nullable|numeric|min:0',
-                'location' => 'nullable|string|max:255',
-                'notes' => 'nullable|string|max:1000',
-                'last_maintenance_date' => 'nullable|date|before_or_equal:today',
-                'next_maintenance_date' => 'nullable|date|after_or_equal:today',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
-                'manual_file' => 'nullable|file|mimes:pdf,doc,docx|max:20480', // 20MB max
+            // Get total equipment statistics
+            $totalEquipment = Equipment::count();
+            $totalUnits = Equipment::sum('total_quantity') ?: 0;
+            
+            // Get active borrow request statistics
+            $activeBorrowStats = DB::table('borrow_request_items as bri')
+                ->join('borrow_requests as br', 'bri.borrow_request_id', '=', 'br.id')
+                ->whereIn('br.status', ['approved', 'active'])
+                ->selectRaw('
+                    COALESCE(SUM(bri.quantity_requested), 0) as requested_units,
+                    COALESCE(SUM(bri.quantity_approved), 0) as approved_units
+                ')
+                ->first();
+            
+            $requestedUnits = $activeBorrowStats->requested_units ?? 0;
+            $approvedUnits = $activeBorrowStats->approved_units ?? 0;
+            
+            // Calculate utilization rate
+            $utilizationRate = $totalUnits > 0 ? round(($approvedUnits / $totalUnits) * 100, 1) : 0;
+            
+            // Additional equipment statistics
+            $statusCounts = Equipment::selectRaw('
+                    status,
+                    COUNT(*) as count,
+                    SUM(total_quantity) as total_units
+                ')
+                ->groupBy('status')
+                ->get()
+                ->keyBy('status');
+            
+            $conditionCounts = Equipment::selectRaw('
+                    condition_status,
+                    COUNT(*) as count
+                ')
+                ->groupBy('condition_status')
+                ->get()
+                ->keyBy('condition_status');
+            
+            // Low availability equipment (less than 20% available)
+            $lowAvailabilityCount = Equipment::whereRaw('available_quantity < total_quantity * 0.2')
+                ->where('status', 'active')
+                ->count();
+            
+            // Equipment needing maintenance
+            $maintenanceNeededCount = Equipment::where(function($query) {
+                    $query->where('next_maintenance_date', '<=', now()->addDays(30))
+                          ->orWhere('status', 'maintenance');
+                })
+                ->count();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Equipment summary retrieved successfully',
+                'data' => [
+                    'total_equipment' => $totalEquipment,
+                    'total_units' => $totalUnits,
+                    'requested_units' => (int) $requestedUnits,
+                    'approved_units' => (int) $approvedUnits,
+                    'utilization_rate' => $utilizationRate,
+                    'available_units' => $totalUnits - $approvedUnits,
+                    'status_breakdown' => [
+                        'active' => $statusCounts->get('active')->count ?? 0,
+                        'active_units' => $statusCounts->get('active')->total_units ?? 0,
+                        'maintenance' => $statusCounts->get('maintenance')->count ?? 0,
+                        'maintenance_units' => $statusCounts->get('maintenance')->total_units ?? 0,
+                        'retired' => $statusCounts->get('retired')->count ?? 0,
+                        'retired_units' => $statusCounts->get('retired')->total_units ?? 0,
+                    ],
+                    'condition_breakdown' => [
+                        'excellent' => $conditionCounts->get('excellent')->count ?? 0,
+                        'good' => $conditionCounts->get('good')->count ?? 0,
+                        'fair' => $conditionCounts->get('fair')->count ?? 0,
+                        'poor' => $conditionCounts->get('poor')->count ?? 0,
+                    ],
+                    'alerts' => [
+                        'low_availability_count' => $lowAvailabilityCount,
+                        'maintenance_needed_count' => $maintenanceNeededCount,
+                    ],
+                ],
+                'meta' => [
+                    'timestamp' => now()->toISOString(),
+                    'cache_duration' => 300, // 5 minutes
+                ]
             ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve equipment summary', [
+                'error' => $e->getMessage(),
+                'admin_user_id' => $request->user()->id ?? null
+            ]);
+            
+            return ApiResponse::error(
+                'Failed to retrieve equipment summary',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+    
+    /**
+     * Create new equipment
+     */
+    public function store(EquipmentStoreRequest $request): JsonResponse
+    {
+        try {
+            $validated = $request->validated();
             
             DB::beginTransaction();
             
@@ -367,30 +459,10 @@ class EquipmentManagementController extends Controller
     /**
      * Update equipment
      */
-    public function update(Request $request, Equipment $equipment): JsonResponse
+    public function update(EquipmentUpdateRequest $request, Equipment $equipment): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'category_id' => 'required|exists:categories,id',
-                'model' => 'nullable|string|max:255',
-                'manufacturer' => 'nullable|string|max:255',
-                'specifications' => 'nullable|array',
-                'total_quantity' => 'required|integer|min:1',
-                'available_quantity' => 'required|integer|min:0|lte:total_quantity',
-                'status' => 'required|string|in:active,maintenance,retired',
-                'condition_status' => 'required|string|in:excellent,good,fair,poor',
-                'purchase_date' => 'nullable|date|before_or_equal:today',
-                'purchase_price' => 'nullable|numeric|min:0',
-                'location' => 'nullable|string|max:255',
-                'notes' => 'nullable|string|max:1000',
-                'last_maintenance_date' => 'nullable|date|before_or_equal:today',
-                'next_maintenance_date' => 'nullable|date|after_or_equal:today',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
-                'manual_file' => 'nullable|file|mimes:pdf,doc,docx|max:20480',
-                'remove_image' => 'boolean',
-                'remove_manual' => 'boolean',
-            ]);
+            $validated = $request->validated();
             
             DB::beginTransaction();
             

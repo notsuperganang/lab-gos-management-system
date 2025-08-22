@@ -120,10 +120,13 @@ class Equipment extends Model
     public function getImageUrlAttribute()
     {
         if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
+            $fullPath = storage_path('app/public/' . $this->image_path);
+            if (file_exists($fullPath)) {
+                return asset('storage/' . $this->image_path);
+            }
         }
 
-        return asset('images/equipment-placeholder.jpg');
+        return asset('assets/images/placeholder.svg');
     }
 
     /**
@@ -144,6 +147,35 @@ class Equipment extends Model
     public function isAvailable($quantity = 1): bool
     {
         return $this->status === 'active' && $this->available_quantity >= $quantity;
+    }
+
+    /**
+     * Get the current quantity of equipment that is borrowed (approved or active borrow requests).
+     */
+    public function getCurrentBorrowedQuantity(): int
+    {
+        return $this->borrowRequestItems()
+            ->whereHas('borrowRequest', function ($query) {
+                $query->whereIn('status', ['approved', 'active']);
+            })
+            ->sum('quantity_approved');
+    }
+
+    /**
+     * Get the maximum available quantity considering currently borrowed equipment.
+     */
+    public function getMaxAvailableQuantity(): int
+    {
+        $currentlyBorrowed = $this->getCurrentBorrowedQuantity();
+        return max(0, $this->total_quantity - $currentlyBorrowed);
+    }
+
+    /**
+     * Check if the requested available quantity is valid considering borrowed equipment.
+     */
+    public function isAvailableQuantityValid(int $requestedAvailable): bool
+    {
+        return $requestedAvailable <= $this->getMaxAvailableQuantity();
     }
 
     /**

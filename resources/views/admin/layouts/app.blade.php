@@ -284,7 +284,7 @@
                                     <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:leading-9 sm:truncate">
                                         @yield('page-title', 'Dashboard')
                                     </h1>
-                                    @hasSection('breadcrumbs')
+                                    @if(View::hasSection('breadcrumbs'))
                                         <div class="mt-1 flex flex-col sm:flex-row sm:flex-wrap sm:mt-0 sm:space-x-6">
                                             <nav class="flex" aria-label="Breadcrumb">
                                                 <ol class="flex items-center space-x-4">
@@ -294,7 +294,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                @hasSection('page-actions')
+                                @if(View::hasSection('page-actions'))
                                     <div class="flex-shrink-0 flex">
                                         @yield('page-actions')
                                     </div>

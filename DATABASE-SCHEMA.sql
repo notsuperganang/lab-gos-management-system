@@ -97,73 +97,81 @@ CREATE TABLE categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE equipment (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    category_id BIGINT UNSIGNED NOT NULL,
-    model VARCHAR(255) NULL,
-    manufacturer VARCHAR(255) NULL,
-    specifications JSON NULL,
-    total_quantity INT NOT NULL DEFAULT 1,
-    available_quantity INT NOT NULL DEFAULT 1,
-    status ENUM('active', 'maintenance', 'retired') DEFAULT 'active',
-    condition_status ENUM('excellent', 'good', 'fair', 'poor') DEFAULT 'excellent',
-    purchase_date DATE NULL,
-    purchase_price DECIMAL(15,2) NULL,
-    location VARCHAR(255) NULL,
-    image_path VARCHAR(500) NULL,
-    manual_file_path VARCHAR(500) NULL,
-    notes TEXT NULL,
-    last_maintenance_date DATE NULL,
-    next_maintenance_date DATE NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_equipment_category (category_id),
-    INDEX idx_equipment_status (status),
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
-);
+-- laboratorium_gos.equipment definition
 
-CREATE TABLE borrow_requests (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    request_id VARCHAR(20) UNIQUE NOT NULL,
-    status ENUM('pending', 'approved', 'rejected', 'active', 'completed', 'cancelled') DEFAULT 'pending',
-    -- Borrower Info
-    members LONGTEXT NOT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
-    supervisor_name VARCHAR(255) NOT NULL,
-    supervisor_nip VARCHAR(50) NULL,
-    supervisor_email VARCHAR(255) NOT NULL,
-    supervisor_phone VARCHAR(20) NOT NULL,
-    -- Schedule Info
-    purpose TEXT NOT NULL,
-    borrow_date DATE NOT NULL,
-    return_date DATE NOT NULL,
-    start_time TIME NULL,
-    end_time TIME NULL,
-    -- System Fields
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    reviewed_at TIMESTAMP NULL,
-    reviewed_by BIGINT UNSIGNED NULL,
-    approval_notes TEXT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_borrow_requests_status (status),
-    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
-);
+CREATE TABLE `equipment` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `category_id` bigint(20) unsigned NOT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `manufacturer` varchar(255) DEFAULT NULL,
+  `specifications` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`specifications`)),
+  `total_quantity` int(11) NOT NULL DEFAULT 1,
+  `available_quantity` int(11) NOT NULL DEFAULT 1,
+  `status` enum('active','maintenance','retired') NOT NULL DEFAULT 'active',
+  `condition_status` enum('excellent','good','fair','poor') NOT NULL DEFAULT 'excellent',
+  `purchase_date` date DEFAULT NULL,
+  `purchase_price` decimal(15,2) DEFAULT NULL,
+  `location` varchar(255) DEFAULT NULL,
+  `image_path` varchar(500) DEFAULT NULL,
+  `manual_file_path` varchar(500) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `last_maintenance_date` date DEFAULT NULL,
+  `next_maintenance_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_equipment_category` (`category_id`),
+  KEY `idx_equipment_status` (`status`),
+  CONSTRAINT `equipment_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE borrow_request_items (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    borrow_request_id BIGINT UNSIGNED NOT NULL,
-    equipment_id BIGINT UNSIGNED NOT NULL,
-    quantity_requested INT NOT NULL,
-    quantity_approved INT NULL,
-    condition_before ENUM('excellent', 'good', 'fair', 'poor') NULL,
-    condition_after ENUM('excellent', 'good', 'fair', 'poor') NULL,
-    notes TEXT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (borrow_request_id) REFERENCES borrow_requests(id) ON DELETE CASCADE,
-    FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE
-);
+CREATE TABLE `borrow_requests` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `request_id` varchar(20) NOT NULL,
+  `status` enum('pending','approved','rejected','active','completed','cancelled') NOT NULL DEFAULT 'pending',
+  `members` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`members`)),
+  `supervisor_name` varchar(255) NOT NULL,
+  `supervisor_nip` varchar(50) DEFAULT NULL,
+  `supervisor_email` varchar(255) NOT NULL,
+  `supervisor_phone` varchar(20) NOT NULL,
+  `purpose` text NOT NULL,
+  `borrow_date` date NOT NULL,
+  `return_date` date NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `submitted_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `reviewed_by` bigint(20) unsigned DEFAULT NULL,
+  `approval_notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `borrow_requests_request_id_unique` (`request_id`),
+  KEY `borrow_requests_reviewed_by_foreign` (`reviewed_by`),
+  KEY `idx_borrow_requests_status` (`status`),
+  CONSTRAINT `borrow_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- laboratorium_gos.borrow_request_items definition
+
+CREATE TABLE `borrow_request_items` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `borrow_request_id` bigint(20) unsigned NOT NULL,
+  `equipment_id` bigint(20) unsigned NOT NULL,
+  `quantity_requested` int(11) NOT NULL,
+  `quantity_approved` int(11) DEFAULT NULL,
+  `condition_before` enum('excellent','good','fair','poor') DEFAULT NULL,
+  `condition_after` enum('excellent','good','fair','poor') DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `borrow_request_items_borrow_request_id_foreign` (`borrow_request_id`),
+  KEY `borrow_request_items_equipment_id_foreign` (`equipment_id`),
+  CONSTRAINT `borrow_request_items_borrow_request_id_foreign` FOREIGN KEY (`borrow_request_id`) REFERENCES `borrow_requests` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `borrow_request_items_equipment_id_foreign` FOREIGN KEY (`equipment_id`) REFERENCES `equipment` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. VISIT MANAGEMENT
 CREATE TABLE visit_requests (
