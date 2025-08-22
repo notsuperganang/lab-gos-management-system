@@ -46,8 +46,25 @@
                 </div>
             </div>
 
-            <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 gap-1">
+            <!-- Loading State -->
+            <div x-show="calendarWeeks.length === 0" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100" 
+                 x-transition:leave-end="opacity-0"
+                 class="text-center py-8">
+                <div class="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                <p class="text-sm text-gray-500 mt-2">Memuat kalender...</p>
+            </div>
+
+            <!-- Calendar Grid (only show when fully loaded) -->
+            <div x-show="calendarWeeks.length > 0"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 class="grid grid-cols-7 gap-1">
                 <!-- Day Headers -->
                 <template x-for="day in dayHeaders">
                     <div class="p-3 text-center text-sm font-medium text-gray-500 border-b">
@@ -64,6 +81,7 @@
                                 'bg-blue-50 border-blue-200': day.isSelected,
                                 'bg-gray-50 text-gray-400': day.isOtherMonth,
                                 'bg-emerald-50 border-emerald-200': day.isToday && !day.isSelected,
+                                'bg-gray-50 text-gray-500 opacity-60': day.isPast && day.isCurrentMonth && !day.isSelected,
                                 'cursor-pointer hover:bg-gray-50': day.isSelectable,
                                 'cursor-not-allowed opacity-50': !day.isSelectable
                             }"
@@ -72,17 +90,44 @@
                             <div class="text-sm font-medium" x-text="day.dayNumber"></div>
                             
                             <!-- Day Summary Indicators -->
-                            <div x-show="day.summary && !day.isOtherMonth" class="mt-1 space-y-1">
-                                <div x-show="day.summary.booked_slots > 0" class="text-xs bg-red-100 text-red-700 px-1 rounded">
-                                    <span x-text="day.summary.booked_slots"></span> Terpakai
+                            <template x-if="day.summary && !day.isOtherMonth">
+                                <div class="mt-1 space-y-1">
+                                    <!-- Booked slots (always show if > 0) -->
+                                    <template x-if="day.summary.booked_slots > 0">
+                                        <div class="text-xs bg-red-100 text-red-700 px-1 rounded">
+                                            <span x-text="day.summary.booked_slots"></span> Terpakai
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Blocked slots (always show if > 0) -->
+                                    <template x-if="day.summary.blocked_slots > 0">
+                                        <div class="text-xs bg-amber-100 text-amber-700 px-1 rounded">
+                                            <span x-text="day.summary.blocked_slots"></span> Diblokir
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Expired slots (past dates or today's expired slots) -->
+                                    <template x-if="day.summary.expired_slots > 0">
+                                        <div class="text-xs bg-gray-100 text-gray-600 px-1 rounded">
+                                            <span x-text="day.summary.expired_slots"></span> Berakhir
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Available slots (only show if > 0 and not a past date) -->
+                                    <template x-if="day.summary.available_slots > 0 && !day.isPast">
+                                        <div class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">
+                                            <span x-text="day.summary.available_slots"></span> Tersedia
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Past dates indicator -->
+                                    <template x-if="day.isPast && day.isCurrentMonth">
+                                        <div class="text-xs bg-gray-100 text-gray-500 px-1 rounded">
+                                            Sudah Lewat
+                                        </div>
+                                    </template>
                                 </div>
-                                <div x-show="day.summary.blocked_slots > 0" class="text-xs bg-amber-100 text-amber-700 px-1 rounded">
-                                    <span x-text="day.summary.blocked_slots"></span> Diblokir
-                                </div>
-                                <div x-show="day.summary.available_slots > 0" class="text-xs bg-emerald-100 text-emerald-700 px-1 rounded">
-                                    <span x-text="day.summary.available_slots"></span> Tersedia
-                                </div>
-                            </div>
+                            </template>
                         </div>
                     </template>
                 </template>
@@ -127,17 +172,24 @@
                     <p class="text-sm text-gray-500" x-text="selectedDayName"></p>
                     
                     <!-- Date Summary -->
-                    <div x-show="daySlots?.length > 0" class="mt-2 flex gap-4 text-xs">
-                        <span class="text-emerald-600">
-                            <span x-text="availableSlotsCount"></span> Tersedia
-                        </span>
-                        <span class="text-red-600">
-                            <span x-text="bookedSlotsCount"></span> Terpakai
-                        </span>
-                        <span class="text-amber-600">
-                            <span x-text="blockedSlotsCount"></span> Diblokir
-                        </span>
-                    </div>
+                    <template x-if="daySlots && daySlots.length > 0">
+                        <div class="mt-2 flex flex-wrap gap-4 text-xs">
+                            <span class="text-emerald-600">
+                                <span x-text="availableSlotsCount || 0"></span> Tersedia
+                            </span>
+                            <span class="text-red-600">
+                                <span x-text="bookedSlotsCount || 0"></span> Terpakai
+                            </span>
+                            <span class="text-amber-600">
+                                <span x-text="blockedSlotsCount || 0"></span> Diblokir
+                            </span>
+                            <template x-if="expiredSlotsCount > 0">
+                                <span class="text-gray-500">
+                                    <span x-text="expiredSlotsCount"></span> Berakhir
+                                </span>
+                            </template>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Slot List -->
@@ -146,13 +198,14 @@
                     <p class="text-sm text-gray-500 mt-2">Memuat slot...</p>
                 </div>
 
-                <div x-show="!loadingSlots && daySlots?.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+                <div x-show="!loadingSlots && daySlots && daySlots.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
                     <template x-for="slot in daySlots" :key="slot.start_time">
                         <div 
                             :class="{
-                                'border-emerald-200 bg-emerald-50': slot.status === 'available',
+                                'border-emerald-200 bg-emerald-50': slot.status === 'available' && !slot.isExpired,
                                 'border-red-200 bg-red-50': slot.status === 'booked',
-                                'border-amber-200 bg-amber-50': slot.status === 'blocked'
+                                'border-amber-200 bg-amber-50': slot.status === 'blocked',
+                                'border-gray-200 bg-gray-50 opacity-75': slot.isExpired
                             }"
                             class="border rounded-lg p-3">
                             
@@ -166,11 +219,12 @@
                                     <div class="text-xs mt-1">
                                         <span 
                                             :class="{
-                                                'text-emerald-600': slot.status === 'available',
+                                                'text-emerald-600': slot.status === 'available' && !slot.isExpired,
                                                 'text-red-600': slot.status === 'booked',
-                                                'text-amber-600': slot.status === 'blocked'
+                                                'text-amber-600': slot.status === 'blocked',
+                                                'text-gray-500': slot.isExpired
                                             }"
-                                            x-text="getStatusText(slot.status)">
+                                            x-text="getStatusText(slot)">
                                         </span>
                                     </div>
 
@@ -180,13 +234,15 @@
                                     </div>
 
                                     <!-- Show block reason -->
-                                    <div x-show="slot.status === 'blocked' && slot.blocked_info?.reason" class="text-xs text-gray-600 mt-1">
-                                        <div x-text="slot.blocked_info.reason"></div>
-                                    </div>
+                                    <template x-if="slot.status === 'blocked' && slot.blocked_info?.reason">
+                                        <div class="text-xs text-gray-600 mt-1">
+                                            <div x-text="slot.blocked_info?.reason"></div>
+                                        </div>
+                                    </template>
                                 </div>
 
-                                <!-- Toggle Switch (only for available/blocked slots) -->
-                                <div x-show="slot.status !== 'booked'" class="ml-3">
+                                <!-- Toggle Switch (only for available/blocked slots, not expired) -->
+                                <div x-show="slot.status !== 'booked' && !slot.isExpired" class="ml-3">
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input 
                                             type="checkbox" 
@@ -265,6 +321,8 @@ document.addEventListener('alpine:init', () => {
         selectedDate: null,
         monthData: null,
         daySlots: [],
+        today: null,
+        initialized: false,
         
         // Toast messages
         showSuccessToast: false,
@@ -277,8 +335,22 @@ document.addEventListener('alpine:init', () => {
         calendarWeeks: [],
 
         async init() {
-            console.log('Visit Schedule component initialized');
+            // Prevent double initialization
+            if (this.initialized) {
+                return;
+            }
+            this.initialized = true;
+            
+            // Set today and auto-select it
+            this.today = this.ymd(new Date());
+            this.selectedDate = { date: this.today };
+            
             await this.loadCurrentMonth();
+            
+            // Auto-load today's slots if today is selectable
+            if (this.selectedDate && this.selectedDate.date === this.today) {
+                await this.loadDaySlots(this.today);
+            }
         },
 
         // Computed properties
@@ -316,7 +388,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         get availableSlotsCount() {
-            return this.daySlots?.filter(slot => slot.status === 'available').length || 0;
+            return this.daySlots?.filter(slot => slot.status === 'available' && !slot.isExpired).length || 0;
         },
 
         get bookedSlotsCount() {
@@ -325,6 +397,10 @@ document.addEventListener('alpine:init', () => {
 
         get blockedSlotsCount() {
             return this.daySlots?.filter(slot => slot.status === 'blocked').length || 0;
+        },
+
+        get expiredSlotsCount() {
+            return this.daySlots?.filter(slot => slot.isExpired).length || 0;
         },
 
         // Calendar navigation
@@ -369,35 +445,31 @@ document.addEventListener('alpine:init', () => {
             if (!day.isSelectable || day.isOtherMonth) return;
 
             this.selectedDate = day;
-            this.loadingSlots = true;
+            // Trigger calendar refresh for reactive selection updates
+            this.buildCalendarGrid();
             
-            try {
-                const response = await this.apiCall('GET', `/api/admin/visit/availability?date=${day.date}`);
-                
-                if (response.success) {
-                    this.daySlots = response.data.slots || [];
-                } else {
-                    throw new Error(response.message || 'Failed to load day slots');
-                }
-            } catch (error) {
-                console.error('Error loading day slots:', error);
-                this.showError('Gagal memuat slot: ' + error.message);
-                this.daySlots = [];
-            } finally {
-                this.loadingSlots = false;
-            }
+            // Load slots for the selected date
+            await this.loadDaySlots(day.date);
         },
 
         async toggleSlot(slot) {
-            if (slot.status === 'booked') return;
+            if (slot.status === 'booked' || slot.isExpired) return;
 
             this.togglingSlot = slot.start_time;
             
             try {
+                // Ensure proper time format with seconds
+                const startTime = slot.start_time.includes(':') && slot.start_time.split(':').length === 3 
+                    ? slot.start_time 
+                    : slot.start_time + ':00';
+                const endTime = slot.end_time.includes(':') && slot.end_time.split(':').length === 3 
+                    ? slot.end_time 
+                    : slot.end_time + ':00';
+
                 const response = await this.apiCall('PUT', '/api/admin/visit/blocks/toggle', {
                     date: this.selectedDate.date,
-                    start_time: slot.start_time,
-                    end_time: slot.end_time,
+                    start_time: startTime,
+                    end_time: endTime,
                     reason: slot.status === 'available' ? 'Diblokir oleh admin' : null
                 });
 
@@ -419,7 +491,14 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (error) {
                 console.error('Error toggling slot:', error);
-                this.showError('Gagal mengubah status slot: ' + error.message);
+                
+                // Handle validation errors specifically
+                if (error.validationErrors) {
+                    const errorMsg = Object.values(error.validationErrors).flat().join('; ');
+                    this.showError('Validasi gagal: ' + errorMsg);
+                } else {
+                    this.showError('Gagal mengubah status slot: ' + error.message);
+                }
             } finally {
                 this.togglingSlot = null;
             }
@@ -437,35 +516,41 @@ document.addEventListener('alpine:init', () => {
             const year = this.currentYear;
             const month = this.currentMonth;
             const firstDay = new Date(year, month - 1, 1);
-            const lastDay = new Date(year, month, 0);
-            const today = new Date();
+            const todayDate = new Date();
             
-            // Get first day of calendar (might be from previous month)
+            // Calculate first Sunday of the calendar grid (Sunday-first)
             const startDate = new Date(firstDay);
-            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            const dayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            startDate.setDate(1 - dayOfWeek); // Move to first Sunday
             
             const weeks = [];
-            let currentWeekStart = new Date(startDate);
             
+            // Build 6 weeks of calendar
             for (let week = 0; week < 6; week++) {
                 const days = [];
                 
-                for (let day = 0; day < 7; day++) {
-                    const currentDate = new Date(currentWeekStart);
-                    currentDate.setDate(currentDate.getDate() + day);
+                // Build 7 days for this week
+                for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                    // Calculate the actual date for this cell
+                    const cellDate = new Date(startDate);
+                    const totalOffset = (week * 7) + dayOffset;
+                    cellDate.setDate(startDate.getDate() + totalOffset);
                     
-                    const isCurrentMonth = currentDate.getMonth() === month - 1;
-                    const isToday = currentDate.toDateString() === today.toDateString();
-                    const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
-                    const isPast = currentDate < today.setHours(0, 0, 0, 0);
+                    const isCurrentMonth = cellDate.getMonth() === month - 1;
+                    const isToday = this.ymd(cellDate) === this.today;
+                    const isWeekend = cellDate.getDay() === 0 || cellDate.getDay() === 6;
+                    const isPast = cellDate < new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
                     const isSelectable = isCurrentMonth && !isWeekend && !isPast;
                     
-                    const dateStr = currentDate.toISOString().split('T')[0];
-                    const daySummary = this.monthData?.daily_summary?.find(d => d.date === dateStr);
+                    const dateStr = this.ymd(cellDate);
+                    const rawSummary = this.monthData?.daily_summary?.find(d => d.date === dateStr);
+                    
+                    // Enhanced summary calculation considering time-based availability
+                    const enhancedSummary = this.calculateEnhancedSummary(rawSummary, dateStr, isPast, isToday);
                     
                     const dayObj = {
                         date: dateStr,
-                        dayNumber: currentDate.getDate(),
+                        dayNumber: cellDate.getDate(),
                         isCurrentMonth,
                         isOtherMonth: !isCurrentMonth,
                         isToday,
@@ -473,7 +558,7 @@ document.addEventListener('alpine:init', () => {
                         isPast,
                         isSelectable,
                         isSelected: this.selectedDate?.date === dateStr,
-                        summary: daySummary
+                        summary: enhancedSummary
                     };
                     
                     days.push(dayObj);
@@ -483,21 +568,147 @@ document.addEventListener('alpine:init', () => {
                     weekIndex: week,
                     days
                 });
-                
-                currentWeekStart.setDate(currentWeekStart.getDate() + 7);
             }
             
             this.calendarWeeks = weeks;
         },
 
+        // Local time helper functions
+        ymd(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
+
+        parseYMD(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        },
+
+        // Time helper functions
+        parseTimeToMinutes(timeStr) {
+            // Convert "HH:MM:SS" or "HH:MM" to minutes since midnight
+            const parts = timeStr.split(':');
+            const hours = parseInt(parts[0], 10);
+            const minutes = parseInt(parts[1], 10);
+            return (hours * 60) + minutes;
+        },
+
+        getCurrentTimeMinutes() {
+            const now = new Date();
+            return (now.getHours() * 60) + now.getMinutes();
+        },
+
+        isSlotExpired(slot, selectedDate) {
+            // Only check for expiration if the selected date is today
+            if (selectedDate !== this.today) {
+                return false;
+            }
+            
+            const currentMinutes = this.getCurrentTimeMinutes();
+            const slotEndMinutes = this.parseTimeToMinutes(slot.end_time);
+            
+            return slotEndMinutes <= currentMinutes;
+        },
+
+        calculateEnhancedSummary(rawSummary, dateStr, isPast, isToday) {
+            // Default summary structure
+            const defaultSummary = {
+                available_slots: 0,
+                booked_slots: 0,
+                blocked_slots: 0,
+                expired_slots: 0,
+                total_slots: 0,
+                real_availability: 0
+            };
+
+            if (!rawSummary) {
+                return defaultSummary;
+            }
+
+            // Start with raw data
+            let summary = {
+                available_slots: rawSummary.available_slots || 0,
+                booked_slots: rawSummary.booked_slots || 0,
+                blocked_slots: rawSummary.blocked_slots || 0,
+                expired_slots: 0,
+                total_slots: rawSummary.total_slots || 0,
+                real_availability: rawSummary.available_slots || 0
+            };
+
+            // For past dates: all non-booked slots are considered "expired/unavailable"
+            if (isPast) {
+                summary.expired_slots = summary.available_slots + summary.blocked_slots;
+                summary.available_slots = 0;
+                summary.real_availability = 0;
+            }
+            // For today: calculate expired slots based on current time
+            else if (isToday && dateStr === this.today) {
+                // Estimate expired slots (we don't have individual slot times here, 
+                // so we'll estimate based on current time vs typical slot schedule)
+                const currentMinutes = this.getCurrentTimeMinutes();
+                const operatingStartMinutes = 8 * 60; // 08:00
+                const operatingEndMinutes = 16 * 60; // 16:00
+                const lunchStartMinutes = 12 * 60; // 12:00
+                const lunchEndMinutes = 13 * 60; // 13:00
+                
+                if (currentMinutes > operatingStartMinutes) {
+                    // Calculate how many slots have likely expired
+                    const totalOperatingMinutes = (operatingEndMinutes - operatingStartMinutes) - (lunchEndMinutes - lunchStartMinutes);
+                    const passedMinutes = Math.min(currentMinutes - operatingStartMinutes, totalOperatingMinutes);
+                    const estimatedExpiredSlots = Math.floor(passedMinutes / 60); // 1-hour slots
+                    
+                    // Don't exceed available slots
+                    summary.expired_slots = Math.min(estimatedExpiredSlots, summary.available_slots);
+                    summary.available_slots = Math.max(0, summary.available_slots - summary.expired_slots);
+                    summary.real_availability = summary.available_slots;
+                }
+            }
+
+            return summary;
+        },
+
+        async loadDaySlots(dateStr) {
+            this.loadingSlots = true;
+            
+            try {
+                const response = await this.apiCall('GET', `/api/admin/visit/availability?date=${dateStr}`);
+                
+                if (response.success) {
+                    // Process slots to add expiration status
+                    this.daySlots = (response.data.slots || []).map(slot => {
+                        const isExpired = this.isSlotExpired(slot, dateStr);
+                        return {
+                            ...slot,
+                            isExpired,
+                            isToggleable: slot.status !== 'booked' && !isExpired
+                        };
+                    });
+                } else {
+                    throw new Error(response.message || 'Failed to load day slots');
+                }
+            } catch (error) {
+                console.error('Error loading day slots:', error);
+                this.showError('Gagal memuat slot: ' + error.message);
+                this.daySlots = [];
+            } finally {
+                this.loadingSlots = false;
+            }
+        },
+
         // Utility functions
-        getStatusText(status) {
+        getStatusText(slot) {
+            if (slot.isExpired) {
+                return 'Sudah Berakhir';
+            }
+            
             const statusMap = {
                 'available': 'Tersedia',
                 'booked': 'Terpakai',
                 'blocked': 'Diblokir'
             };
-            return statusMap[status] || status;
+            return statusMap[slot.status] || slot.status;
         },
 
         showSuccess(message) {
@@ -540,6 +751,12 @@ document.addEventListener('alpine:init', () => {
             const result = await response.json();
 
             if (!response.ok) {
+                // Handle validation errors (422)
+                if (response.status === 422 && result.errors) {
+                    const error = new Error(result.message || 'Validation failed');
+                    error.validationErrors = result.errors;
+                    throw error;
+                }
                 throw new Error(result.message || `HTTP ${response.status}`);
             }
 
