@@ -514,4 +514,214 @@ class CalendarController extends Controller
             );
         }
     }
+
+    /**
+     * Get hourly availability grid for a specific date
+     * Route alias for specification compliance: GET /api/admin/visit/availability?date=YYYY-MM-DD
+     */
+    public function getAvailability(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'date' => 'required|date|date_format:Y-m-d'
+            ]);
+
+            $date = $validated['date'];
+            
+            // Reuse existing dayView logic
+            return $this->dayView($request, $date);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors());
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve availability', [
+                'error' => $e->getMessage(),
+                'admin_user_id' => $request->user()->id,
+                'date' => $request->input('date')
+            ]);
+
+            return ApiResponse::error(
+                'Failed to retrieve availability',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Get month overview with availability counts  
+     * Route alias for specification compliance: GET /api/admin/visit/calendar?year=YYYY&month=MM
+     */
+    public function getCalendar(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'year' => 'required|integer|min:2020|max:2030',
+                'month' => 'required|integer|min:1|max:12'
+            ]);
+
+            $year = $validated['year'];
+            $month = $validated['month'];
+            
+            // Reuse existing monthView logic
+            return $this->monthView($request, $year, $month);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors());
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve calendar', [
+                'error' => $e->getMessage(),
+                'admin_user_id' => $request->user()->id,
+                'year' => $request->input('year'),
+                'month' => $request->input('month')
+            ]);
+
+            return ApiResponse::error(
+                'Failed to retrieve calendar',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Toggle block/unblock a single 1-hour time slot
+     * Route: PUT /api/admin/visit/blocks/toggle
+     */
+    public function toggleBlock(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'date' => 'required|date|date_format:Y-m-d|after:today',
+                'start_time' => 'required|date_format:H:i:s',
+                'end_time' => 'required|date_format:H:i:s|after:start_time',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $date = $validated['date'];
+            $startTime = $validated['start_time'];
+            $endTime = $validated['end_time'];
+
+            // Validate that it's exactly 1 hour and top-of-hour
+            $startMinutes = $this->timeToMinutes($startTime);
+            $endMinutes = $this->timeToMinutes($endTime);
+            $duration = $endMinutes - $startMinutes;
+
+            if ($duration !== 60) {
+                return ApiResponse::error('Time slot must be exactly 1 hour', 422);
+            }
+
+            if ($startMinutes % 60 !== 0) {
+                return ApiResponse::error('Time slot must start at top of hour (e.g., 09:00:00)', 422);
+            }
+
+            // Check if date is weekend
+            $dateCarbon = Carbon::parse($date);
+            if ($dateCarbon->isWeekend()) {
+                return ApiResponse::error('Cannot manage slots on weekends', 422);
+            }
+
+            // Check if slot exists
+            $existingBlock = BlockedTimeSlot::where('date', $date)
+                ->where('start_time', $startTime)
+                ->where('end_time', $endTime)
+                ->first();
+
+            DB::beginTransaction();
+
+            if ($existingBlock) {
+                // Unblock the slot
+                $slotInfo = [
+                    'id' => $existingBlock->id,
+                    'date' => $existingBlock->date->format('Y-m-d'),
+                    'start_time' => $existingBlock->start_time,
+                    'end_time' => $existingBlock->end_time,
+                    'time_range' => $existingBlock->time_range,
+                    'reason' => $existingBlock->reason,
+                ];
+
+                $existingBlock->delete();
+                $newStatus = 'available';
+                $message = 'Time slot unblocked successfully';
+
+                DB::commit();
+
+                Log::info('Time slot toggled to available', [
+                    'admin_user_id' => $request->user()->id,
+                    'slot' => $slotInfo
+                ]);
+
+            } else {
+                // Block the slot
+                $blockedSlot = BlockedTimeSlot::create([
+                    'date' => $date,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'reason' => $validated['reason'] ?? null,
+                    'created_by' => $request->user()->id,
+                ]);
+
+                $newStatus = 'blocked';
+                $message = 'Time slot blocked successfully';
+
+                $slotInfo = [
+                    'id' => $blockedSlot->id,
+                    'date' => $blockedSlot->date->format('Y-m-d'),
+                    'start_time' => $blockedSlot->start_time,
+                    'end_time' => $blockedSlot->end_time,
+                    'time_range' => $blockedSlot->time_range,
+                    'reason' => $blockedSlot->reason,
+                    'created_by' => $blockedSlot->creator->name ?? 'Admin',
+                    'created_at' => $blockedSlot->created_at->format('Y-m-d H:i:s'),
+                ];
+
+                DB::commit();
+
+                Log::info('Time slot toggled to blocked', [
+                    'admin_user_id' => $request->user()->id,
+                    'slot' => $slotInfo
+                ]);
+            }
+
+            return ApiResponse::success([
+                'status' => $newStatus,
+                'slot' => $slotInfo
+            ], $message);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors());
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Failed to toggle time slot', [
+                'error' => $e->getMessage(),
+                'admin_user_id' => $request->user()->id,
+                'request_data' => $validated ?? []
+            ]);
+
+            return ApiResponse::error(
+                'Failed to toggle time slot',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Convert time string (HH:MM:SS) to minutes since midnight
+     */
+    private function timeToMinutes(string $time): int
+    {
+        $parts = explode(':', $time);
+        $hours = (int) $parts[0];
+        $minutes = isset($parts[1]) ? (int) $parts[1] : 0;
+        
+        return ($hours * 60) + $minutes;
+    }
 }

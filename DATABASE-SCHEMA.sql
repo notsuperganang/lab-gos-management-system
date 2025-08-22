@@ -173,40 +173,59 @@ CREATE TABLE `borrow_request_items` (
   CONSTRAINT `borrow_request_items_equipment_id_foreign` FOREIGN KEY (`equipment_id`) REFERENCES `equipment` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. VISIT MANAGEMENT
-CREATE TABLE visit_requests (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    request_id VARCHAR(20) UNIQUE NOT NULL,
-    status ENUM('pending', 'under_review', 'approved', 'ready', 'completed', 'rejected', 'cancelled') DEFAULT 'pending',
-    -- Contact Info
-    visitor_name VARCHAR(255) NOT NULL,
-    visitor_email VARCHAR(255) NOT NULL,
-    visitor_phone VARCHAR(20) NOT NULL,
-    institution VARCHAR(255) NOT NULL,
-    -- Visit Info
-    visit_purpose ENUM('study-visit', 'research', 'learning', 'internship', 'others') NOT NULL,
-    visit_date DATE NOT NULL,
-    start_time TIME NULL,
-    end_time TIME NULL,
-    visit_time ENUM('morning', 'afternoon') NOT NULL,
-    group_size INT NOT NULL,
-    purpose_description TEXT NULL,
-    special_requirements TEXT NULL,
-    equipment_needed LONGTEXT NULL, -- JSON stored as LONGTEXT with utf8mb4_bin collation
-    -- Documents
-    request_letter_path VARCHAR(500) NULL,
-    approval_letter_path VARCHAR(500) NULL,
-    -- System Fields
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    reviewed_at TIMESTAMP NULL,
-    reviewed_by BIGINT UNSIGNED NULL,
-    approval_notes TEXT NULL,
-    agreement_accepted BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_visit_requests_status (status),
-    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
-);
+-- laboratorium_gos.visit_requests definition
+
+CREATE TABLE `visit_requests` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `request_id` varchar(20) NOT NULL,
+  `status` enum('pending','under_review','approved','ready','completed','rejected','cancelled') NOT NULL DEFAULT 'pending',
+  `visitor_name` varchar(255) NOT NULL,
+  `visitor_email` varchar(255) NOT NULL,
+  `visitor_phone` varchar(20) NOT NULL,
+  `institution` varchar(255) NOT NULL,
+  `visit_purpose` enum('study-visit','research','learning','internship','others') NOT NULL,
+  `visit_date` date NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `visit_time` enum('morning','afternoon') NOT NULL,
+  `group_size` int(11) NOT NULL,
+  `purpose_description` text DEFAULT NULL,
+  `special_requirements` text DEFAULT NULL,
+  `equipment_needed` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`equipment_needed`)),
+  `request_letter_path` varchar(500) DEFAULT NULL,
+  `approval_letter_path` varchar(500) DEFAULT NULL,
+  `submitted_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `reviewed_by` bigint(20) unsigned DEFAULT NULL,
+  `approval_notes` text DEFAULT NULL,
+  `agreement_accepted` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `visit_requests_request_id_unique` (`request_id`),
+  KEY `visit_requests_reviewed_by_foreign` (`reviewed_by`),
+  KEY `idx_visit_requests_status` (`status`),
+  CONSTRAINT `visit_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- laboratorium_gos.blocked_time_slots definition
+
+CREATE TABLE `blocked_time_slots` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `date` date NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `reason` text DEFAULT NULL,
+  `created_by` bigint(20) unsigned NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_blocked_slot` (`date`,`start_time`,`end_time`),
+  KEY `blocked_time_slots_created_by_foreign` (`created_by`),
+  KEY `idx_blocked_slots_date` (`date`),
+  KEY `idx_blocked_slots_time` (`date`,`start_time`,`end_time`),
+  CONSTRAINT `blocked_time_slots_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. TESTING/SAMPLE ANALYSIS
 CREATE TABLE testing_requests (

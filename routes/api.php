@@ -342,6 +342,21 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
             ->name('blocked-slots-list');
     });
 
+    // Visit schedule management - route aliases for exact specification URLs
+    Route::prefix('visit')->name('visit.')->group(function () {
+        // Get hourly availability grid for a specific date
+        Route::get('/availability', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'getAvailability'])
+            ->name('availability');
+
+        // Get month overview with availability counts
+        Route::get('/calendar', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'getCalendar'])
+            ->name('calendar');
+
+        // Toggle block/unblock a single 1-hour time slot
+        Route::put('/blocks/toggle', [\App\Http\Controllers\Api\Admin\CalendarController::class, 'toggleBlock'])
+            ->name('blocks.toggle');
+    });
+
     // Profile management for authenticated admin users
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', function (Request $request) {
