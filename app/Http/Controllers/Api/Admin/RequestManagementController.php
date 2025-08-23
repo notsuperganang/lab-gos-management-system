@@ -7,6 +7,7 @@ use App\Http\Resources\ApiResponse;
 use App\Models\BorrowRequest;
 use App\Models\VisitRequest;
 use App\Models\TestingRequest;
+use App\Services\BorrowLetterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,12 @@ use Illuminate\Support\Facades\Log;
 
 class RequestManagementController extends Controller
 {
+    protected BorrowLetterService $borrowLetterService;
+    
+    public function __construct(BorrowLetterService $borrowLetterService)
+    {
+        $this->borrowLetterService = $borrowLetterService;
+    }
     /**
      * Get paginated list of borrow requests with filtering
      */
@@ -165,6 +172,21 @@ class RequestManagementController extends Controller
             }
             
             DB::commit();
+            
+            // Generate PDF letter after successful approval
+            try {
+                $letterUrl = $this->borrowLetterService->generate($borrowRequest);
+                Log::info('Borrow request letter generated', [
+                    'request_id' => $borrowRequest->request_id,
+                    'letter_url' => $letterUrl
+                ]);
+            } catch (\Exception $e) {
+                // Log the error but don't fail the approval process
+                Log::error('Failed to generate borrow request letter', [
+                    'request_id' => $borrowRequest->request_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             Log::info('Borrow request approved', [
                 'request_id' => $borrowRequest->request_id,
@@ -322,6 +344,79 @@ class RequestManagementController extends Controller
             
             return ApiResponse::error(
                 'Failed to update borrow request',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+    
+    /**
+     * Get or generate borrow request letter PDF
+     */
+    public function getBorrowRequestLetter(BorrowRequest $borrowRequest): JsonResponse
+    {
+        try {
+            $letterUrl = $this->borrowLetterService->getOrGenerate($borrowRequest);
+            
+            if (!$letterUrl) {
+                return ApiResponse::error(
+                    'Letter not available. Request must be approved to generate letter.',
+                    404
+                );
+            }
+            
+            return ApiResponse::success([
+                'letter_url' => $letterUrl,
+                'request_id' => $borrowRequest->request_id,
+                'status' => $borrowRequest->status
+            ], 'Letter retrieved successfully');
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to get borrow request letter', [
+                'request_id' => $borrowRequest->request_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ApiResponse::error(
+                'Failed to retrieve letter',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+    
+    /**
+     * Regenerate borrow request letter PDF
+     */
+    public function regenerateBorrowRequestLetter(BorrowRequest $borrowRequest): JsonResponse
+    {
+        try {
+            // Only allow regeneration for approved/active/completed requests
+            if (!in_array($borrowRequest->status, ['approved', 'active', 'completed'])) {
+                return ApiResponse::error(
+                    'Letter can only be regenerated for approved requests',
+                    400
+                );
+            }
+            
+            $letterUrl = $this->borrowLetterService->regenerate($borrowRequest);
+            
+            return ApiResponse::success([
+                'letter_url' => $letterUrl,
+                'request_id' => $borrowRequest->request_id,
+                'regenerated_at' => now()->toISOString()
+            ], 'Letter regenerated successfully');
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to regenerate borrow request letter', [
+                'request_id' => $borrowRequest->request_id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return ApiResponse::error(
+                'Failed to regenerate letter',
                 500,
                 null,
                 $e->getMessage()

@@ -197,6 +197,12 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
             ->name('borrow.approve');
         Route::put('/borrow/{borrowRequest}/reject', [RequestManagementController::class, 'rejectBorrowRequest'])
             ->name('borrow.reject');
+        
+        // Borrow request letter management
+        Route::get('/borrow/{borrowRequest}/letter', [RequestManagementController::class, 'getBorrowRequestLetter'])
+            ->name('borrow.letter');
+        Route::post('/borrow/{borrowRequest}/letter/regenerate', [RequestManagementController::class, 'regenerateBorrowRequestLetter'])
+            ->name('borrow.letter.regenerate');
 
         // Visit requests
         Route::get('/visit', [RequestManagementController::class, 'visitRequests'])
