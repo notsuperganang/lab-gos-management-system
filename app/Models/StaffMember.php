@@ -112,12 +112,6 @@ class StaffMember extends Model
         return asset('assets/images/placeholder.svg');
     }
 
-    // NOTE: If you see 403 responses for storage/staff/*.jpg ensure:
-    // 1. File actually exists under storage/app/public/staff
-    // 2. Symlink public/storage -> storage/app/public is present (php artisan storage:link)
-    // 3. Web server / filesystem permissions allow read (chmod o+r on files)
-    // Laravel's local file serving aborts(403) when the path resolves outside the configured directory or missing.
-
     /**
      * Check if staff member has research interests.
      */
