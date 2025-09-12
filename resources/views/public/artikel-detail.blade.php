@@ -48,7 +48,7 @@
         </div>
 
         <!-- Back Button -->
-        <div class="absolute top-8 left-8 z-20">
+        <div class="absolute bottom-8 left-8 z-30">
             <a href="{{ route('artikel') }}" class="bg-white bg-opacity-20 backdrop-blur-sm text-white px-4 py-2 rounded-xl hover:bg-opacity-30 transition-all duration-300">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Kembali
@@ -97,7 +97,7 @@
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
                      class="mb-8 transition-all duration-1000 ease-out">
-                    <img src="{{ Storage::url($article->featured_image_path) }}" 
+                    <img src="{{ $article->featured_image_url }}" 
                          class="w-full rounded-2xl aspect-[16/9] object-cover" 
                          loading="lazy" 
                          alt="{{ $article->title }}">
