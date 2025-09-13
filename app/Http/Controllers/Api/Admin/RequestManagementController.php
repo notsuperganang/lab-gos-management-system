@@ -8,6 +8,8 @@ use App\Models\BorrowRequest;
 use App\Models\TestingRequest;
 use App\Models\VisitRequest;
 use App\Services\BorrowLetterService;
+use App\Services\VisitLetterService;
+use App\Services\TestingLetterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +18,14 @@ use Illuminate\Support\Facades\Log;
 class RequestManagementController extends Controller
 {
     protected BorrowLetterService $borrowLetterService;
+    protected VisitLetterService $visitLetterService;
+    protected TestingLetterService $testingLetterService;
 
-    public function __construct(BorrowLetterService $borrowLetterService)
+    public function __construct(BorrowLetterService $borrowLetterService, VisitLetterService $visitLetterService, TestingLetterService $testingLetterService)
     {
         $this->borrowLetterService = $borrowLetterService;
+        $this->visitLetterService = $visitLetterService;
+        $this->testingLetterService = $testingLetterService;
     }
 
     /**
@@ -465,6 +471,152 @@ class RequestManagementController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to regenerate borrow request letter', [
                 'request_id' => $borrowRequest->request_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to regenerate letter',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Get or generate visit request letter PDF
+     */
+    public function getVisitRequestLetter(VisitRequest $visitRequest): JsonResponse
+    {
+        try {
+            $letterUrl = $this->visitLetterService->getOrGenerate($visitRequest);
+
+            if (! $letterUrl) {
+                return ApiResponse::error(
+                    'Letter not available. Request must be approved to generate letter.',
+                    404
+                );
+            }
+
+            return ApiResponse::success([
+                'letter_url' => $letterUrl,
+                'request_id' => $visitRequest->request_id,
+                'status' => $visitRequest->status,
+            ], 'Letter retrieved successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get visit request letter', [
+                'request_id' => $visitRequest->request_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to retrieve letter',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Regenerate visit request letter PDF
+     */
+    public function regenerateVisitRequestLetter(VisitRequest $visitRequest): JsonResponse
+    {
+        try {
+            // Only allow regeneration for approved/completed requests
+            if (! in_array($visitRequest->status, ['approved', 'completed'])) {
+                return ApiResponse::error(
+                    'Letter can only be regenerated for approved requests',
+                    400
+                );
+            }
+
+            $letterUrl = $this->visitLetterService->regenerate($visitRequest);
+
+            return ApiResponse::success([
+                'letter_url' => $letterUrl,
+                'request_id' => $visitRequest->request_id,
+                'regenerated_at' => now()->toISOString(),
+            ], 'Letter regenerated successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to regenerate visit request letter', [
+                'request_id' => $visitRequest->request_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to regenerate letter',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Get or generate testing request authorization letter PDF
+     */
+    public function getTestingRequestLetter(TestingRequest $testingRequest): JsonResponse
+    {
+        try {
+            $letterUrl = $this->testingLetterService->getOrGenerate($testingRequest);
+
+            if (! $letterUrl) {
+                return ApiResponse::error(
+                    'Letter not available. Request must be approved to generate letter.',
+                    404
+                );
+            }
+
+            return ApiResponse::success([
+                'letter_url' => $letterUrl,
+                'request_id' => $testingRequest->request_id,
+                'status' => $testingRequest->status,
+            ], 'Letter retrieved successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get testing request letter', [
+                'request_id' => $testingRequest->request_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to retrieve letter',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Regenerate testing request authorization letter PDF
+     */
+    public function regenerateTestingRequestLetter(TestingRequest $testingRequest): JsonResponse
+    {
+        try {
+            // Only allow regeneration for approved+ status requests
+            if (! in_array($testingRequest->status, ['approved', 'sample_received', 'in_progress', 'completed'])) {
+                return ApiResponse::error(
+                    'Letter can only be regenerated for approved requests',
+                    400
+                );
+            }
+
+            $letterUrl = $this->testingLetterService->regenerate($testingRequest);
+
+            return ApiResponse::success([
+                'letter_url' => $letterUrl,
+                'request_id' => $testingRequest->request_id,
+                'regenerated_at' => now()->toISOString(),
+            ], 'Letter regenerated successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to regenerate testing request letter', [
+                'request_id' => $testingRequest->request_id,
                 'error' => $e->getMessage(),
             ]);
 
