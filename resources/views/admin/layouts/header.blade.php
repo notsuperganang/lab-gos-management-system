@@ -14,9 +14,9 @@
 
             <!-- Laboratory branding -->
             <div class="flex items-center space-x-3">
-                <img src="{{ asset('assets/images/logo-fisika-putih.png') }}" 
+                <img src="{{ asset('assets/images/logo-fisika-hitam.png') }}" 
                      alt="Lab GOS" 
-                     class="h-8 w-8 bg-blue-600 p-1 rounded">
+                     class="h-10 w-10 flex-shrink-0 object-contain">
                 <div class="hidden sm:block">
                     <h1 class="text-lg font-semibold text-gray-900">
                         @yield('header-title', 'Laboratorium GOS Admin')

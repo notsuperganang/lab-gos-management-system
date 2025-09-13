@@ -31,7 +31,7 @@ class SiteSettingSeeder extends Seeder
             [
                 'key' => 'institution_name',
                 'title' => 'Nama Institusi',
-                'content' => 'Universitas Sumatera Utara',
+                'content' => 'Universitas Syiah Kuala',
                 'type' => 'text',
                 'is_active' => true,
             ],
@@ -76,30 +76,30 @@ class SiteSettingSeeder extends Seeder
             [
                 'key' => 'address',
                 'title' => 'Alamat Laboratorium',
-                'content' => 'Gedung J7 Lantai 2, Departemen Fisika FMIPA USU
-Jl. Bioteknologi No. 1, Kampus USU Padang Bulan
-Medan, Sumatera Utara 20155',
+                'content' => 'Departemen Fisika FMIPA Universitas Syiah Kuala
+Jl. Teuku Nyak Arief, Darussalam
+Banda Aceh, Aceh 23111',
                 'type' => 'text',
                 'is_active' => true,
             ],
             [
                 'key' => 'phone',
                 'title' => 'Nomor Telepon',
-                'content' => '+62 61 8211050',
+                'content' => '+62 651-7551843',
                 'type' => 'text',
                 'is_active' => true,
             ],
             [
                 'key' => 'email',
                 'title' => 'Email Laboratorium',
-                'content' => 'labgos@usu.ac.id',
+                'content' => 'labgos@unsyiah.ac.id',
                 'type' => 'text',
                 'is_active' => true,
             ],
             [
                 'key' => 'website',
                 'title' => 'Website Laboratorium',
-                'content' => 'https://labgos.fisika.usu.ac.id',
+                'content' => 'https://labgos.fisika.unsyiah.ac.id',
                 'type' => 'text',
                 'is_active' => true,
             ],
@@ -126,7 +126,7 @@ Medan, Sumatera Utara 20155',
             [
                 'key' => 'about',
                 'title' => 'Tentang Laboratorium',
-                'content' => '<p>Laboratorium Getaran, Optik, dan Spektroskopi (Lab GOS) merupakan salah satu laboratorium unggulan di Departemen Fisika, Fakultas MIPA, Universitas Sumatera Utara. Laboratorium ini didirikan pada tahun 2010 dengan tujuan untuk mendukung kegiatan pembelajaran dan penelitian dalam bidang fisika instrumentasi.</p>
+                'content' => '<p>Laboratorium Getaran, Optik, dan Spektroskopi (Lab GOS) merupakan salah satu laboratorium unggulan di Departemen Fisika, Fakultas MIPA, Universitas Syiah Kuala. Laboratorium ini didirikan dengan tujuan untuk mendukung kegiatan pembelajaran dan penelitian dalam bidang fisika instrumentasi.</p>
 
 <p>Lab GOS dilengkapi dengan peralatan canggih dan modern untuk berbagai keperluan penelitian dan praktikum mahasiswa. Beberapa peralatan unggulan yang tersedia meliputi spektrometer UV-Vis, FTIR, mikroskop optik, sistem laser, dan berbagai peralatan elektronik instrumentasi.</p>
 
@@ -188,10 +188,10 @@ Medan, Sumatera Utara 20155',
                 'key' => 'social_media',
                 'title' => 'Media Sosial',
                 'content' => json_encode([
-                    'instagram' => '@labgos_usu',
-                    'twitter' => '@labgos_usu',
-                    'youtube' => 'Lab GOS USU',
-                    'linkedin' => 'company/lab-gos-usu'
+                    'instagram' => '@labgos_unsyiah',
+                    'twitter' => '@labgos_unsyiah',
+                    'youtube' => 'Lab GOS Unsyiah',
+                    'linkedin' => 'company/lab-gos-unsyiah'
                 ]),
                 'type' => 'json',
                 'is_active' => true,
@@ -233,7 +233,7 @@ Medan, Sumatera Utara 20155',
             [
                 'key' => 'footer_text',
                 'title' => 'Teks Footer',
-                'content' => '© 2024 Laboratorium Getaran, Optik, dan Spektroskopi - Departemen Fisika FMIPA USU. All rights reserved.',
+                'content' => '© 2024 Laboratorium Getaran, Optik, dan Spektroskopi - Departemen Fisika FMIPA Universitas Syiah Kuala. All rights reserved.',
                 'type' => 'text',
                 'is_active' => true,
             ],
@@ -249,7 +249,7 @@ Medan, Sumatera Utara 20155',
             [
                 'key' => 'institution_logo',
                 'title' => 'Logo Institusi',
-                'content' => 'images/usu-logo.png',
+                'content' => 'images/Unsyiah-logo.png',
                 'type' => 'image',
                 'is_active' => true,
             ],
@@ -259,10 +259,11 @@ Medan, Sumatera Utara 20155',
                 'key' => 'lab_head',
                 'title' => 'Kepala Laboratorium',
                 'content' => json_encode([
-                    'name' => 'Dr. Ahmad Fadli, M.Si',
-                    'email' => 'ahmad.fadli@usu.ac.id',
-                    'phone' => '+62 812-3456-7890',
-                    'office' => 'Ruang J7-201'
+                    'name' => 'Dr. Ir. Muhammad Syukri, M.Sc',
+                    'nip' => '196808121994031002',
+                    'email' => 'muhammad.syukri@unsyiah.ac.id',
+                    'phone' => '+62 651-7551843',
+                    'office' => 'Laboratorium Gelombang, Optik dan Spektroskopi'
                 ]),
                 'type' => 'json',
                 'is_active' => true,
@@ -271,8 +272,8 @@ Medan, Sumatera Utara 20155',
                 'key' => 'technical_contact',
                 'title' => 'Kontak Teknis',
                 'content' => json_encode([
-                    'name' => 'Dr. Siti Nurhaliza, M.Sc',
-                    'email' => 'siti.nurhaliza@usu.ac.id',
+                    'name' => 'Dr. Ir. Sulaiman, M.Si',
+                    'email' => 'sulaiman@unsyiah.ac.id',
                     'phone' => '+62 813-4567-8901',
                     'specialization' => 'Spektroskopi dan Karakterisasi Material'
                 ]),

@@ -53,9 +53,11 @@ class BorrowRequestTrackingResource extends JsonResource
             'total_approved_quantity' => $this->total_approved_quantity,
             'submitted_at' => $this->submitted_at->format('Y-m-d H:i:s'),
             'reviewed_at' => $this->reviewed_at?->format('Y-m-d H:i:s'),
-            'reviewer' => $this->when($this->relationLoaded('reviewer') && $this->reviewer, [
-                'name' => $this->reviewer->name,
-            ]),
+            'reviewer' => $this->when($this->relationLoaded('reviewer') && $this->reviewer, function () {
+                return [
+                    'name' => $this->reviewer->name,
+                ];
+            }),
             'approval_notes' => $this->approval_notes,
             'timeline' => $this->getTimeline(),
         ];

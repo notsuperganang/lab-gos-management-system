@@ -10,10 +10,10 @@
             <div class="flex items-center space-x-3">
                 <img src="{{ asset('assets/images/logo-fisika-putih.png') }}"
                      alt="Lab GOS"
-                     class="h-8 w-8 flex-shrink-0">
+                     class="h-10 w-10 flex-shrink-0 object-contain">
                 <div class="text-white font-bold text-lg transition-opacity duration-300"
                      :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                    <span x-show="sidebarOpen" x-transition>LIP GLOSS</span>
+                    <span x-show="sidebarOpen" x-transition>Lab GOS</span>
                 </div>
             </div>
         </div>
