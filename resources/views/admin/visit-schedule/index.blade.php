@@ -259,7 +259,18 @@
                 </div>
 
                 <div x-show="!loadingSlots && (!daySlots || daySlots.length === 0)" class="text-center py-8 text-gray-500">
-                    <p>Tidak ada slot tersedia untuk tanggal ini</p>
+                    <template x-if="selectedDate && selectedDate.isWeekend">
+                        <div>
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="font-medium">Laboratorium Tutup</p>
+                            <p class="text-sm">Kunjungan laboratorium hanya tersedia pada hari Senin - Jumat</p>
+                        </div>
+                    </template>
+                    <template x-if="!selectedDate || !selectedDate.isWeekend">
+                        <p>Tidak ada slot tersedia untuk tanggal ini</p>
+                    </template>
                 </div>
             </div>
         </div>
@@ -344,12 +355,29 @@ document.addEventListener('alpine:init', () => {
             // Set today and auto-select it
             this.today = this.ymd(new Date());
             this.selectedDate = { date: this.today };
-            
+
             await this.loadCurrentMonth();
-            
-            // Auto-load today's slots if today is selectable
-            if (this.selectedDate && this.selectedDate.date === this.today) {
-                await this.loadDaySlots(this.today);
+
+            // After loading month data, find today's day object and check if it's selectable
+            if (this.calendarWeeks.length > 0) {
+                const todayDay = this.calendarWeeks
+                    .flatMap(week => week.days)
+                    .find(day => day.date === this.today);
+
+                if (todayDay && todayDay.isSelectable) {
+                    this.selectedDate = todayDay;
+                    await this.loadDaySlots(this.today);
+                } else {
+                    // If today is weekend or not selectable, find the next available weekday
+                    const nextAvailableDay = this.calendarWeeks
+                        .flatMap(week => week.days)
+                        .find(day => day.isCurrentMonth && day.isSelectable);
+
+                    if (nextAvailableDay) {
+                        this.selectedDate = nextAvailableDay;
+                        await this.loadDaySlots(nextAvailableDay.date);
+                    }
+                }
             }
         },
 
@@ -447,9 +475,11 @@ document.addEventListener('alpine:init', () => {
             this.selectedDate = day;
             // Trigger calendar refresh for reactive selection updates
             this.buildCalendarGrid();
-            
-            // Load slots for the selected date
-            await this.loadDaySlots(day.date);
+
+            // Only load slots for weekdays (isSelectable already ensures this)
+            if (day.isSelectable) {
+                await this.loadDaySlots(day.date);
+            }
         },
 
         async toggleSlot(slot) {
@@ -670,11 +700,22 @@ document.addEventListener('alpine:init', () => {
         },
 
         async loadDaySlots(dateStr) {
+            // Check if it's a weekend before making API call
+            const date = new Date(dateStr);
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+            if (isWeekend) {
+                console.log('Skipping weekend date:', dateStr);
+                this.daySlots = [];
+                this.loadingSlots = false;
+                return;
+            }
+
             this.loadingSlots = true;
-            
+
             try {
                 const response = await this.apiCall('GET', `/api/admin/visit/availability?date=${dateStr}`);
-                
+
                 if (response.success) {
                     // Process slots to add expiration status
                     this.daySlots = (response.data.slots || []).map(slot => {
@@ -690,8 +731,15 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (error) {
                 console.error('Error loading day slots:', error);
-                this.showError('Gagal memuat slot: ' + error.message);
-                this.daySlots = [];
+
+                // Handle specific weekend error gracefully
+                if (error.message && error.message.includes('weekdays')) {
+                    console.log('Weekend date selected, slots not available');
+                    this.daySlots = [];
+                } else {
+                    this.showError('Gagal memuat slot: ' + error.message);
+                    this.daySlots = [];
+                }
             } finally {
                 this.loadingSlots = false;
             }
