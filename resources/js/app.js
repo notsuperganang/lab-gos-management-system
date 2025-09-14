@@ -1,22 +1,34 @@
 import './bootstrap';
 import AlpineImport from 'alpinejs';
 
-// Ensure only one Alpine instance: prefer CDN if present
-if (!window.Alpine) {
-    window.Alpine = AlpineImport;
-    // Start Alpine only when we provided the instance
-    window.Alpine.start();
+// Robust Alpine initialization to prevent race conditions
+let alpineInitialized = false;
+
+function initializeAlpine() {
+    if (alpineInitialized) return;
+    alpineInitialized = true;
+
+    // Use existing Alpine instance if available (CDN), otherwise use our import
+    const Alpine = window.Alpine || AlpineImport;
+    window.Alpine = Alpine;
+
+    // Register stores/directives before starting Alpine
+    setupScrollAnimations(Alpine);
+
+    // Start Alpine if it hasn't been started yet
+    if (!Alpine._hasStarted) {
+        Alpine.start();
+    }
 }
 
-// Register stores/directives on the active Alpine instance when it initializes
-document.addEventListener('alpine:init', () => {
-    const Alpine = window.Alpine;
-
-    // Custom scroll animation system
+function setupScrollAnimations(Alpine) {
+    // Custom scroll animation system with enhanced reliability
     Alpine.store('scrollAnimations', {
         elements: new Map(),
         scrollY: 0,
         isScrolling: false,
+        isReady: false,
+        pendingChecks: [],
 
         init() {
             // Throttled scroll listener
@@ -32,8 +44,15 @@ document.addEventListener('alpine:init', () => {
                 }
             });
 
-            // Initial check
-            setTimeout(() => this.checkElements(), 100);
+            // Mark as ready and process any pending checks
+            this.isReady = true;
+
+            // Initial check with proper timing
+            setTimeout(() => {
+                this.checkElements();
+                // Fallback check to ensure content shows
+                setTimeout(() => this.checkElements(), 200);
+            }, 100);
         },
 
         register(element, options = {}) {
@@ -47,6 +66,12 @@ document.addEventListener('alpine:init', () => {
                 },
                 triggered: false
             });
+
+            // If store is ready, do an immediate check for this element
+            if (this.isReady) {
+                setTimeout(() => this.checkElements(), 50);
+            }
+
             return id;
         },
 
@@ -113,9 +138,21 @@ document.addEventListener('alpine:init', () => {
             }
         });
     });
+}
 
-    // Initialize scroll animations store
-    Alpine.store('scrollAnimations').init();
+// Initialize Alpine when DOM is ready or immediately if already ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAlpine);
+} else {
+    initializeAlpine();
+}
+
+// Also handle alpine:init event for compatibility
+document.addEventListener('alpine:init', () => {
+    // Initialize scroll animations store if Alpine was started externally
+    if (window.Alpine && window.Alpine.store('scrollAnimations')) {
+        window.Alpine.store('scrollAnimations').init();
+    }
 });
 
 // LabGOS API Client
