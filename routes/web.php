@@ -65,7 +65,7 @@ Route::prefix('layanan')->name('layanan.')->group(function () {
     Route::get('/testing/confirmation/{testingId}', function ($testingId) {
         return view('public.layanan.tracking-pengujian', ['testingId' => $testingId]);
     })->name('testing.confirmation');
-    
+
     // Testing tracking detail page (accepts request ID as query parameter)
     Route::get('/tracking-pengujian', function () {
         $requestId = request()->get('rid');
@@ -88,18 +88,18 @@ Route::get('/admin/login', function () {
 
 // Admin routes group (views only - data comes from API)
 Route::prefix('admin')->name('admin.')->group(function () {
-    
+
     // Main Dashboard
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.index');
-    
+
     // PROFIL DAN PUBLIKASI (Profile & Publications)
     Route::prefix('site-settings')->name('site-settings.')->group(function () {
         Route::get('/', [AdminController::class, 'siteSettings'])->name('index');
         Route::get('/edit', [AdminController::class, 'editSiteSettings'])->name('edit');
         Route::put('/update', [AdminController::class, 'updateSiteSettings'])->name('update');
     });
-    
+
     Route::prefix('staff')->name('staff.')->group(function () {
         Route::get('/', [AdminController::class, 'staffIndex'])->name('index');
         Route::get('/create', [AdminController::class, 'staffCreate'])->name('create');
@@ -109,7 +109,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{staff}', [AdminController::class, 'staffUpdate'])->name('update');
         Route::delete('/{staff}', [AdminController::class, 'staffDestroy'])->name('destroy');
     });
-    
+
     Route::prefix('articles')->name('articles.')->group(function () {
         Route::get('/', [AdminController::class, 'articlesIndex'])->name('index');
         Route::get('/create', [AdminController::class, 'articlesCreate'])->name('create');
@@ -119,7 +119,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{article}', [AdminController::class, 'articlesUpdate'])->name('update');
         Route::delete('/{article}', [AdminController::class, 'articlesDestroy'])->name('destroy');
     });
-    
+
     Route::prefix('gallery')->name('gallery.')->group(function () {
         Route::get('/', [AdminController::class, 'galleryIndex'])->name('index');
         Route::get('/create', [AdminController::class, 'galleryCreate'])->name('create');
@@ -129,7 +129,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{gallery}', [AdminController::class, 'galleryUpdate'])->name('update');
         Route::delete('/{gallery}', [AdminController::class, 'galleryDestroy'])->name('destroy');
     });
-    
+
     // SARANA DAN PENJADWALAN (Facilities & Scheduling)
     Route::prefix('equipment')->name('equipment.')->group(function () {
         Route::get('/', [AdminController::class, 'equipmentIndex'])->name('index');
@@ -140,14 +140,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{equipment}', [AdminController::class, 'equipmentUpdate'])->name('update');
         Route::delete('/{equipment}', [AdminController::class, 'equipmentDestroy'])->name('destroy');
     });
-    
+
     Route::prefix('visit-schedule')->name('visit-schedule.')->group(function () {
         Route::get('/', [AdminController::class, 'visitScheduleIndex'])->name('index');
         Route::get('/calendar', [AdminController::class, 'visitScheduleCalendar'])->name('calendar');
         Route::post('/block-time', [AdminController::class, 'blockTimeSlot'])->name('block-time');
         Route::delete('/unblock-time/{id}', [AdminController::class, 'unblockTimeSlot'])->name('unblock-time');
     });
-    
+
     // LAYANAN LABORATORIUM (Laboratory Services)
     Route::prefix('borrowing')->name('borrowing.')->group(function () {
         Route::get('/', [AdminController::class, 'borrowingIndex'])->name('index');
@@ -156,7 +156,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{request}/reject', [AdminController::class, 'borrowingReject'])->name('reject');
         Route::put('/{request}/complete', [AdminController::class, 'borrowingComplete'])->name('complete');
     });
-    
+
     Route::prefix('visits')->name('visits.')->group(function () {
         Route::get('/', [AdminController::class, 'visitsIndex'])->name('index');
         Route::get('/{request}', [AdminController::class, 'visitsShow'])->name('show');
@@ -164,13 +164,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/{request}/reject', [AdminController::class, 'visitsReject'])->name('reject');
         Route::put('/{request}/complete', [AdminController::class, 'visitsComplete'])->name('complete');
     });
-    
+
     Route::prefix('testing')->name('testing.')->group(function () {
         Route::get('/', [AdminController::class, 'testingIndex'])->name('index');
         Route::get('/{request}', [AdminController::class, 'testingShow'])->name('show');
         Route::put('/{request}/approve', [AdminController::class, 'testingApprove'])->name('approve');
         Route::put('/{request}/reject', [AdminController::class, 'testingReject'])->name('reject');
         Route::put('/{request}/complete', [AdminController::class, 'testingComplete'])->name('complete');
+    });
+
+    // Profile Settings
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/settings', [AdminController::class, 'profileSettings'])->name('settings');
+    });
+
+    // User Management (for Super Admin)
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [AdminController::class, 'usersIndex'])->name('index');
     });
 });
 
@@ -182,9 +192,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 | These routes serve the super admin interface but data loading is API-driven
 */
 
-// Super Admin routes group (views only - data comes from API)  
+// Super Admin routes group (views only - data comes from API)
 Route::prefix('superadmin')->name('superadmin.')->group(function () {
-    
+
     // User Management
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersIndex'])->name('index');

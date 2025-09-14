@@ -10,194 +10,154 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
-    
+
     <!-- Chart.js for dashboard charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 
-    <!-- Vite Assets (CSS and JS) - must load before Alpine.js -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <!-- AdminAPI Availability Check -->
-    <script>
-        console.log('Admin layout: checking AdminAPI availability...');
-        // Wait for AdminAPI to be available before starting Alpine
-        function waitForAdminAPI() {
-            return new Promise((resolve) => {
-                if (typeof window.AdminAPI !== 'undefined') {
-                    console.log('AdminAPI already available');
-                    resolve();
-                } else {
-                    console.log('Waiting for AdminAPI to load...');
-                    const checkInterval = setInterval(() => {
-                        if (typeof window.AdminAPI !== 'undefined') {
-                            console.log('AdminAPI became available');
-                            clearInterval(checkInterval);
-                            resolve();
-                        }
-                    }, 50);
-                    
-                    // Timeout after 10 seconds
-                    setTimeout(() => {
-                        clearInterval(checkInterval);
-                        console.error('AdminAPI failed to load within 10 seconds');
-                        resolve(); // Resolve anyway to not block Alpine
-                    }, 10000);
-                }
-            });
-        }
-        
-        // Wait for AdminAPI before loading Alpine
-        document.addEventListener('DOMContentLoaded', async () => {
-            await waitForAdminAPI();
-            console.log('Loading Alpine.js now...');
-        });
-    </script>
-    
-    <!-- Alpine.js CDN - loads after AdminAPI is available -->
+    <!-- Load Alpine.js via CDN first so it's the primary instance -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+
+    <!-- Vite Assets (CSS and JS) - registers stores/directives and only starts Alpine if CDN is absent -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <!-- Minimal Alpine Components for Layout -->
     <script>
         document.addEventListener('alpine:init', () => {
-            // Minimal admin app component for layout
+            // Main admin app component for layout
             Alpine.data('adminApp', () => ({
                 sidebarOpen: window.innerWidth >= 1024,
+                sidebarCollapsed: false,
                 loading: false,
-                
+                user: null,
+
                 init() {
                     this.handleResize();
+                    // Load sidebar state from localStorage
+                    const savedState = localStorage.getItem('admin_sidebar_collapsed');
+                    if (savedState !== null) {
+                        this.sidebarCollapsed = JSON.parse(savedState);
+                    }
+                    // Load user data
+                    this.loadUserData();
                 },
-                
+
+                async loadUserData() {
+                    const token = localStorage.getItem('admin_token');
+                    if (!token) {
+                        // No token, redirect to login
+                        window.location.href = '/admin/login';
+                        return;
+                    }
+
+                    this.loading = true;
+
+                    try {
+                        const response = await fetch('/api/user', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const user = await response.json();
+                            this.user = user;
+                        } else if (response.status === 401) {
+                            // Token is invalid
+                            this.redirectToLogin();
+                        } else {
+                            console.error('Failed to load user data:', response.status);
+                        }
+                    } catch (error) {
+                        console.error('Error loading user data:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                redirectToLogin() {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = '/admin/login';
+                },
+
+                // Global error handler for API calls
+                handleApiError(error) {
+                    console.error('API Error:', error);
+
+                    // Handle authentication errors
+                    if (error.status === 401 || error.message?.includes('Unauthorized')) {
+                        this.redirectToLogin();
+                        return;
+                    }
+
+                    // Show error notification
+                    const message = error.message || error.data?.message || 'Terjadi kesalahan. Silakan coba lagi.';
+                    this.showNotification(message, 'error');
+                },
+
+                // Global notification system
+                showNotification(message, type = 'info') {
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+                        type === 'success' ? 'bg-green-500 text-white' :
+                        type === 'error' ? 'bg-red-500 text-white' :
+                        type === 'warning' ? 'bg-yellow-500 text-white' :
+                        'bg-blue-500 text-white'
+                    }`;
+                    notification.textContent = message;
+
+                    document.body.appendChild(notification);
+
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 5000);
+                },
+
                 handleResize() {
-                    this.sidebarOpen = window.innerWidth >= 1024;
+                    // On mobile, always close sidebar
+                    if (window.innerWidth < 1024) {
+                        this.sidebarOpen = false;
+                    } else {
+                        this.sidebarOpen = true;
+                    }
                 },
-                
+
                 toggleSidebar() {
                     this.sidebarOpen = !this.sidebarOpen;
+                },
+
+                toggleSidebarCollapse() {
+                    this.sidebarCollapsed = !this.sidebarCollapsed;
+                    // Save state to localStorage
+                    localStorage.setItem('admin_sidebar_collapsed', JSON.stringify(this.sidebarCollapsed));
                 }
             }));
-            
-            // Minimal sidebar component
-            Alpine.data('sidebarData', () => ({
-                collapsed: false,
-                
-                toggleCollapse() {
-                    this.collapsed = !this.collapsed;
-                }
-            }));
-            
-            // Header component with notifications
+
+            // Header component
             Alpine.data('headerData', () => ({
                 currentTime: new Date().toLocaleTimeString(),
-                notifications: [],
-                unreadCount: 0,
-                loading: false,
-                open: false, // Notification dropdown state
-                apiToken: localStorage.getItem('admin_token'),
-                
+
                 init() {
                     // Update time every second
                     setInterval(() => {
                         this.currentTime = new Date().toLocaleTimeString();
                     }, 1000);
-                    
-                    // Load notifications on init
-                    this.loadNotifications();
-                    
-                    // Auto-refresh notifications every 30 seconds
-                    setInterval(() => {
-                        this.loadNotifications();
-                    }, 30000);
                 },
 
-                async loadNotifications() {
-                    if (!this.apiToken) return;
-                    
-                    try {
-                        const response = await fetch('/api/admin/notifications', {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': `Bearer ${this.apiToken}`,
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.success) {
-                                this.notifications = data.data || [];
-                                this.unreadCount = this.notifications.filter(n => !n.is_read).length;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error loading notifications:', error);
-                    }
-                },
-
-                async markAsRead(notificationId) {
-                    if (!this.apiToken) return;
-                    
-                    try {
-                        const response = await fetch(`/api/admin/notifications/${notificationId}/read`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${this.apiToken}`,
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            // Update local state
-                            const notification = this.notifications.find(n => n.id === notificationId);
-                            if (notification) {
-                                notification.is_read = true;
-                                this.unreadCount = this.notifications.filter(n => !n.is_read).length;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error marking notification as read:', error);
-                    }
-                },
-
-                async markAllAsRead() {
-                    if (!this.apiToken || this.unreadCount === 0) return;
-                    
-                    try {
-                        const response = await fetch('/api/admin/notifications/mark-all-read', {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${this.apiToken}`,
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            // Update local state
-                            this.notifications.forEach(n => n.is_read = true);
-                            this.unreadCount = 0;
-                        }
-                    } catch (error) {
-                        console.error('Error marking all notifications as read:', error);
-                    }
-                },
-
-                // Alias function for header dropdown compatibility
-                fetchNotifications() {
-                    return this.loadNotifications();
+                redirectToLogin() {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = '/admin/login';
                 }
             }));
-            
-            console.log('Alpine.js layout components initialized');
         });
     </script>
-    
+
     <!-- Custom Admin Styles -->
     <style>
         [x-cloak] { display: none !important; }
-        
+
         /* Ensure icons display correctly without heroicons */
         .icon-svg {
             display: inline-block;
@@ -209,52 +169,52 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-        
+
         .sidebar-transition {
             transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
         }
-        
+
         .main-content-transition {
             transition: margin-left 0.3s ease-in-out;
         }
-        
+
         .gradient-admin {
             background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 50%, #1E40AF 100%);
         }
-        
+
         .card-shadow {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        
+
         .metric-card {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
             border: 1px solid #e2e8f0;
         }
-        
+
         .metric-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        
+
         .stat-icon {
             background: linear-gradient(135deg, #FDB813 0%, #f59e0b 100%);
         }
-        
+
         /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f5f9;
             border-radius: 3px;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 3px;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
@@ -267,9 +227,9 @@
         @include('admin.layouts.sidebar')
 
         <!-- Main content area -->
-        <div class="flex-1 flex flex-col main-content-transition" 
-             :class="sidebarOpen ? 'ml-64' : 'ml-16'">
-            
+        <div class="flex-1 flex flex-col main-content-transition"
+             :class="window.innerWidth >= 1024 ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'">
+
             <!-- Top header -->
             @include('admin.layouts.header')
 

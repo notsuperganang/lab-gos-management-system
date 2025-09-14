@@ -531,4 +531,20 @@ class AdminController extends Controller
         return redirect()->route('admin.testing.show', $id)
                         ->with('success', 'Testing request completed.');
     }
+
+    /**
+     * Show profile settings page.
+     */
+    public function profileSettings(): View
+    {
+        return view('admin.profile.settings');
+    }
+
+    /**
+     * Show users management page (Super Admin only).
+     */
+    public function usersIndex(): View
+    {
+        return view('admin.users.index');
+    }
 }

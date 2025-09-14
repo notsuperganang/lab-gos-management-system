@@ -1,116 +1,120 @@
 import './bootstrap';
-import Alpine from 'alpinejs';
+import AlpineImport from 'alpinejs';
 
-// Custom scroll animation system
-Alpine.store('scrollAnimations', {
-    elements: new Map(),
-    scrollY: 0,
-    isScrolling: false,
+// Ensure only one Alpine instance: prefer CDN if present
+if (!window.Alpine) {
+    window.Alpine = AlpineImport;
+    // Start Alpine only when we provided the instance
+    window.Alpine.start();
+}
 
-    init() {
-        // Throttled scroll listener
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                requestAnimationFrame(() => {
-                    this.scrollY = window.scrollY;
-                    this.checkElements();
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
+// Register stores/directives on the active Alpine instance when it initializes
+document.addEventListener('alpine:init', () => {
+    const Alpine = window.Alpine;
 
-        // Initial check
-        setTimeout(() => this.checkElements(), 100);
-    },
+    // Custom scroll animation system
+    Alpine.store('scrollAnimations', {
+        elements: new Map(),
+        scrollY: 0,
+        isScrolling: false,
 
-    register(element, options = {}) {
-        const id = Math.random().toString(36).substr(2, 9);
-        this.elements.set(id, {
-            element,
-            options: {
-                offset: options.offset || 100,
-                once: options.once || false,
-                ...options
-            },
-            triggered: false
-        });
-        return id;
-    },
-
-    unregister(id) {
-        this.elements.delete(id);
-    },
-
-    checkElements() {
-        const windowHeight = window.innerHeight;
-
-        this.elements.forEach((item, id) => {
-            const { element, options, triggered } = item;
-
-            if (options.once && triggered) return;
-
-            const rect = element.getBoundingClientRect();
-            const elementTop = rect.top;
-            const elementVisible = elementTop < (windowHeight - options.offset);
-
-            if (elementVisible && !triggered) {
-                // Trigger show animation
-                element.dispatchEvent(new CustomEvent('scroll-reveal', {
-                    detail: { visible: true }
-                }));
-
-                if (options.once) {
-                    item.triggered = true;
+        init() {
+            // Throttled scroll listener
+            let ticking = false;
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    requestAnimationFrame(() => {
+                        this.scrollY = window.scrollY;
+                        this.checkElements();
+                        ticking = false;
+                    });
+                    ticking = true;
                 }
-            } else if (!elementVisible && triggered && !options.once) {
-                // Element scrolled out of view (for repeating animations)
-                element.dispatchEvent(new CustomEvent('scroll-reveal', {
-                    detail: { visible: false }
-                }));
-                item.triggered = false;
-            }
-        });
-    }
-});
+            });
 
-// Custom directive for scroll-based animations
-Alpine.directive('scroll-animate', (el, { expression, modifiers }, { evaluate, cleanup }) => {
-    const options = {
-        once: modifiers.includes('once'),
-        offset: modifiers.find(mod => mod.startsWith('offset'))?.split('-')[1] || 100
-    };
+            // Initial check
+            setTimeout(() => this.checkElements(), 100);
+        },
 
-    let elementId;
+        register(element, options = {}) {
+            const id = Math.random().toString(36).substr(2, 9);
+            this.elements.set(id, {
+                element,
+                options: {
+                    offset: options.offset || 100,
+                    once: options.once || false,
+                    ...options
+                },
+                triggered: false
+            });
+            return id;
+        },
 
-    // Register element when Alpine initializes
-    Alpine.nextTick(() => {
-        elementId = Alpine.store('scrollAnimations').register(el, options);
+        unregister(id) {
+            this.elements.delete(id);
+        },
 
-        // Listen for scroll reveal events
-        el.addEventListener('scroll-reveal', (event) => {
-            if (event.detail.visible) {
-                evaluate(expression);
-            }
-        });
-    });
+        checkElements() {
+            const windowHeight = window.innerHeight;
 
-    cleanup(() => {
-        if (elementId) {
-            Alpine.store('scrollAnimations').unregister(elementId);
+            this.elements.forEach((item, id) => {
+                const { element, options, triggered } = item;
+
+                if (options.once && triggered) return;
+
+                const rect = element.getBoundingClientRect();
+                const elementTop = rect.top;
+                const elementVisible = elementTop < (windowHeight - options.offset);
+
+                if (elementVisible && !triggered) {
+                    // Trigger show animation
+                    element.dispatchEvent(new CustomEvent('scroll-reveal', {
+                        detail: { visible: true }
+                    }));
+
+                    if (options.once) {
+                        item.triggered = true;
+                    }
+                } else if (!elementVisible && triggered && !options.once) {
+                    // Element scrolled out of view (for repeating animations)
+                    element.dispatchEvent(new CustomEvent('scroll-reveal', {
+                        detail: { visible: false }
+                    }));
+                    item.triggered = false;
+                }
+            });
         }
     });
-});
 
-// Global Alpine
-window.Alpine = Alpine;
+    // Custom directive for scroll-based animations
+    Alpine.directive('scroll-animate', (el, { expression, modifiers }, { evaluate, cleanup }) => {
+        const options = {
+            once: modifiers.includes('once'),
+            offset: modifiers.find(mod => mod.startsWith('offset'))?.split('-')[1] || 100
+        };
 
-// Start Alpine
-Alpine.start();
+        let elementId;
 
-// Initialize scroll animations after Alpine starts
-document.addEventListener('alpine:init', () => {
+        // Register element when Alpine initializes
+        Alpine.nextTick(() => {
+            elementId = Alpine.store('scrollAnimations').register(el, options);
+
+            // Listen for scroll reveal events
+            el.addEventListener('scroll-reveal', (event) => {
+                if (event.detail.visible) {
+                    evaluate(expression);
+                }
+            });
+        });
+
+        cleanup(() => {
+            if (elementId) {
+                Alpine.store('scrollAnimations').unregister(elementId);
+            }
+        });
+    });
+
+    // Initialize scroll animations store
     Alpine.store('scrollAnimations').init();
 });
 
@@ -305,11 +309,11 @@ const AdminAPI = {
 
         try {
             const response = await fetch(url, config);
-            
+
             // Handle different content types
             let data;
             const contentType = response.headers.get('content-type');
-            
+
             try {
                 if (contentType && contentType.includes('application/json')) {
                     data = await response.json();
@@ -317,7 +321,7 @@ const AdminAPI = {
                     // Server returned non-JSON response (likely HTML error page)
                     const text = await response.text();
                     console.error('Server returned non-JSON response:', text.substring(0, 200));
-                    
+
                     data = {
                         success: false,
                         message: `Server error: Expected JSON but received ${contentType || 'unknown content type'}. This usually indicates a 404 or 500 error.`
@@ -337,7 +341,7 @@ const AdminAPI = {
                     console.warn('Authentication expired. Please log in again.');
                     // Could redirect to login here if needed
                 }
-                
+
                 throw {
                     status: response.status,
                     response: { data }
@@ -352,7 +356,7 @@ const AdminAPI = {
                 error: error.message || error,
                 status: error.status
             });
-            
+
             if (error.response) {
                 throw error;
             }
@@ -654,7 +658,7 @@ if (typeof window.AdminAPI === 'undefined') {
 // Export utility functions globally for Alpine templates
 window.getTrendColor = function(trend) {
     if (trend > 0) return 'text-red-600';
-    if (trend < 0) return 'text-green-600';  
+    if (trend < 0) return 'text-green-600';
     return 'text-gray-500';
 };
 
@@ -692,14 +696,14 @@ function adminApp() {
         // Initialize admin app with dependency checks
         init() {
             console.log('Initializing adminApp...');
-            
+
             // Check dependencies
             if (typeof AdminAPI === 'undefined') {
                 console.error('AdminAPI not available during adminApp init');
                 this.showToast('System initialization error: API not available', 'error');
                 return;
             }
-            
+
             // Initialize components
             try {
                 this.loadUser();
@@ -742,7 +746,7 @@ function adminApp() {
             try {
                 console.log('Loading notifications...');
                 const response = await AdminAPI.getNotifications();
-                
+
                 if (response && response.success) {
                     // Handle different response formats
                     const notificationData = response.data?.data || response.data || [];
@@ -758,7 +762,7 @@ function adminApp() {
                 console.error('Failed to load notifications:', error);
                 this.notifications = [];
                 this.unreadNotifications = 0;
-                
+
                 // Handle specific error cases
                 if (error.status === 401) {
                     console.warn('Authentication required for notifications');
@@ -824,11 +828,11 @@ function adminApp() {
         formatNumber(number) {
             return new Intl.NumberFormat('id-ID').format(number);
         },
-        
+
         // Get trend color for dashboard metrics
         getTrendColor(trend) {
             if (trend > 0) return 'text-red-600';
-            if (trend < 0) return 'text-green-600';  
+            if (trend < 0) return 'text-green-600';
             return 'text-gray-500';
         },
 

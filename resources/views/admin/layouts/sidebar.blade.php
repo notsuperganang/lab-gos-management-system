@@ -1,19 +1,25 @@
 <!-- Sidebar -->
 <div class="fixed inset-y-0 left-0 z-50 sidebar-transition"
-     :class="sidebarOpen ? 'w-64' : 'w-16'"
-     x-data="sidebarData()">
+     :class="{
+         'w-64': !sidebarCollapsed && (sidebarOpen || window.innerWidth >= 1024),
+         'w-16': sidebarCollapsed && window.innerWidth >= 1024,
+         '-translate-x-full': !sidebarOpen && window.innerWidth < 1024,
+         'translate-x-0': sidebarOpen || window.innerWidth >= 1024
+     }">
 
     <!-- Sidebar content -->
     <div class="flex flex-col h-full gradient-admin">
         <!-- Logo section -->
-        <div class="flex items-center justify-center h-16 px-4 border-b border-blue-800">
-            <div class="flex items-center space-x-3">
+        <div class="flex items-center h-16 px-4 border-b border-blue-800"
+             :class="sidebarCollapsed ? 'justify-center' : 'justify-start'">
+            <div class="flex items-center"
+                 :class="sidebarCollapsed ? '' : 'space-x-3'">
                 <img src="{{ asset('assets/images/logo-fisika-putih.png') }}"
                      alt="Lab GOS"
                      class="h-10 w-10 flex-shrink-0 object-contain">
-                <div class="text-white font-bold text-lg transition-opacity duration-300"
-                     :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                    <span x-show="sidebarOpen" x-transition>Lab GOS</span>
+                <div class="text-white font-bold text-lg transition-all duration-300 overflow-hidden"
+                     :class="sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100 ml-3'">
+                    <span x-show="!sidebarCollapsed" x-transition>Lab GOS</span>
                 </div>
             </div>
         </div>
@@ -24,8 +30,8 @@
             <!-- Main Dashboard -->
             <div class="mb-6">
                 <h3 class="px-3 text-xs font-semibold text-blue-200 uppercase tracking-wider transition-opacity duration-300"
-                    :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                    <span x-show="sidebarOpen" x-transition>Main</span>
+                    :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                    <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Main</span>
                 </h3>
 
                 <a href="{{ route('admin.dashboard') }}"
@@ -35,8 +41,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-4-2-4 2V5z"/>
                     </svg>
                     <span class="transition-opacity duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                        <span x-show="sidebarOpen" x-transition>Dashboard</span>
+                          :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                        <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Dashboard</span>
                     </span>
                 </a>
             </div>
@@ -49,10 +55,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
                     </svg>
                     <span class="flex-1 text-left transition-opacity duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                        <span x-show="sidebarOpen" x-transition>Profil & Publikasi</span>
+                          :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                        <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Profil & Publikasi</span>
                     </span>
-                    <svg x-show="sidebarOpen"
+                    <svg x-show="sidebarOpen && !sidebarCollapsed"
                          :class="{ 'rotate-90': open }"
                          class="ml-2 h-4 w-4 transform transition-transform duration-200"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +66,7 @@
                     </svg>
                 </button>
 
-                <div x-show="open && sidebarOpen"
+                <div x-show="open && sidebarOpen && !sidebarCollapsed"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 transform scale-95"
                      x-transition:enter-end="opacity-100 transform scale-100"
@@ -120,10 +126,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                     </svg>
                     <span class="flex-1 text-left transition-opacity duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                        <span x-show="sidebarOpen" x-transition>Sarana & Penjadwalan</span>
+                          :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                        <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Sarana & Penjadwalan</span>
                     </span>
-                    <svg x-show="sidebarOpen"
+                    <svg x-show="sidebarOpen && !sidebarCollapsed"
                          :class="{ 'rotate-90': open }"
                          class="ml-2 h-4 w-4 transform transition-transform duration-200"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +137,7 @@
                     </svg>
                 </button>
 
-                <div x-show="open && sidebarOpen"
+                <div x-show="open && sidebarOpen && !sidebarCollapsed"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 transform scale-95"
                      x-transition:enter-end="opacity-100 transform scale-100"
@@ -166,10 +172,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
                     <span class="flex-1 text-left transition-opacity duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                        <span x-show="sidebarOpen" x-transition>Layanan Laboratorium</span>
+                          :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                        <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Layanan Laboratorium</span>
                     </span>
-                    <svg x-show="sidebarOpen"
+                    <svg x-show="sidebarOpen && !sidebarCollapsed"
                          :class="{ 'rotate-90': open }"
                          class="ml-2 h-4 w-4 transform transition-transform duration-200"
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,7 +183,7 @@
                     </svg>
                 </button>
 
-                <div x-show="open && sidebarOpen"
+                <div x-show="open && sidebarOpen && !sidebarCollapsed"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 transform scale-95"
                      x-transition:enter-end="opacity-100 transform scale-100"
@@ -221,47 +227,39 @@
             </div>
 
             <!-- USER MANAGEMENT Section (Super Admin Only) -->
-            @if(auth()->user() && (auth()->user()->role === 'super_admin' || (method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('super_admin'))))
+            <template x-if="user && user.role === 'super_admin'">
             <div class="mb-6">
                 <h3 class="px-3 text-xs font-semibold text-blue-200 uppercase tracking-wider transition-opacity duration-300"
-                    :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                    <span x-show="sidebarOpen" x-transition>Administration</span>
+                    :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                    <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Administration</span>
                 </h3>
 
-                @if(Route::has('superadmin.users.index'))
                 <a href="{{ route('superadmin.users.index') }}"
                    class="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('superadmin.users.*') ? 'bg-blue-800 text-white' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
-                @else
-                <span class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed">
-                @endif
                     <svg class="mr-3 h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
                     </svg>
                     <span class="transition-opacity duration-300"
-                          :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                        <span x-show="sidebarOpen" x-transition>User Management</span>
+                          :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                        <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>User Management</span>
                     </span>
-                @if(Route::has('superadmin.users.index'))
                 </a>
-                @else
-                </span>
-                @endif
             </div>
-            @endif
+            </template>
         </nav>
 
         <!-- Sidebar toggle button -->
         <div class="flex-shrink-0 p-4 border-t border-blue-800">
-            <button @click="$parent.toggleSidebar()"
+            <button @click="toggleSidebarCollapse()"
                     class="w-full flex items-center justify-center p-2 text-blue-100 hover:bg-blue-700 hover:text-white rounded-md transition-colors duration-200">
-                <svg :class="sidebarOpen ? 'rotate-180' : ''"
+                <svg :class="sidebarCollapsed ? '' : 'rotate-180'"
                      class="h-5 w-5 transform transition-transform duration-200"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
                 </svg>
                 <span class="ml-2 transition-opacity duration-300"
-                      :class="sidebarOpen ? 'opacity-100' : 'opacity-0'">
-                    <span x-show="sidebarOpen" x-transition>Collapse</span>
+                      :class="(sidebarOpen && !sidebarCollapsed) ? 'opacity-100' : 'opacity-0'">
+                    <span x-show="sidebarOpen && !sidebarCollapsed" x-transition>Collapse</span>
                 </span>
             </button>
         </div>

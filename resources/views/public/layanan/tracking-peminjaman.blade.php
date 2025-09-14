@@ -67,15 +67,32 @@
                                      :class="{
                                         'bg-yellow-100 text-yellow-800': currentStatus === 'pending',
                                         'bg-green-100 text-green-800': currentStatus === 'approved',
-                                        'bg-blue-100 text-blue-800': currentStatus === 'active' || currentStatus === 'completed',
+                                        'bg-blue-100 text-blue-800': currentStatus === 'active',
+                                        'bg-gray-100 text-gray-800': currentStatus === 'completed',
                                         'bg-red-100 text-red-800': currentStatus === 'rejected' || currentStatus === 'cancelled'
                                      }">
                                     <span x-show="currentStatus === 'pending'">⏳ Menunggu Persetujuan</span>
-                                    <span x-show="currentStatus === 'approved'">✅ Disetujui</span>
-                                    <span x-show="currentStatus === 'active'">🔄 Sedang Berlangsung</span>
-                                    <span x-show="currentStatus === 'completed'">✅ Selesai</span>
+                                    <span x-show="currentStatus === 'approved'">✅ Permohonan Disetujui</span>
+                                    <span x-show="currentStatus === 'active'">⏳ Masa Peminjaman Berlangsung</span>
+                                    <span x-show="currentStatus === 'completed'">🎉 Peminjaman Selesai</span>
                                     <span x-show="currentStatus === 'rejected'">❌ Ditolak</span>
                                     <span x-show="currentStatus === 'cancelled'">🚫 Dibatalkan</span>
+                                </div>
+
+                                <!-- Status Message -->
+                                <div class="mt-3 text-blue-100 text-sm">
+                                    <div x-show="currentStatus === 'approved'" class="bg-blue-500 bg-opacity-20 rounded-lg p-3">
+                                        <div class="font-medium mb-1">Langkah Selanjutnya:</div>
+                                        <div>Silakan unduh <strong>Surat Izin Pemakaian Alat</strong>, tanda tangani sesuai ketentuan, lalu bawa surat ini ke <strong>Jurusan</strong> pada <span x-text="scheduleInfo?.borrowDate || 'tanggal yang telah ditentukan'"></span> untuk pengambilan alat.</div>
+                                    </div>
+                                    <div x-show="currentStatus === 'active'" class="bg-blue-500 bg-opacity-20 rounded-lg p-3">
+                                        <div class="font-medium mb-1">Periode Peminjaman:</div>
+                                        <div><span x-text="scheduleInfo?.borrowDate || 'N/A'"></span> s.d. <span x-text="scheduleInfo?.returnDate || 'N/A'"></span></div>
+                                        <div class="mt-2 text-xs">Mohon menjaga kondisi alat dan mengikuti tata tertib laboratorium.</div>
+                                    </div>
+                                    <div x-show="currentStatus === 'completed'" class="bg-gray-500 bg-opacity-20 rounded-lg p-3">
+                                        <div>Terima kasih. Peminjaman telah selesai dan diarsipkan.</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -306,55 +323,63 @@
                         <!-- Download Surat -->
                         <div class="bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="currentStatus === 'approved' ? 'bg-green-100' : 'bg-gray-200'">
+                                 :class="['approved', 'active'].includes(currentStatus) ? 'bg-green-100' : 'bg-gray-200'">
                                 <i class="fas fa-download text-2xl"
-                                   :class="currentStatus === 'approved' ? 'text-green-600' : 'text-gray-400'"></i>
+                                   :class="['approved', 'active'].includes(currentStatus) ? 'text-green-600' : 'text-gray-400'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Download Surat</h4>
                             <p class="text-sm text-gray-600 mb-4">
-                                <span x-show="currentStatus === 'approved'">Surat izin siap diunduh</span>
+                                <span x-show="['approved', 'active'].includes(currentStatus)">Surat izin siap diunduh</span>
                                 <span x-show="currentStatus === 'pending'">Menunggu persetujuan</span>
+                                <span x-show="currentStatus === 'completed'" class="text-gray-600 font-semibold">Sudah selesai - tidak tersedia</span>
                                 <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
-                                <span x-show="['completed', 'rejected'].includes(currentStatus)">Tidak tersedia</span>
+                                <span x-show="currentStatus === 'rejected'">Tidak tersedia - ditolak</span>
                             </p>
                             <button @click="downloadLetter()"
-                                    :disabled="currentStatus !== 'approved'"
-                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="currentStatus === 'approved' ?
-                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl' :
+                                    :disabled="!['approved', 'active'].includes(currentStatus)"
+                                    :title="currentStatus === 'completed' ? 'Sudah selesai' : ''"
+                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform"
+                                    :class="['approved', 'active'].includes(currentStatus) ?
+                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:scale-105 cursor-pointer' :
                                            'bg-gray-300 text-gray-500 cursor-not-allowed'">
-                                <span x-show="currentStatus === 'approved'">Download</span>
+                                <span x-show="['approved', 'active'].includes(currentStatus)">
+                                    <i class="fas fa-download mr-2"></i>Download Surat
+                                </span>
                                 <span x-show="currentStatus === 'pending'">Belum Tersedia</span>
+                                <span x-show="currentStatus === 'completed'">Sudah Selesai</span>
                                 <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
-                                <span x-show="['completed', 'rejected'].includes(currentStatus)">Tidak Tersedia</span>
+                                <span x-show="currentStatus === 'rejected'">Ditolak</span>
                             </button>
                         </div>
 
                         <!-- WhatsApp Konfirmasi -->
                         <div class="bg-green-50 rounded-2xl p-6 text-center hover:bg-green-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="currentStatus === 'cancelled' ? 'bg-gray-200' : 'bg-green-100'">
+                                 :class="['cancelled', 'completed'].includes(currentStatus) ? 'bg-gray-200' : 'bg-green-100'">
                                 <i class="fab fa-whatsapp text-2xl"
-                                   :class="currentStatus === 'cancelled' ? 'text-gray-400' : 'text-green-600'"></i>
+                                   :class="['cancelled', 'completed'].includes(currentStatus) ? 'text-gray-400' : 'text-green-600'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Chat WhatsApp Admin</h4>
                             <p class="text-sm text-gray-600 mb-4">
-                                <span x-show="currentStatus !== 'cancelled'">Chat langsung dengan admin lab</span>
+                                <span x-show="!['cancelled', 'completed'].includes(currentStatus)">Chat langsung dengan admin lab</span>
+                                <span x-show="currentStatus === 'completed'" class="text-gray-600 font-semibold">Sudah selesai - tidak tersedia</span>
                                 <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
                             </p>
                             <button @click="openWhatsAppChat()"
-                                    :disabled="currentStatus === 'cancelled' || !canSendMessage"
-                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="currentStatus === 'cancelled' ? 
+                                    :disabled="['cancelled', 'completed'].includes(currentStatus) || !canSendMessage"
+                                    :title="currentStatus === 'completed' ? 'Sudah selesai' : ''"
+                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform"
+                                    :class="['cancelled', 'completed'].includes(currentStatus) ?
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
-                                           !canSendMessage ? 
+                                           !canSendMessage ?
                                            'bg-orange-400 text-white cursor-not-allowed' :
-                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'">
+                                           'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:scale-105'">
                                 <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
-                                <span x-show="currentStatus !== 'cancelled' && canSendMessage">
+                                <span x-show="currentStatus === 'completed'">Sudah Selesai</span>
+                                <span x-show="!['cancelled', 'completed'].includes(currentStatus) && canSendMessage">
                                     <i class="fab fa-whatsapp mr-2"></i>Chat Admin
                                 </span>
-                                <span x-show="currentStatus !== 'cancelled' && !canSendMessage" x-text="cooldownText"></span>
+                                <span x-show="!['cancelled', 'completed'].includes(currentStatus) && !canSendMessage" x-text="cooldownText"></span>
                             </button>
                         </div>
 
@@ -368,17 +393,22 @@
                             <h4 class="font-bold text-gray-800 mb-2">Batalkan Peminjaman</h4>
                             <p class="text-sm text-gray-600 mb-4">
                                 <span x-show="currentStatus === 'pending'">Dapat dibatalkan sebelum disetujui</span>
-                                <span x-show="['approved', 'completed'].includes(currentStatus)">Tidak dapat dibatalkan</span>
+                                <span x-show="currentStatus === 'approved'">Tidak dapat dibatalkan - sudah disetujui</span>
+                                <span x-show="currentStatus === 'active'">Tidak dapat dibatalkan - sedang berlangsung</span>
+                                <span x-show="currentStatus === 'completed'" class="text-gray-600 font-semibold">Sudah selesai</span>
                                 <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Sudah dibatalkan</span>
                             </p>
                             <button @click="cancelRequest()"
-                                    :disabled="['approved', 'completed', 'cancelled'].includes(currentStatus)"
-                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="['approved', 'completed', 'cancelled'].includes(currentStatus) ?
+                                    :disabled="['approved', 'active', 'completed', 'cancelled'].includes(currentStatus)"
+                                    :title="currentStatus === 'completed' ? 'Sudah selesai' : ''"
+                                    class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform"
+                                    :class="['approved', 'active', 'completed', 'cancelled'].includes(currentStatus) ?
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
-                                           'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl'">
+                                           'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:scale-105'">
                                 <span x-show="currentStatus === 'pending'">Batalkan</span>
-                                <span x-show="['approved', 'completed'].includes(currentStatus)">Tidak Tersedia</span>
+                                <span x-show="currentStatus === 'approved'">Tidak Tersedia</span>
+                                <span x-show="currentStatus === 'active'">Tidak Tersedia</span>
+                                <span x-show="currentStatus === 'completed'">Sudah Selesai</span>
                                 <span x-show="currentStatus === 'cancelled'">Sudah Dibatalkan</span>
                             </button>
                         </div>
@@ -403,6 +433,7 @@
             return {
                 // Request Info
                 requestId: '',
+                borrowRequestId: null, // Numeric ID for API calls
                 submittedDate: '',
                 currentStatus: 'pending', // pending, approved, rejected, completed
                 loading: true,
@@ -547,6 +578,7 @@
                 populateTrackingData(data) {
                     this.requestId = data.request_id;
                     this.currentStatus = data.status;
+                    this.borrowRequestId = data.id || null; // Store numeric ID for API calls
 
                     // Fix time display issue - Laravel returns UTC time, convert to Jakarta time
                     // API returns: "2025-08-11 07:41:42" (UTC format from Laravel)
@@ -663,13 +695,35 @@
                         case 'approved':
                             this.statusSteps[1].status = 'completed';
                             this.statusSteps[2].status = 'completed';
+                            this.statusSteps[2].title = 'Permohonan Disetujui';
+                            this.statusSteps[2].description = 'Permohonan peminjaman telah disetujui! Silakan unduh surat izin, tanda tangani, dan bawa ke Jurusan pada tanggal peminjaman.';
+                            this.statusSteps[2].icon = 'fas fa-check-circle';
                             this.statusSteps[3].status = 'current';
+                            this.statusSteps[3].title = 'Siap untuk Pengambilan';
+                            this.statusSteps[3].description = 'Bawa surat izin yang telah ditandatangani ke Jurusan pada tanggal peminjaman untuk mengambil peralatan.';
+                            this.statusSteps[3].icon = 'fas fa-hand-holding';
                             break;
                         case 'active':
+                            this.statusSteps[1].status = 'completed';
+                            this.statusSteps[2].status = 'completed';
+                            this.statusSteps[2].title = 'Permohonan Disetujui';
+                            this.statusSteps[2].description = 'Permohonan peminjaman telah disetujui dan surat izin telah diunduh.';
+                            this.statusSteps[2].icon = 'fas fa-check-circle';
+                            this.statusSteps[3].status = 'completed';
+                            this.statusSteps[3].title = 'Masa Peminjaman Berlangsung';
+                            this.statusSteps[3].description = `Peralatan sedang digunakan dalam periode ${this.scheduleInfo?.borrowDate || ''} s.d. ${this.scheduleInfo?.returnDate || ''}. Mohon menjaga kondisi alat dan mengikuti tata tertib laboratorium.`;
+                            this.statusSteps[3].icon = 'fas fa-play-circle';
+                            break;
                         case 'completed':
                             this.statusSteps[1].status = 'completed';
                             this.statusSteps[2].status = 'completed';
+                            this.statusSteps[2].title = 'Permohonan Disetujui';
+                            this.statusSteps[2].description = 'Permohonan peminjaman telah disetujui dan surat izin telah diunduh.';
+                            this.statusSteps[2].icon = 'fas fa-check-circle';
                             this.statusSteps[3].status = 'completed';
+                            this.statusSteps[3].title = 'Peminjaman Selesai';
+                            this.statusSteps[3].description = 'Peralatan telah dikembalikan dengan baik dan peminjaman selesai. Terima kasih atas partisipasinya.';
+                            this.statusSteps[3].icon = 'fas fa-check-double';
                             break;
                         case 'rejected':
                             // For rejected, show rejection at review stage
@@ -857,19 +911,58 @@
                 },
 
                 // Actions
-                downloadLetter() {
-                    if (this.currentStatus !== 'approved') {
+                async downloadLetter() {
+                    if (!['approved', 'active'].includes(this.currentStatus)) {
                         alert('Surat izin hanya dapat diunduh setelah permohonan disetujui.');
                         return;
                     }
 
-                    // Simulate file download
-                    const link = document.createElement('a');
-                    link.href = '#'; // URL file akan diisi dari backend
-                    link.download = `Surat_Izin_Peminjaman_${this.requestId}.pdf`;
-                    link.click();
+                    try {
+                        // First check if LabGOS API is available
+                        if (!window.LabGOS) {
+                            throw new Error('Sistem API tidak tersedia');
+                        }
 
-                    alert('Surat izin peminjaman sedang diunduh...');
+                        // Use the numeric ID if available, otherwise try to extract from request_id
+                        const borrowId = this.borrowRequestId || this.requestId.replace(/\D/g, '');
+
+                        if (!borrowId) {
+                            throw new Error('ID peminjaman tidak ditemukan');
+                        }
+
+                        const response = await fetch(`/api/admin/requests/borrow/${borrowId}/letter`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+
+                            if (data.success && data.data?.letter_url) {
+                                // Open the PDF in a new tab
+                                window.open(data.data.letter_url, '_blank');
+                                alert('✅ Surat izin peminjaman berhasil dibuka dalam tab baru.');
+                            } else {
+                                throw new Error(data.message || 'URL surat tidak tersedia');
+                            }
+                        } else {
+                            throw new Error('Gagal mengakses surat izin');
+                        }
+                    } catch (error) {
+                        console.error('Letter download error:', error);
+
+                        // Fallback: Try direct storage URL construction
+                        try {
+                            const storageUrl = `/storage/letters/${this.requestId}.pdf`;
+                            window.open(storageUrl, '_blank');
+                            alert('📄 Mencoba membuka surat dari arsip...');
+                        } catch (fallbackError) {
+                            alert('❌ Gagal mengunduh surat izin. Silakan hubungi admin laboratorium atau coba lagi nanti.');
+                        }
+                    }
                 },
 
                 // Cooldown system methods

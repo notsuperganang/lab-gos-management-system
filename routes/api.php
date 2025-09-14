@@ -184,6 +184,16 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
     Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllNotificationsAsRead'])
         ->name('notifications.mark-all-read');
 
+    // Profile management
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::post('/', [App\Http\Controllers\Admin\ProfileController::class, 'update'])
+            ->name('update');
+        Route::put('/password', [App\Http\Controllers\Admin\ProfileController::class, 'updatePassword'])
+            ->name('update-password');
+        Route::delete('/avatar', [App\Http\Controllers\Admin\ProfileController::class, 'removeAvatar'])
+            ->name('remove-avatar');
+    });
+
     // Request management
     Route::prefix('requests')->name('requests.')->group(function () {
         // Borrow requests
@@ -197,7 +207,7 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
             ->name('borrow.approve');
         Route::put('/borrow/{borrowRequest}/reject', [RequestManagementController::class, 'rejectBorrowRequest'])
             ->name('borrow.reject');
-        
+
         // Borrow request letter management
         Route::get('/borrow/{borrowRequest}/letter', [RequestManagementController::class, 'getBorrowRequestLetter'])
             ->name('borrow.letter');
@@ -256,7 +266,7 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
         // Equipment summary statistics
         Route::get('/summary', [EquipmentManagementController::class, 'summary'])
             ->name('summary');
-        
+
         // Equipment CRUD (specific routes come after more general ones)
         Route::get('/', [EquipmentManagementController::class, 'index'])
             ->name('index');
@@ -310,7 +320,7 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
             ->name('gallery.featured-slots.get');
         Route::put('/gallery/featured-slots', [ContentManagementController::class, 'updateFeaturedSlots'])
             ->name('gallery.featured-slots.update');
-        
+
         // Gallery CRUD routes
         Route::get('/gallery', [ContentManagementController::class, 'gallery'])
             ->name('gallery.index');
