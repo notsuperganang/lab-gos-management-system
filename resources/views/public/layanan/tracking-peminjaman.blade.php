@@ -83,11 +83,11 @@
                                 <div class="mt-3 text-blue-100 text-sm">
                                     <div x-show="currentStatus === 'approved'" class="bg-blue-500 bg-opacity-20 rounded-lg p-3">
                                         <div class="font-medium mb-1">Langkah Selanjutnya:</div>
-                                        <div>Silakan unduh <strong>Surat Izin Pemakaian Alat</strong>, tanda tangani sesuai ketentuan, lalu bawa surat ini ke <strong>Jurusan</strong> pada <span x-text="scheduleInfo?.borrowDate || 'tanggal yang telah ditentukan'"></span> untuk pengambilan alat.</div>
+                                        <div>Silakan unduh <strong>Surat Izin Pemakaian Alat</strong>, tanda tangani sesuai ketentuan, lalu bawa surat ini ke <strong>Jurusan</strong> pada <span x-text="formatSafeDate(scheduleInfo?.borrowDate, 'tanggal yang telah ditentukan')"></span> untuk pengambilan alat.</div>
                                     </div>
                                     <div x-show="currentStatus === 'active'" class="bg-blue-500 bg-opacity-20 rounded-lg p-3">
                                         <div class="font-medium mb-1">Periode Peminjaman:</div>
-                                        <div><span x-text="scheduleInfo?.borrowDate || 'N/A'"></span> s.d. <span x-text="scheduleInfo?.returnDate || 'N/A'"></span></div>
+                                        <div x-text="getDateRangeText()"></div>
                                         <div class="mt-2 text-xs">Mohon menjaga kondisi alat dan mengikuti tata tertib laboratorium.</div>
                                     </div>
                                     <div x-show="currentStatus === 'completed'" class="bg-gray-500 bg-opacity-20 rounded-lg p-3">
@@ -386,9 +386,9 @@
                         <!-- Cancel Peminjaman -->
                         <div class="bg-red-50 rounded-2xl p-6 text-center hover:bg-red-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="['approved', 'completed', 'cancelled'].includes(currentStatus) ? 'bg-gray-200' : 'bg-red-100'">
+                                 :class="['approved', 'active', 'completed', 'cancelled'].includes(currentStatus) ? 'bg-gray-200' : 'bg-red-100'">
                                 <i class="fas fa-times text-2xl"
-                                   :class="['approved', 'completed', 'cancelled'].includes(currentStatus) ? 'text-gray-400' : 'text-red-600'"></i>
+                                   :class="['approved', 'active', 'completed', 'cancelled'].includes(currentStatus) ? 'text-gray-400' : 'text-red-600'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Batalkan Peminjaman</h4>
                             <p class="text-sm text-gray-600 mb-4">
@@ -511,7 +511,7 @@
                 extractAdminPhone() {
                     // Use WhatsApp admin phone directly since it's the most accurate
                     const whatsappAdminPhones = this.siteSettings?.whatsapp_admin_phones;
-                    
+
                     if (whatsappAdminPhones && whatsappAdminPhones.length > 0) {
                         // Use first WhatsApp admin phone
                         let adminPhone = whatsappAdminPhones[0];
@@ -524,14 +524,41 @@
                         return;
                     }
 
-                    // Fallback to site settings if WhatsApp admin phones not available
-                    if (!this.siteSettings) return;
+                    // Get phone from site settings
+                    if (!this.siteSettings) {
+                        console.warn('No site settings available for phone extraction');
+                        return;
+                    }
                     const siteSettings = this.siteSettings.site_settings || {};
 
-                    // Try to get from technical_contact first, then lab_head
+                    console.log('=== PHONE EXTRACTION DEBUG ===');
+                    console.log('Site settings keys:', Object.keys(siteSettings));
+                    console.log('Phone field value:', siteSettings.phone);
+                    console.log('WhatsApp admin phone:', siteSettings.whatsapp_admin_phone);
+
+                    // Try to get phone in this priority order:
+                    // 1. Direct phone key from site settings
+                    // 2. WhatsApp admin phone if available
+                    // 3. Technical contact phone
+                    // 4. Lab head phone
                     let adminPhone = null;
 
-                    if (siteSettings.technical_contact) {
+                    // Check phone field (with content property for site settings structure)
+                    if (siteSettings.phone && siteSettings.phone.content) {
+                        adminPhone = siteSettings.phone.content;
+                        console.log('Found phone in phone.content:', adminPhone);
+                    } else if (siteSettings.phone && typeof siteSettings.phone === 'string') {
+                        adminPhone = siteSettings.phone;
+                        console.log('Found phone as string:', adminPhone);
+                    }
+
+                    // Fallback to whatsapp_admin_phone
+                    if (!adminPhone && siteSettings.whatsapp_admin_phone) {
+                        adminPhone = siteSettings.whatsapp_admin_phone.content || siteSettings.whatsapp_admin_phone;
+                        console.log('Using WhatsApp admin phone fallback:', adminPhone);
+                    }
+
+                    if (!adminPhone && siteSettings.technical_contact) {
                         try {
                             const technicalContact = JSON.parse(siteSettings.technical_contact);
                             adminPhone = technicalContact.phone;
@@ -551,12 +578,20 @@
 
                     // Format phone number for WhatsApp (remove +, spaces, dashes)
                     if (adminPhone) {
+                        console.log('Raw admin phone before formatting:', adminPhone);
                         this.adminPhone = adminPhone.replace(/[\s\-\+]/g, '');
+
                         // Ensure it starts with country code
                         if (!this.adminPhone.startsWith('62') && this.adminPhone.startsWith('08')) {
+                            console.log('Converting 08 to 62 format');
                             this.adminPhone = '62' + this.adminPhone.substring(1);
                         }
+
+                        console.log('Final formatted admin phone:', this.adminPhone);
+                    } else {
+                        console.warn('No admin phone found in site settings');
                     }
+                    console.log('=== PHONE EXTRACTION DEBUG END ===');
                 },
 
                 // Load tracking data from API
@@ -632,13 +667,19 @@
                     };
 
                     // Update equipment list with proper specs formatting
-                    if (data.equipment_items) {
-                        this.equipmentList = data.equipment_items.map(item => ({
+                    if (data.equipment_items && Array.isArray(data.equipment_items)) {
+                        console.log('Processing equipment_items:', data.equipment_items);
+                        this.equipmentList = data.equipment_items.map((item, index) => ({
+                            id: item.id || item.equipment?.id || index, // Ensure unique ID for template key
                             name: item.equipment?.name || 'Equipment name not available',
                             category: item.equipment?.category?.name || 'Unknown',
                             specs: this.getKeySpecs(item.equipment),
-                            quantity: item.quantity_requested
+                            quantity: item.quantity_requested || item.quantity_approved || 0
                         }));
+                        console.log('Processed equipmentList:', this.equipmentList);
+                    } else {
+                        console.warn('No equipment_items found or invalid format:', data.equipment_items);
+                        this.equipmentList = [];
                     }
 
                     // Update status steps based on current status
@@ -711,7 +752,7 @@
                             this.statusSteps[2].icon = 'fas fa-check-circle';
                             this.statusSteps[3].status = 'completed';
                             this.statusSteps[3].title = 'Masa Peminjaman Berlangsung';
-                            this.statusSteps[3].description = `Peralatan sedang digunakan dalam periode ${this.scheduleInfo?.borrowDate || ''} s.d. ${this.scheduleInfo?.returnDate || ''}. Mohon menjaga kondisi alat dan mengikuti tata tertib laboratorium.`;
+                            this.statusSteps[3].description = `Peralatan sedang digunakan dalam periode ${this.getDateRangeText()}. Mohon menjaga kondisi alat dan mengikuti tata tertib laboratorium.`;
                             this.statusSteps[3].icon = 'fas fa-play-circle';
                             break;
                         case 'completed':
@@ -918,49 +959,29 @@
                     }
 
                     try {
-                        // First check if LabGOS API is available
-                        if (!window.LabGOS) {
-                            throw new Error('Sistem API tidak tersedia');
-                        }
+                        // Use direct storage URL since this is a public tracking page
+                        const storageUrl = `/storage/letters/${this.requestId}.pdf`;
 
-                        // Use the numeric ID if available, otherwise try to extract from request_id
-                        const borrowId = this.borrowRequestId || this.requestId.replace(/\D/g, '');
+                        // Test if the file exists by making a HEAD request
+                        const testResponse = await fetch(storageUrl, { method: 'HEAD' });
 
-                        if (!borrowId) {
-                            throw new Error('ID peminjaman tidak ditemukan');
-                        }
-
-                        const response = await fetch(`/api/admin/requests/borrow/${borrowId}/letter`, {
-                            method: 'GET',
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-
-                            if (data.success && data.data?.letter_url) {
-                                // Open the PDF in a new tab
-                                window.open(data.data.letter_url, '_blank');
-                                alert('✅ Surat izin peminjaman berhasil dibuka dalam tab baru.');
-                            } else {
-                                throw new Error(data.message || 'URL surat tidak tersedia');
-                            }
+                        if (testResponse.ok) {
+                            // File exists, open it
+                            window.open(storageUrl, '_blank');
+                            alert('✅ Surat izin peminjaman berhasil dibuka dalam tab baru.');
                         } else {
-                            throw new Error('Gagal mengakses surat izin');
+                            // File doesn't exist or not accessible
+                            throw new Error('Surat belum tersedia');
                         }
+
                     } catch (error) {
                         console.error('Letter download error:', error);
 
-                        // Fallback: Try direct storage URL construction
-                        try {
-                            const storageUrl = `/storage/letters/${this.requestId}.pdf`;
-                            window.open(storageUrl, '_blank');
-                            alert('📄 Mencoba membuka surat dari arsip...');
-                        } catch (fallbackError) {
-                            alert('❌ Gagal mengunduh surat izin. Silakan hubungi admin laboratorium atau coba lagi nanti.');
+                        // Show user-friendly error
+                        if (error.message.includes('Surat belum tersedia')) {
+                            alert('📋 Surat izin belum tersedia. Surat akan dibuat secara otomatis setelah permohonan disetujui oleh admin.');
+                        } else {
+                            alert('❌ Gagal mengakses surat izin. Silakan hubungi admin laboratorium atau coba lagi nanti.');
                         }
                     }
                 },
@@ -990,7 +1011,7 @@
                 updateCooldownStatus() {
                     const now = Date.now();
                     this.remainingTime = Math.max(0, this.cooldownDuration - (now - this.lastMessageTime));
-                    
+
                     if (this.remainingTime > 0 && !this.cooldownTimer) {
                         this.cooldownTimer = setInterval(() => {
                             this.updateCooldownStatus();
@@ -1015,12 +1036,12 @@
                     }
                     // Generate tracking URL
                     const trackingUrl = `${window.location.origin}/layanan/peminjaman-alat/tracking/${this.requestId}`;
-                    
+
                     // Format equipment list professionally
-                    const equipmentListFormatted = this.equipmentList.map((item, index) => 
+                    const equipmentListFormatted = this.equipmentList.map((item, index) =>
                         `${index + 1}. ${item.name} - ${item.quantity} unit`
                     ).join('\n   ');
-                    
+
                     const message = `Kepada Yang Terhormat,
 Admin Laboratorium Gelombang, Optik dan Spektroskopi (GOS)
 Departemen Fisika FMIPA Universitas Syiah Kuala
@@ -1031,13 +1052,13 @@ Saya bermaksud untuk melakukan konsultasi terkait permohonan peminjaman peralata
 
 === DETAIL PERMOHONAN PEMINJAMAN ===
 - ID Permohonan: ${this.requestId}
-- Pembimbing: ${this.supervisorInfo.name}
-- Institusi: ${this.supervisorInfo.nip ? 'Universitas Syiah Kuala' : this.supervisorInfo.institution || 'Tidak disebutkan'}
+- Pembimbing: ${this.borrowerInfo.supervisor?.name || 'Tidak disebutkan'}
+- Institusi: ${this.borrowerInfo.supervisor?.nip ? 'Universitas Syiah Kuala' : 'Tidak disebutkan'}
 - Tanggal Peminjaman: ${this.scheduleInfo.borrowDate}
 - Tanggal Pengembalian: ${this.scheduleInfo.returnDate}
 - Waktu: ${this.scheduleInfo.timeRange || 'Sesuai jam operasional laboratorium'}
-- Status Permohonan: ${this.currentStatus === 'pending' ? 'Menunggu Persetujuan' : 
-                         this.currentStatus === 'approved' ? 'Disetujui' : 
+- Status Permohonan: ${this.currentStatus === 'pending' ? 'Menunggu Persetujuan' :
+                         this.currentStatus === 'approved' ? 'Disetujui' :
                          this.currentStatus === 'active' ? 'Sedang Berlangsung' :
                          this.currentStatus === 'completed' ? 'Selesai' :
                          this.currentStatus === 'rejected' ? 'Ditolak' :
@@ -1059,22 +1080,21 @@ Mohon kiranya Bapak/Ibu dapat memberikan informasi lebih lanjut mengenai:
 Demikian permohonan ini saya sampaikan. Atas perhatian dan kerjasamanya, saya ucapkan terima kasih.
 
 Hormat saya,
-${this.supervisorInfo.name}
-${this.supervisorInfo.nip ? `NIP: ${this.supervisorInfo.nip}` : ''}
-${this.supervisorInfo.email}
+${this.borrowerInfo.supervisor?.name || 'Pemohon'}
+${this.borrowerInfo.supervisor?.nip ? `NIP: ${this.borrowerInfo.supervisor.nip}` : ''}
+${this.borrowerInfo.supervisor?.email || ''}
 
 ---
 Laboratorium GOS - Departemen Fisika FMIPA USK
-Email: labgos@usu.ac.id
+Email: labgos@usk.ac.id
 Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
 
-                    // Get admin phone from environment or use fallback
-                    const phoneNumber = '{{ str_replace("+", "", env("WHATSAPP_LAB_PHONE", "6285338573726")) }}';
-                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    // Use the dynamically retrieved phone number
+                    const whatsappUrl = `https://wa.me/${this.adminPhone}?text=${encodeURIComponent(message)}`;
 
                     // Start cooldown after successful message
                     this.startCooldown();
-                    
+
                     window.open(whatsappUrl, '_blank');
                 },
 
@@ -1141,7 +1161,7 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                     }
 
                     let specs = equipment.specifications;
-                    
+
                     // Handle case where specifications is a JSON string
                     if (typeof specs === 'string') {
                         try {
@@ -1150,7 +1170,7 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                             return 'Tidak ada spesifikasi';
                         }
                     }
-                    
+
                     if (typeof specs !== 'object') {
                         return 'Tidak ada spesifikasi';
                     }
@@ -1276,6 +1296,35 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                         .replace(/([A-Z])/g, ' $1')
                         .replace(/\b\w/g, char => char.toUpperCase())
                         .trim();
+                },
+
+                // Safe date formatter with fallback
+                formatSafeDate(dateString, fallback = 'tanggal tidak tersedia') {
+                    if (!dateString || dateString === 'N/A') return fallback;
+                    try {
+                        // If it's already formatted, return as is
+                        if (dateString.includes(' ')) return dateString;
+
+                        // Try to format the date
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return fallback;
+
+                        return date.toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        });
+                    } catch (error) {
+                        console.warn('Date formatting error:', error);
+                        return fallback;
+                    }
+                },
+
+                // Get date range safely
+                getDateRangeText() {
+                    const startDate = this.formatSafeDate(this.scheduleInfo?.borrowDate, 'tanggal mulai');
+                    const endDate = this.formatSafeDate(this.scheduleInfo?.returnDate, 'tanggal selesai');
+                    return `${startDate} s.d. ${endDate}`;
                 }
             }
         }
