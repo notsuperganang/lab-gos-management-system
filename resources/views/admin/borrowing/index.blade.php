@@ -1478,15 +1478,63 @@ document.addEventListener('alpine:init', () => {
         
         // PDF Letter functionality
         async downloadLetter(requestId) {
+            console.log('=== DOWNLOAD LETTER DEBUG START ===');
+            console.log('Request ID:', requestId);
+
             try {
                 this.loading = true;
+                console.log('Making API request to:', `/api/admin/requests/borrow/${requestId}/letter`);
                 const response = await this.apiRequest(`/api/admin/requests/borrow/${requestId}/letter`);
-                
+
+                console.log('API Response:', response);
+
                 if (response.data && response.data.letter_url) {
+                    console.log('Letter URL found:', response.data.letter_url);
+                    console.log('Letter URL type:', typeof response.data.letter_url);
+                    console.log('Letter URL length:', response.data.letter_url.length);
+
+                    // Check if URL is relative or absolute and construct full URL
+                    const letterUrl = response.data.letter_url;
+                    let fullUrl;
+
+                    if (letterUrl.startsWith('http://') || letterUrl.startsWith('https://')) {
+                        fullUrl = letterUrl;
+                    } else if (letterUrl.startsWith('/')) {
+                        fullUrl = window.location.origin + letterUrl;
+                    } else {
+                        fullUrl = window.location.origin + '/' + letterUrl;
+                    }
+
+                    console.log('Final URL being opened:', fullUrl);
+                    console.log('Current origin:', window.location.origin);
+
+                    // Test the URL first
+                    console.log('Testing URL accessibility...');
+                    fetch(fullUrl, { method: 'HEAD' })
+                        .then(testResponse => {
+                            console.log('URL test response status:', testResponse.status);
+                            console.log('URL test response ok:', testResponse.ok);
+                            if (!testResponse.ok) {
+                                console.error('URL is not accessible:', testResponse.status, testResponse.statusText);
+                            }
+                        })
+                        .catch(err => {
+                            console.error('URL test failed:', err);
+                        });
+
                     // Open the PDF in a new tab
-                    window.open(response.data.letter_url, '_blank');
-                    this.showSuccess('Surat berhasil dibuka');
+                    console.log('Attempting to open window...');
+                    const newWindow = window.open(fullUrl, '_blank');
+                    console.log('Window.open result:', newWindow);
+
+                    if (!newWindow) {
+                        console.error('Failed to open window - popup might be blocked');
+                        this.showError('Popup diblokir. Silakan izinkan popup dan coba lagi.');
+                    } else {
+                        this.showSuccess('Surat berhasil dibuka');
+                    }
                 } else {
+                    console.error('No letter_url in response:', response);
                     throw new Error('URL surat tidak tersedia');
                 }
             } catch (error) {
@@ -1499,6 +1547,8 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.loading = false;
             }
+
+            console.log('=== DOWNLOAD LETTER DEBUG END ===');
         },
         
         async regenerateLetter(requestId) {
@@ -1563,39 +1613,105 @@ document.addEventListener('alpine:init', () => {
 
         // Download PDF
         async downloadPDF(id) {
+            console.log('=== PDF DOWNLOAD DEBUG START ===');
+            console.log('Request ID:', id);
+            console.log('Selected request:', this.selectedRequest);
+
             try {
                 const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                console.log('Token found:', !!token);
+
                 if (!token) {
+                    console.error('No token found');
                     this.showError('Token tidak ditemukan. Silakan login ulang.');
                     return;
                 }
 
-                const response = await fetch(`/api/admin/requests/borrow/${id}/letter`, {
+                const url = `/api/admin/requests/borrow/${id}/letter`;
+                console.log('API URL:', url);
+
+                // First, get the letter URL from the API
+                console.log('Making API request...');
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/pdf'
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     }
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
                 if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = `borrow-request-${id}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
+                    const data = await response.json();
+                    console.log('Response data:', data);
+
+                    if (data.success && data.data && data.data.letter_url) {
+                        console.log('Letter URL:', data.data.letter_url);
+                        console.log('Letter URL type:', typeof data.data.letter_url);
+                        console.log('Letter URL length:', data.data.letter_url.length);
+                        console.log('Current window location:', window.location.href);
+                        console.log('Opening PDF in new tab...');
+
+                        // Check if URL is relative or absolute
+                        const letterUrl = data.data.letter_url;
+                        let fullUrl;
+
+                        if (letterUrl.startsWith('http://') || letterUrl.startsWith('https://')) {
+                            fullUrl = letterUrl;
+                        } else if (letterUrl.startsWith('/')) {
+                            fullUrl = window.location.origin + letterUrl;
+                        } else {
+                            fullUrl = window.location.origin + '/' + letterUrl;
+                        }
+
+                        console.log('Final URL being opened:', fullUrl);
+
+                        // Test the URL first
+                        console.log('Testing URL accessibility...');
+                        fetch(fullUrl, { method: 'HEAD' })
+                            .then(response => {
+                                console.log('URL test response status:', response.status);
+                                console.log('URL test response ok:', response.ok);
+                                console.log('URL test response headers:', Object.fromEntries(response.headers.entries()));
+                            })
+                            .catch(err => {
+                                console.error('URL test failed:', err);
+                            });
+
+                        // Open the PDF URL directly in a new tab/window
+                        const newWindow = window.open(fullUrl, '_blank');
+                        console.log('Window.open result:', newWindow);
+
+                        if (!newWindow) {
+                            console.error('Failed to open window - popup might be blocked');
+                            this.showError('Popup diblokir. Silakan izinkan popup dan coba lagi.');
+                        } else {
+                            this.showSuccess('PDF berhasil dibuka.');
+                        }
+                    } else {
+                        console.error('Invalid response structure:', data);
+                        this.showError(data.message || 'Gagal mendapatkan URL PDF.');
+                    }
                 } else {
-                    this.showError('Gagal mengunduh PDF. Silakan coba lagi.');
+                    console.error('Response not ok, status:', response.status);
+                    const errorData = await response.json().catch((err) => {
+                        console.error('Failed to parse error response:', err);
+                        return null;
+                    });
+                    console.log('Error data:', errorData);
+                    this.showError(errorData?.message || 'Gagal mengunduh PDF. Silakan coba lagi.');
                 }
             } catch (error) {
                 console.error('PDF download error:', error);
+                console.error('Error stack:', error.stack);
                 this.showError('Gagal mengunduh PDF. Silakan coba lagi.');
             }
+
+            console.log('=== PDF DOWNLOAD DEBUG END ===');
         },
 
         // Get available actions for request
