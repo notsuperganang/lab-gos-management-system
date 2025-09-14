@@ -15,6 +15,7 @@ class BorrowRequestTrackingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'request_id' => $this->request_id,
             'status' => $this->status,
             'status_label' => $this->status_label,
@@ -35,11 +36,13 @@ class BorrowRequestTrackingResource extends JsonResource
             'equipment_items' => $this->when($this->relationLoaded('borrowRequestItems'), function () {
                 return $this->borrowRequestItems->map(function ($item) {
                     return [
+                        'id' => $item->id,
                         'equipment' => [
                             'id' => $item->equipment->id,
                             'name' => $item->equipment->name,
                             'model' => $item->equipment->model,
                             'category' => $item->equipment->category?->name,
+                            'available_quantity' => $item->equipment->available_quantity,
                         ],
                         'quantity_requested' => $item->quantity_requested,
                         'quantity_approved' => $item->quantity_approved,

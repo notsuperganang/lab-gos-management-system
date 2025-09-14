@@ -234,11 +234,11 @@
                                     <!-- Status-specific action buttons -->
                                     <template x-if="request.status === 'pending'">
                                         <div class="flex space-x-1">
-                                            <button @click="showDetail(request.id); $nextTick(() => showApprovalModal = true)" 
+                                            <button @click="showApproveModal(request.id)" 
                                                     class="text-green-600 hover:text-green-900 text-xs px-2 py-1 rounded border border-green-200 hover:bg-green-50">
                                                 Setujui
                                             </button>
-                                            <button @click="showDetail(request.id); $nextTick(() => showRejectModal = true)" 
+                                            <button @click="showDetail(request.id); $nextTick(() => showRejectModal())" 
                                                     class="text-red-600 hover:text-red-900 text-xs px-2 py-1 rounded border border-red-200 hover:bg-red-50">
                                                 Tolak
                                             </button>
@@ -246,14 +246,14 @@
                                     </template>
                                     
                                     <template x-if="request.status === 'approved'">
-                                        <button @click="showDetail(request.id); $nextTick(() => { statusForm.status = 'active'; showUpdateStatusModal = true; })" 
+                                        <button @click="showDetail(request.id); $nextTick(() => { statusForm.status = 'active'; showUpdateStatusModalOpen = true; })" 
                                                 class="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 rounded border border-blue-200 hover:bg-blue-50">
                                             Mulai
                                         </button>
                                     </template>
                                     
                                     <template x-if="request.status === 'active'">
-                                        <button @click="showDetail(request.id); $nextTick(() => { statusForm.status = 'completed'; showUpdateStatusModal = true; })" 
+                                        <button @click="showDetail(request.id); $nextTick(() => { statusForm.status = 'completed'; showUpdateStatusModalOpen = true; })" 
                                                 class="text-green-600 hover:text-green-900 text-xs px-2 py-1 rounded border border-green-200 hover:bg-green-50">
                                             Selesai
                                         </button>
@@ -553,19 +553,19 @@
                                         <div class="space-y-3">
                                             <div class="flex justify-between py-2 border-b border-gray-200">
                                                 <span class="text-gray-600 font-medium">Nama:</span>
-                                                <span class="font-medium text-gray-900" x-text="selectedRequest?.supervisor_name"></span>
+                                                <span class="font-medium text-gray-900" x-text="selectedRequest?.supervisor?.name"></span>
                                             </div>
                                             <div class="flex justify-between py-2 border-b border-gray-200">
                                                 <span class="text-gray-600 font-medium">NIP:</span>
-                                                <span class="font-medium text-gray-900" x-text="selectedRequest?.supervisor_nip"></span>
+                                                <span class="font-medium text-gray-900" x-text="selectedRequest?.supervisor?.nip"></span>
                                             </div>
                                             <div class="flex justify-between py-2 border-b border-gray-200">
                                                 <span class="text-gray-600 font-medium">Email:</span>
-                                                <span class="font-medium text-gray-900 break-all" x-text="selectedRequest?.supervisor_email"></span>
+                                                <span class="font-medium text-gray-900 break-all" x-text="selectedRequest?.supervisor?.email"></span>
                                             </div>
                                             <div class="flex justify-between py-2">
                                                 <span class="text-gray-600 font-medium">Telepon:</span>
-                                                <span class="font-medium text-gray-900" x-text="selectedRequest?.supervisor_phone"></span>
+                                                <span class="font-medium text-gray-900" x-text="selectedRequest?.supervisor?.phone"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -579,25 +579,25 @@
                                             Peralatan
                                         </h4>
                                         <div class="space-y-3">
-                                            <template x-for="(item, index) in selectedRequest?.equipment_items || []" :key="'equipment-' + index">
+                                            <template x-for="(item, index) in selectedRequest?.equipment_items || []" :key="'equipment-detail-' + (item.id || index)">
                                                 <div class="bg-white rounded border p-3">
                                                     <div class="flex justify-between items-start">
                                                         <div class="flex-1">
-                                                            <div class="font-medium text-gray-900" x-text="item.equipment?.name"></div>
-                                                            <div class="text-sm text-gray-600 mt-1" x-text="item.equipment?.category?.name"></div>
+                                                            <div class="font-medium text-gray-900" x-text="item?.equipment?.name || 'N/A'"></div>
+                                                            <div class="text-sm text-gray-600 mt-1" x-text="item?.equipment?.category || 'N/A'"></div>
                                                             <div class="flex items-center space-x-4 mt-2 text-sm">
                                                                 <span class="text-blue-600">
-                                                                    <strong>Diminta:</strong> <span x-text="item.quantity_requested"></span>
+                                                                    <strong>Diminta:</strong> <span x-text="item?.quantity_requested || 0"></span>
                                                                 </span>
-                                                                <span x-show="item.quantity_approved" class="text-green-600">
-                                                                    <strong>Disetujui:</strong> <span x-text="item.quantity_approved"></span>
+                                                                <span x-show="item?.quantity_approved" class="text-green-600">
+                                                                    <strong>Disetujui:</strong> <span x-text="item?.quantity_approved || 0"></span>
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div x-show="item.notes" class="mt-2 pt-2 border-t border-gray-200">
+                                                    <div x-show="item?.notes" class="mt-2 pt-2 border-t border-gray-200">
                                                         <div class="text-sm text-gray-600">
-                                                            <strong>Catatan:</strong> <span x-text="item.notes"></span>
+                                                            <strong>Catatan:</strong> <span x-text="item?.notes || ''"></span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -645,7 +645,18 @@
                         <div class="flex space-x-2">
                             <!-- Dynamic action buttons in detail modal -->
                             <template x-for="action in getAvailableActions(selectedRequest)" :key="action.key">
-                                <button @click="window[action.action](selectedRequest.id)" 
+                                <button @click="
+                                    console.log('=== BUTTON CLICK DEBUG ===');
+                                    console.log('Action key:', action.key);
+                                    console.log('Button context this:', $data);
+                                    console.log('Available methods:', Object.getOwnPropertyNames($data).filter(prop => typeof $data[prop] === 'function'));
+                                    console.log('showRejectModal type:', typeof showRejectModal);
+                                    console.log('showRejectModal function:', showRejectModal);
+
+                                    action.key === 'approve' ? showApproveModal(selectedRequest.id) :
+                                    action.key === 'reject' ? (console.log('About to call showRejectModal...'), showRejectModal()) :
+                                    action.key === 'updateStatus' ? showUpdateStatusModal() :
+                                    action.key === 'pdf' ? downloadPDF(selectedRequest.id) : null"
                                         :class="action.class"
                                         x-text="action.text">
                                 </button>
@@ -698,7 +709,7 @@
                                 </p>
                                 
                                 <!-- Equipment Adjustments Table -->
-                                <div class="mt-6">
+                                <div class="mt-6" x-show="approvalForm.equipment_adjustments && approvalForm.equipment_adjustments.length > 0">
                                     <h4 class="text-sm font-medium text-gray-900 mb-3">Alat yang Diminta</h4>
                                     <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                                         <table class="min-w-full divide-y divide-gray-300">
@@ -711,21 +722,21 @@
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200">
-                                                <template x-for="(item, index) in selectedRequest?.equipment_items || []" :key="item.id">
+                                                <template x-for="(item, index) in selectedRequest?.equipment_items || []" :key="'equipment-approval-' + (item.id || index)">
                                                     <tr>
                                                         <td class="px-4 py-3 text-sm">
-                                                            <div class="font-medium text-gray-900" x-text="item.equipment?.name"></div>
-                                                            <div class="text-gray-500" x-text="item.equipment?.model"></div>
+                                                            <div class="font-medium text-gray-900" x-text="item?.equipment?.name || 'N/A'"></div>
+                                                            <div class="text-gray-500" x-text="item?.equipment?.model || 'N/A'"></div>
                                                         </td>
-                                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="item.equipment?.available_quantity || 0"></td>
-                                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="item.quantity_requested"></td>
+                                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="item?.equipment?.available_quantity || 0"></td>
+                                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="item?.quantity_requested || 0"></td>
                                                         <td class="px-4 py-3 text-sm">
-                                                            <input type="number" 
+                                                            <input type="number"
                                                                    x-model.number="approvalForm.equipment_adjustments[index].quantity_approved"
                                                                    :min="0"
-                                                                   :max="Math.min(item.quantity_requested, item.equipment?.available_quantity || 0)"
+                                                                   :max="Math.min(item?.quantity_requested || 0, item?.equipment?.available_quantity || 0)"
                                                                    class="w-20 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm"
-                                                                   @input="validateEquipmentQuantity(index, $event.target.value)">
+                                                                   @input="approvalForm.equipment_adjustments[index] && validateEquipmentQuantity(index, $event.target.value)">
                                                         </td>
                                                     </tr>
                                                 </template>
@@ -745,8 +756,8 @@
                                 
                                 <!-- Validation Errors -->
                                 <div x-show="Object.keys(errors).length > 0" class="mt-4 p-3 bg-red-50 rounded-md">
-                                    <template x-for="error in Object.values(errors)" :key="error">
-                                        <div class="text-sm text-red-600" x-text="error"></div>
+                                    <template x-for="(error, index) in Object.values(errors)" :key="'error-' + index">
+                                        <div class="text-sm text-red-600" x-text="Array.isArray(error) ? error.join(', ') : error"></div>
                                     </template>
                                 </div>
                             </div>
@@ -777,7 +788,7 @@
     </div>
 
     <!-- Reject Modal -->
-    <div x-show="showRejectModal" 
+    <div x-show="showRejectModalOpen" 
          x-transition:enter="ease-out duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -789,7 +800,7 @@
         
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div x-show="showRejectModal"
+                <div x-show="showRejectModalOpen"
                      x-transition:enter="ease-out duration-300"
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                      x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -851,7 +862,7 @@
     </div>
 
     <!-- Update Status Modal -->
-    <div x-show="showUpdateStatusModal" 
+    <div x-show="showUpdateStatusModalOpen" 
          x-transition:enter="ease-out duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -863,7 +874,7 @@
         
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div x-show="showUpdateStatusModal"
+                <div x-show="showUpdateStatusModalOpen"
                      x-transition:enter="ease-out duration-300"
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                      x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -999,8 +1010,8 @@ document.addEventListener('alpine:init', () => {
         loading: false,
         showDetailModal: false,
         showApprovalModal: false,
-        showRejectModal: false,
-        showUpdateStatusModal: false,
+        showRejectModalOpen: false,
+        showUpdateStatusModalOpen: false,
         
         // Form data
         approvalForm: { 
@@ -1016,6 +1027,20 @@ document.addEventListener('alpine:init', () => {
         
         // Initialize
         async init() {
+            console.log('=== ALPINE.JS COMPONENT DEBUG START ===');
+            console.log('Component `this` context:', this);
+            console.log('Component methods available:');
+            console.log('- showApproveModal:', typeof this.showApproveModal, this.showApproveModal);
+            console.log('- showRejectModal:', typeof this.showRejectModal, this.showRejectModal);
+            console.log('- showUpdateStatusModal:', typeof this.showUpdateStatusModal, this.showUpdateStatusModal);
+            console.log('- downloadPDF:', typeof this.downloadPDF, this.downloadPDF);
+
+            // Check if methods are enumerable
+            console.log('Enumerable properties:', Object.keys(this));
+            console.log('All property names:', Object.getOwnPropertyNames(this));
+
+            console.log('=== ALPINE.JS COMPONENT DEBUG END ===');
+
             console.log('Initializing borrow requests management...');
             await this.loadRequests();
             await this.loadSummary();
@@ -1107,27 +1132,48 @@ document.addEventListener('alpine:init', () => {
         
         // Initialize equipment adjustments form
         initializeEquipmentAdjustments() {
-            if (!this.selectedRequest?.equipment_items) return;
-            
-            this.approvalForm.equipment_adjustments = this.selectedRequest.equipment_items.map(item => ({
-                borrow_request_item_id: item.id,
-                quantity_approved: item.quantity_requested,
-                equipment_id: item.equipment?.id
-            }));
+            try {
+                if (!this.selectedRequest?.equipment_items || !Array.isArray(this.selectedRequest.equipment_items)) {
+                    this.approvalForm.equipment_adjustments = [];
+                    console.warn('No equipment items found for initialization');
+                    return;
+                }
+
+                this.approvalForm.equipment_adjustments = this.selectedRequest.equipment_items.map((item, index) => ({
+                    borrow_request_item_id: item?.id || index,
+                    quantity_approved: Math.max(0, item?.quantity_requested || 0),
+                    equipment_id: item?.equipment?.id || null
+                }));
+
+                console.log('Initialized equipment adjustments:', this.approvalForm.equipment_adjustments);
+            } catch (error) {
+                console.error('Error initializing equipment adjustments:', error);
+                this.approvalForm.equipment_adjustments = [];
+                this.showError('Gagal menginisialisasi data peralatan');
+            }
         },
         
         // Validate equipment quantity
         validateEquipmentQuantity(index, value) {
-            const item = this.selectedRequest?.equipment_items[index];
-            if (!item) return;
-            
-            const numValue = parseInt(value) || 0;
-            const maxAvailable = Math.min(item.quantity_requested, item.equipment?.available_quantity || 0);
-            
-            if (numValue > maxAvailable) {
-                this.approvalForm.equipment_adjustments[index].quantity_approved = maxAvailable;
-            } else if (numValue < 0) {
-                this.approvalForm.equipment_adjustments[index].quantity_approved = 0;
+            try {
+                if (typeof index !== 'number' || index < 0) return;
+
+                const item = this.selectedRequest?.equipment_items?.[index];
+                if (!item || !this.approvalForm.equipment_adjustments?.[index]) return;
+
+                const numValue = Math.max(0, parseInt(value) || 0);
+                const requestedQty = Math.max(0, item?.quantity_requested || 0);
+                const availableQty = Math.max(0, item?.equipment?.available_quantity || 0);
+                const maxAvailable = Math.min(requestedQty, availableQty);
+
+                if (numValue > maxAvailable) {
+                    this.approvalForm.equipment_adjustments[index].quantity_approved = maxAvailable;
+                } else {
+                    this.approvalForm.equipment_adjustments[index].quantity_approved = numValue;
+                }
+            } catch (error) {
+                console.error('Error validating equipment quantity:', error);
+                this.showError('Gagal memvalidasi jumlah peralatan');
             }
         },
         
@@ -1242,7 +1288,7 @@ document.addEventListener('alpine:init', () => {
         },
         
         resetForms() {
-            this.approvalForm = { 
+            this.approvalForm = {
                 notes: '',
                 equipment_adjustments: []
             };
@@ -1252,34 +1298,51 @@ document.addEventListener('alpine:init', () => {
         },
         
         // Modal actions
-        showApproveModal() {
+        async showApproveModal(id = null) {
+            if (id) {
+                await this.loadDetail(id);
+            }
             this.showApprovalModal = true;
             this.resetForms();
+            this.initializeEquipmentAdjustments();
         },
         
         closeApprovalModal() {
             this.showApprovalModal = false;
-            this.resetForms();
+            // Delay form reset to avoid reactive binding conflicts
+            this.$nextTick(() => {
+                this.resetForms();
+            });
         },
         
         showRejectModal() {
-            this.showRejectModal = true;
+            console.log('=== SHOW REJECT MODAL CALLED ===');
+            console.log('Method context `this`:', this);
+            console.log('Setting showRejectModalOpen to true...');
+            this.showRejectModalOpen = true;
             this.resetForms();
+            console.log('=== SHOW REJECT MODAL COMPLETED ===');
         },
         
         closeRejectModal() {
-            this.showRejectModal = false;
-            this.resetForms();
+            this.showRejectModalOpen = false;
+            // Delay form reset to avoid reactive binding conflicts
+            this.$nextTick(() => {
+                this.resetForms();
+            });
         },
         
         showUpdateStatusModal() {
-            this.showUpdateStatusModal = true;
+            this.showUpdateStatusModalOpen = true;
             this.resetForms();
         },
         
         closeUpdateStatusModal() {
-            this.showUpdateStatusModal = false;
-            this.resetForms();
+            this.showUpdateStatusModalOpen = false;
+            // Delay form reset to avoid reactive binding conflicts
+            this.$nextTick(() => {
+                this.resetForms();
+            });
         },
         
         // Action methods
@@ -1338,7 +1401,7 @@ document.addEventListener('alpine:init', () => {
             
             try {
                 const payload = {
-                    rejection_reason: this.rejectForm.reason.trim()
+                    approval_notes: this.rejectForm.reason.trim()
                 };
                 
                 const response = await this.apiRequest(
@@ -1496,6 +1559,115 @@ document.addEventListener('alpine:init', () => {
             setTimeout(() => {
                 this.message = '';
             }, 8000);
+        },
+
+        // Download PDF
+        async downloadPDF(id) {
+            try {
+                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                if (!token) {
+                    this.showError('Token tidak ditemukan. Silakan login ulang.');
+                    return;
+                }
+
+                const response = await fetch(`/api/admin/requests/borrow/${id}/letter`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/pdf'
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `borrow-request-${id}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    this.showError('Gagal mengunduh PDF. Silakan coba lagi.');
+                }
+            } catch (error) {
+                console.error('PDF download error:', error);
+                this.showError('Gagal mengunduh PDF. Silakan coba lagi.');
+            }
+        },
+
+        // Get available actions for request
+        getAvailableActions(request) {
+            console.log('=== GET AVAILABLE ACTIONS DEBUG ===');
+            console.log('Request:', request);
+            console.log('Request status:', request?.status);
+            console.log('Component context in getAvailableActions:', this);
+            console.log('showRejectModal method check:', typeof this.showRejectModal);
+
+            try {
+                if (!request || typeof request !== 'object') return [];
+
+            const actions = [];
+
+            switch (request.status) {
+                case 'pending':
+                    actions.push(
+                        {
+                            key: 'approve',
+                            text: 'Setujui',
+                            action: 'showApproveModal',
+                            class: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium'
+                        },
+                        {
+                            key: 'reject',
+                            text: 'Tolak',
+                            action: 'showRejectModal',
+                            class: 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium'
+                        }
+                    );
+                    break;
+                case 'approved':
+                    actions.push(
+                        {
+                            key: 'updateStatus',
+                            text: 'Update Status',
+                            action: 'showUpdateStatusModal',
+                            class: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium'
+                        }
+                    );
+                    break;
+                case 'active':
+                    actions.push(
+                        {
+                            key: 'updateStatus',
+                            text: 'Update Status',
+                            action: 'showUpdateStatusModal',
+                            class: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium'
+                        }
+                    );
+                    break;
+            }
+
+            // PDF action for approved and active requests
+            if (['approved', 'active'].includes(request.status)) {
+                actions.push({
+                    key: 'pdf',
+                    text: 'Download PDF',
+                    action: 'downloadPDF',
+                    class: 'bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium'
+                });
+            }
+
+            console.log('Final actions array:', actions);
+            console.log('=== GET AVAILABLE ACTIONS COMPLETE ===');
+
+            return actions;
+            } catch (error) {
+                console.error('Error getting available actions:', error);
+                return [];
+            }
         }
     }));
 });

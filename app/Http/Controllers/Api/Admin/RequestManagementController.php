@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ApiResponse;
+use App\Http\Resources\Public\BorrowRequestTrackingResource;
 use App\Models\BorrowRequest;
 use App\Models\TestingRequest;
 use App\Models\VisitRequest;
@@ -330,7 +331,7 @@ class RequestManagementController extends Controller
         try {
             $borrowRequest->load(['borrowRequestItems.equipment.category', 'reviewer']);
 
-            return ApiResponse::success($borrowRequest, 'Borrow request retrieved successfully');
+            return ApiResponse::success(new BorrowRequestTrackingResource($borrowRequest), 'Borrow request retrieved successfully');
 
         } catch (\Exception $e) {
             Log::error('Failed to get borrow request details', [
