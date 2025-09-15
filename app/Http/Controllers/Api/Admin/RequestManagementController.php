@@ -1012,11 +1012,65 @@ class RequestManagementController extends Controller
     }
 
     /**
+     * Get testing requests summary
+     */
+    private function getTestingRequestSummary(): JsonResponse
+    {
+        try {
+            $totalRequests = TestingRequest::count();
+            $pendingRequests = TestingRequest::where('status', 'pending')->count();
+            $approvedRequests = TestingRequest::where('status', 'approved')->count();
+            $sampleReceivedRequests = TestingRequest::where('status', 'sample_received')->count();
+            $inProgressRequests = TestingRequest::where('status', 'in_progress')->count();
+            $completedRequests = TestingRequest::where('status', 'completed')->count();
+            $rejectedRequests = TestingRequest::where('status', 'rejected')->count();
+            $cancelledRequests = TestingRequest::where('status', 'cancelled')->count();
+
+            return ApiResponse::success([
+                'total_requests' => $totalRequests,
+                'pending_requests' => $pendingRequests,
+                'approved_requests' => $approvedRequests,
+                'sample_received_requests' => $sampleReceivedRequests,
+                'in_progress_requests' => $inProgressRequests,
+                'completed_requests' => $completedRequests,
+                'rejected_requests' => $rejectedRequests,
+                'cancelled_requests' => $cancelledRequests,
+                'status_distribution' => [
+                    'pending' => $pendingRequests,
+                    'approved' => $approvedRequests,
+                    'sample_received' => $sampleReceivedRequests,
+                    'in_progress' => $inProgressRequests,
+                    'completed' => $completedRequests,
+                    'rejected' => $rejectedRequests,
+                    'cancelled' => $cancelledRequests,
+                ],
+            ], 'Testing requests summary retrieved successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve testing requests summary', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to retrieve testing requests summary',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
      * Get testing requests with filtering
      */
     public function testingRequests(Request $request): JsonResponse
     {
         try {
+            // Handle summary request
+            if ($request->boolean('summary')) {
+                return $this->getTestingRequestSummary();
+            }
+
             $query = TestingRequest::with(['reviewer', 'assignedUser'])
                 ->orderBy('created_at', 'desc');
 
@@ -1056,7 +1110,7 @@ class RequestManagementController extends Controller
             $perPage = min($request->get('per_page', 15), 100);
             $testingRequests = $query->paginate($perPage);
 
-            // Transform data manually first to debug
+            // Transform data manually to include all necessary fields
             $testingData = $testingRequests->getCollection()->map(function ($request) {
                 return [
                     'id' => $request->id,
@@ -1065,14 +1119,25 @@ class RequestManagementController extends Controller
                     'status_label' => $request->status_label,
                     'client_name' => $request->client_name,
                     'client_organization' => $request->client_organization,
+                    'client_email' => $request->client_email,
+                    'client_phone' => $request->client_phone,
+                    'client_address' => $request->client_address,
                     'sample_name' => $request->sample_name,
+                    'sample_description' => $request->sample_description,
+                    'sample_quantity' => $request->sample_quantity,
+                    'sample_delivery_schedule' => $request->sample_delivery_schedule?->format('Y-m-d'),
                     'testing_type' => $request->testing_type,
                     'testing_type_label' => $request->testing_type_label,
+                    'testing_parameters' => $request->testing_parameters,
                     'urgent_request' => $request->urgent_request,
-                    'preferred_date' => $request->preferred_date?->format('Y-m-d'),
+                    'estimated_duration' => $request->estimated_duration,
+                    'completion_date' => $request->completion_date?->format('Y-m-d'),
+                    'result_summary' => $request->result_summary,
+                    'result_files_path' => $request->result_files_path,
                     'cost' => $request->cost,
                     'submitted_at' => $request->submitted_at->format('Y-m-d H:i:s'),
                     'reviewed_at' => $request->reviewed_at?->format('Y-m-d H:i:s'),
+                    'approval_notes' => $request->approval_notes,
                     'reviewer' => $request->reviewer ? [
                         'id' => $request->reviewer->id,
                         'name' => $request->reviewer->name,
@@ -1159,17 +1224,50 @@ class RequestManagementController extends Controller
     public function updateTestingRequest(Request $request, TestingRequest $testingRequest): JsonResponse
     {
         try {
+            Log::info('=== TESTING REQUEST UPDATE START ===', [
+                'request_id' => $testingRequest->request_id,
+                'current_status' => $testingRequest->status,
+                'all_request_data' => $request->all(),
+                'user_id' => $request->user()->id,
+            ]);
+
             $validated = $request->validate([
+                'status' => 'sometimes|string|in:pending,approved,sample_received,in_progress,completed,rejected,cancelled',
                 'testing_type' => 'sometimes|string|in:'.implode(',', array_keys(TestingRequest::getTestingTypes())),
                 'testing_parameters' => 'sometimes|array',
                 'preferred_date' => 'sometimes|date|after:today',
-                'estimated_duration_hours' => 'sometimes|integer|min:1|max:168',
+                'estimated_duration' => 'sometimes|integer|min:1|max:30',
                 'cost' => 'sometimes|numeric|min:0',
                 'assigned_to' => 'sometimes|nullable|exists:users,id',
                 'approval_notes' => 'sometimes|nullable|string|max:1000',
+                'result_summary' => 'sometimes|nullable|string',
             ]);
 
-            $testingRequest->update($validated);
+            Log::info('Validation passed', [
+                'validated_data' => $validated,
+            ]);
+
+            // If status is being changed, add timestamp and user info
+            if (isset($validated['status']) && $validated['status'] !== $testingRequest->status) {
+                Log::info('Status change detected', [
+                    'old_status' => $testingRequest->status,
+                    'new_status' => $validated['status'],
+                ]);
+                $validated['reviewed_at'] = now();
+                $validated['reviewed_by'] = $request->user()->id;
+            }
+
+            Log::info('About to update with data', [
+                'update_data' => $validated,
+            ]);
+
+            $updated = $testingRequest->update($validated);
+
+            Log::info('Update result', [
+                'update_successful' => $updated,
+                'new_status_in_db' => $testingRequest->fresh()->status,
+                'model_after_update' => $testingRequest->toArray(),
+            ]);
 
             Log::info('Testing request updated', [
                 'request_id' => $testingRequest->request_id,
@@ -1214,7 +1312,7 @@ class RequestManagementController extends Controller
             $validated = $request->validate([
                 'approval_notes' => 'nullable|string|max:1000',
                 'cost' => 'nullable|numeric|min:0',
-                'estimated_duration_hours' => 'nullable|integer|min:1|max:168',
+                'estimated_duration' => 'nullable|integer|min:1|max:30',
                 'assigned_to' => 'nullable|exists:users,id',
             ]);
 
@@ -1232,8 +1330,8 @@ class RequestManagementController extends Controller
                 $updateData['cost'] = $validated['cost'];
             }
 
-            if (isset($validated['estimated_duration_hours'])) {
-                $updateData['estimated_duration_hours'] = $validated['estimated_duration_hours'];
+            if (isset($validated['estimated_duration'])) {
+                $updateData['estimated_duration'] = $validated['estimated_duration'];
             }
 
             if (isset($validated['assigned_to'])) {

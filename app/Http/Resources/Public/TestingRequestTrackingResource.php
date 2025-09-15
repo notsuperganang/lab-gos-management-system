@@ -15,11 +15,14 @@ class TestingRequestTrackingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id, // Add missing ID for admin operations
             'request_id' => $this->request_id,
             'status' => $this->status,
             'status_label' => $this->status_label,
             'status_color' => $this->status_color,
             'progress_percentage' => $this->progress_percentage,
+
+            // Nested format for public use
             'client' => [
                 'name' => $this->client_name,
                 'organization' => $this->client_organization,
@@ -51,13 +54,34 @@ class TestingRequestTrackingResource extends JsonResource
                 'summary' => $this->result_summary,
                 'files' => $this->result_files_path,
             ],
+
+            // Flat format for admin interface compatibility
+            'client_name' => $this->client_name,
+            'client_organization' => $this->client_organization,
+            'client_email' => $this->client_email,
+            'client_phone' => $this->client_phone,
+            'client_address' => $this->client_address,
+            'sample_name' => $this->sample_name,
+            'sample_description' => $this->sample_description,
+            'sample_quantity' => $this->sample_quantity,
+            'testing_type' => $this->testing_type,
+            'testing_type_label' => $this->testing_type_label,
+            'testing_parameters' => $this->testing_parameters,
+            'urgent_request' => $this->urgent_request,
+            'sample_delivery_schedule' => $this->sample_delivery_schedule?->format('Y-m-d'),
+            'estimated_duration' => $this->estimated_duration,
+            'completion_date' => $this->completion_date?->format('Y-m-d'),
+            'result_summary' => $this->result_summary,
+            'result_files_path' => $this->result_files_path,
+            'cost' => $this->cost,
+
             'submitted_at' => $this->submitted_at->format('Y-m-d H:i:s'),
             'reviewed_at' => $this->reviewed_at?->format('Y-m-d H:i:s'),
             'reviewer' => $this->when($this->relationLoaded('reviewer') && $this->reviewer, [
-                'name' => $this->reviewer->name,
+                'name' => $this->reviewer?->name,
             ]),
             'assigned_to' => $this->when($this->relationLoaded('assignedUser') && $this->assignedUser, [
-                'name' => $this->assignedUser->name,
+                'name' => $this->assignedUser?->name,
             ]),
             'approval_notes' => $this->approval_notes,
             'is_overdue' => $this->isOverdue(),

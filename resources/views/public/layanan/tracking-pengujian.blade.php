@@ -92,16 +92,13 @@
                                      :class="{
                                         'bg-yellow-100 text-yellow-800': currentStatus === 'pending',
                                         'bg-blue-100 text-blue-800': currentStatus === 'approved',
-                                        'bg-purple-100 text-purple-800': currentStatus === 'in_progress',
+                                        'bg-purple-100 text-purple-800': currentStatus === 'sample_received',
+                                        'bg-indigo-100 text-indigo-800': currentStatus === 'in_progress',
                                         'bg-green-100 text-green-800': currentStatus === 'completed',
-                                        'bg-red-100 text-red-800': currentStatus === 'rejected' || currentStatus === 'cancelled'
+                                        'bg-red-100 text-red-800': currentStatus === 'rejected',
+                                        'bg-orange-100 text-orange-800': currentStatus === 'cancelled'
                                      }">
-                                    <span x-show="currentStatus === 'pending'">⏳ Menunggu Review & Quote</span>
-                                    <span x-show="currentStatus === 'approved'">✅ Disetujui, Siap Testing</span>
-                                    <span x-show="currentStatus === 'in_progress'">🔬 Testing Berlangsung</span>
-                                    <span x-show="currentStatus === 'completed'">✅ Testing Selesai</span>
-                                    <span x-show="currentStatus === 'rejected'">❌ Ditolak</span>
-                                    <span x-show="currentStatus === 'cancelled'">🚫 Dibatalkan</span>
+                                    <span x-text="getStatusDisplayText(currentStatus)"></span>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -152,20 +149,51 @@
                         </div>
 
                         <!-- Cancelled Status Message -->
-                        <div x-show="currentStatus === 'cancelled'" class="mt-8 p-6 bg-red-50 border border-red-200 rounded-xl">
+                        <div x-show="currentStatus === 'cancelled'" class="mt-8 p-6 bg-orange-50 border border-orange-200 rounded-xl">
                             <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
-                                    <i class="fas fa-ban text-red-600 text-xl"></i>
+                                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-ban text-orange-600 text-xl"></i>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-bold text-red-800">Permohonan Dibatalkan</h3>
-                                    <p class="text-red-600 text-sm">Permohonan pengujian telah dibatalkan</p>
+                                    <h3 class="text-lg font-bold text-orange-800">Permohonan Pengujian Dibatalkan</h3>
+                                    <p class="text-orange-600 text-sm">Permohonan telah dibatalkan oleh pemohon</p>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border border-orange-100">
+                                <p class="text-gray-700 text-sm">
+                                    <strong>Informasi:</strong> Permohonan pengujian dengan ID <span x-text="testingId" class="font-mono font-semibold"></span>
+                                    telah dibatalkan. Jika Anda masih memerlukan layanan pengujian, silakan ajukan permohonan baru melalui halaman layanan.
+                                </p>
+                                <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                                    <a href="/layanan/pengujian"
+                                       class="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-plus mr-2"></i>
+                                        Ajukan Permohonan Baru
+                                    </a>
+                                    <a href="/"
+                                       class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
+                                        <i class="fas fa-home mr-2"></i>
+                                        Kembali ke Beranda
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rejected Status Message -->
+                        <div x-show="currentStatus === 'rejected'" class="mt-8 p-6 bg-red-50 border border-red-200 rounded-xl">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-red-800">Permohonan Pengujian Ditolak</h3>
+                                    <p class="text-red-600 text-sm">Permohonan tidak dapat diproses</p>
                                 </div>
                             </div>
                             <div class="bg-white rounded-lg p-4 border border-red-100">
                                 <p class="text-gray-700 text-sm">
                                     <strong>Informasi:</strong> Permohonan pengujian dengan ID <span x-text="testingId" class="font-mono font-semibold"></span>
-                                    telah dibatalkan. Jika Anda masih memerlukan layanan pengujian, silakan ajukan permohonan baru melalui halaman layanan.
+                                    telah ditolak oleh admin. Silakan periksa alasan penolakan pada timeline di atas dan ajukan permohonan baru jika diperlukan.
                                 </p>
                                 <div class="mt-4 flex flex-col sm:flex-row gap-3">
                                     <a href="/layanan/pengujian"
@@ -201,6 +229,71 @@
                     </div>
 
                     <div class="p-8">
+                        <!-- Admin Cost & Duration Estimation - Full Width -->
+                        <div x-show="isApprovedOrLater() && (costInfo.cost > 0 || scheduleInfo.estimatedDuration > 0)"
+                             class="mb-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-8 border-2 border-blue-200 shadow-xl">
+                            <div class="flex items-center mb-6">
+                                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mr-6">
+                                    <i class="fas fa-calculator text-white text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-3xl font-bold text-blue-900">Biaya & Durasi Admin</h3>
+                                    <p class="text-blue-700 text-lg">Biaya dan waktu yang ditetapkan admin</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <!-- Cost -->
+                                <div x-show="costInfo.cost > 0" class="bg-white rounded-2xl p-6 border border-blue-200 shadow-md">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-lg font-medium text-blue-700 mb-2">💰 Biaya Pengujian</div>
+                                            <div class="text-4xl font-bold text-blue-900" x-text="formatCurrency(costInfo.cost)"></div>
+                                        </div>
+                                        <div class="text-blue-500">
+                                            <i class="fas fa-money-bill-wave text-5xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Duration -->
+                                <div x-show="scheduleInfo.estimatedDuration > 0" class="bg-white rounded-2xl p-6 border border-blue-200 shadow-md">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-lg font-medium text-blue-700 mb-2">⏱️ Durasi Pengujian</div>
+                                            <div class="text-4xl font-bold text-blue-900" x-text="getEstimatedDurationText()"></div>
+                                        </div>
+                                        <div class="text-blue-500">
+                                            <i class="fas fa-clock text-5xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Admin Info -->
+                            <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6">
+                                <div class="flex items-start">
+                                    <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4 mt-1">
+                                        <i class="fas fa-info-circle text-yellow-800 text-xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-lg font-bold text-yellow-800 mb-3">
+                                            Tidak sesuai dengan harapan Anda?
+                                        </p>
+                                        <p class="text-sm text-yellow-700 mb-4">
+                                            Jika biaya atau waktu pengujian tidak sesuai dengan harapan, Anda dapat menghubungi admin untuk membatalkan permohonan ini.
+                                        </p>
+                                        <button
+                                            @click="contactAdminForCostConcern()"
+                                            class="inline-flex items-center px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-lg font-bold rounded-xl transition-colors duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                                            <i class="fab fa-whatsapp mr-3 text-xl"></i>
+                                            Hubungi Admin
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                             <!-- Info Klien -->
@@ -250,7 +343,7 @@
                                 </div>
 
                                 <!-- Cost Information -->
-                                <div x-show="costInfo.cost" class="bg-green-50 rounded-xl p-4">
+                                <div x-show="costInfo.cost > 0" class="bg-green-50 rounded-xl p-4 border border-green-200">
                                     <h4 class="font-semibold text-green-800 mb-2">Biaya Testing</h4>
                                     <div class="text-lg font-bold text-green-700" x-text="formatCurrency(costInfo.cost)"></div>
                                 </div>
@@ -305,12 +398,12 @@
                                 <!-- Progress Bar -->
                                 <div class="bg-gray-50 rounded-xl p-4">
                                     <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium text-gray-600">Progress Testing</span>
-                                        <span class="text-sm font-bold text-gray-800" x-text="progressPercentage + '%'"></span>
+                                        <span class="text-sm font-medium text-gray-600">Progress Pengujian</span>
+                                        <span class="text-sm font-bold text-gray-800" x-text="getProgressText()"></span>
                                     </div>
                                     <div class="w-full bg-gray-200 rounded-full h-2">
                                         <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500"
-                                             :style="`width: ${progressPercentage}%`"></div>
+                                             :style="`width: ${getProgressHeight()}%`"></div>
                                     </div>
                                 </div>
                             </div>
@@ -404,13 +497,14 @@
                                    :class="currentStatus === 'completed' ? 'text-green-600' :
                                            currentStatus === 'cancelled' ? 'text-gray-400' : 'text-gray-400'"></i>
                             </div>
-                            <h4 class="font-bold text-gray-800 mb-2">Download Hasil Pengujian</h4>
+                            <h4 class="font-bold text-gray-800 mb-2">Unduh Hasil Pengujian</h4>
                             <p class="text-sm text-gray-600 mb-4">
                                 <span x-show="currentStatus === 'completed'">Hasil pengujian siap diunduh</span>
-                                <span x-show="currentStatus === 'pending'">Menunggu review & quote</span>
-                                <span x-show="currentStatus === 'approved'">Testing disetujui, belum dimulai</span>
-                                <span x-show="currentStatus === 'in_progress'">Testing sedang berlangsung</span>
-                                <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
+                                <span x-show="currentStatus === 'pending'">Menunggu persetujuan admin</span>
+                                <span x-show="currentStatus === 'approved'">Pengujian disetujui, menunggu sampel</span>
+                                <span x-show="currentStatus === 'sample_received'">Sampel diterima, siap diuji</span>
+                                <span x-show="currentStatus === 'in_progress'">Pengujian sedang berlangsung</span>
+                                <span x-show="currentStatus === 'cancelled'" class="text-orange-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
                                 <span x-show="currentStatus === 'rejected'" class="text-red-600 font-semibold">Tidak tersedia - permohonan ditolak</span>
                             </p>
                             <button @click="downloadResults()"
@@ -419,40 +513,40 @@
                                     :class="currentStatus === 'completed' ?
                                            'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl' :
                                            'bg-gray-300 text-gray-500 cursor-not-allowed'">
-                                <span x-show="currentStatus === 'completed'">Download Hasil</span>
-                                <span x-show="currentStatus === 'pending'">Belum Tersedia</span>
-                                <span x-show="currentStatus === 'approved'">Belum Tersedia</span>
-                                <span x-show="currentStatus === 'in_progress'">Belum Tersedia</span>
-                                <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
-                                <span x-show="currentStatus === 'rejected'">Tidak Tersedia</span>
+                                <span x-show="currentStatus === 'completed'">
+                                    <i class="fas fa-download mr-2"></i>Unduh Hasil
+                                </span>
+                                <span x-show="currentStatus !== 'completed'">Belum Tersedia</span>
                             </button>
                         </div>
 
                         <!-- WhatsApp Konfirmasi -->
                         <div class="bg-green-50 rounded-2xl p-6 text-center hover:bg-green-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="currentStatus === 'cancelled' ? 'bg-gray-200' : 'bg-green-100'">
+                                 :class="['cancelled', 'rejected'].includes(currentStatus) ? 'bg-gray-200' : 'bg-green-100'">
                                 <i class="fab fa-whatsapp text-2xl"
-                                   :class="currentStatus === 'cancelled' ? 'text-gray-400' : 'text-green-600'"></i>
+                                   :class="['cancelled', 'rejected'].includes(currentStatus) ? 'text-gray-400' : 'text-green-600'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Chat WhatsApp Admin</h4>
                             <p class="text-sm text-gray-600 mb-4">
-                                <span x-show="currentStatus !== 'cancelled'">Chat langsung dengan admin lab</span>
-                                <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
+                                <span x-show="currentStatus !== 'cancelled' && currentStatus !== 'rejected'">Chat langsung dengan admin lab</span>
+                                <span x-show="currentStatus === 'cancelled'" class="text-orange-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
+                                <span x-show="currentStatus === 'rejected'" class="text-red-600 font-semibold">Tidak tersedia - permohonan ditolak</span>
                             </p>
                             <button @click="openWhatsAppChat()"
-                                    :disabled="currentStatus === 'cancelled' || !canSendMessage"
+                                    :disabled="['cancelled', 'rejected'].includes(currentStatus) || !canSendMessage"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="currentStatus === 'cancelled' ?
+                                    :class="['cancelled', 'rejected'].includes(currentStatus) ?
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
                                            !canSendMessage ?
                                            'bg-orange-400 text-white cursor-not-allowed' :
                                            'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'">
                                 <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
-                                <span x-show="currentStatus !== 'cancelled' && canSendMessage">
+                                <span x-show="currentStatus === 'rejected'">Tidak Tersedia</span>
+                                <span x-show="!['cancelled', 'rejected'].includes(currentStatus) && canSendMessage">
                                     <i class="fab fa-whatsapp mr-2"></i>Chat Admin
                                 </span>
-                                <span x-show="currentStatus !== 'cancelled' && !canSendMessage" x-text="cooldownText"></span>
+                                <span x-show="!['cancelled', 'rejected'].includes(currentStatus) && !canSendMessage" x-text="cooldownText"></span>
                             </button>
                         </div>
 
@@ -751,9 +845,11 @@
                 },
 
                 get costInfo() {
-                    if (!this.testingData) return {};
+                    if (!this.testingData) return { cost: 0 };
+                    // Public API returns nested format: { cost: { cost: value } }
+                    const cost = this.testingData.cost?.cost || this.testingData.cost;
                     return {
-                        cost: this.testingData.cost?.cost || 0
+                        cost: cost ? parseFloat(cost) : 0
                     };
                 },
 
@@ -795,114 +891,189 @@
                     return keyMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 },
 
+                // Get timeline state mapping for Indonesian 7-step workflow
+                getTimelineState(backendStatus) {
+                    const mappings = {
+                        'pending': {
+                            active: 2,
+                            done: [1]
+                        },
+                        'approved': {
+                            active: 4,
+                            done: [1,2,3]
+                        },
+                        'sample_received': {
+                            active: 5,
+                            done: [1,2,3,4]
+                        },
+                        'in_progress': {
+                            active: 6,
+                            done: [1,2,3,4,5]
+                        },
+                        'completed': {
+                            active: null,
+                            done: [1,2,3,4,5,6,7]
+                        },
+                        'rejected': {
+                            active: null,
+                            done: [1],
+                            rejected: 2,
+                            disabled: [3,4,5,6,7]
+                        },
+                        'cancelled': {
+                            active: null,
+                            done: [1],
+                            cancelled: true,
+                            disabled: [2,3,4,5,6,7]
+                        }
+                    };
+                    return mappings[backendStatus] || mappings['pending'];
+                },
+
                 setupStatusSteps() {
                     if (!this.testingData) return;
 
-                    // Reset to base steps first for testing workflow
+                    // Fixed 7-step timeline structure with Indonesian copy
                     const baseSteps = [
                         {
+                            step: 1,
                             title: 'Permohonan Dikirim',
-                            description: 'Permohonan telah dikirim dan menunggu persetujuan admin. Mohon tunggu konfirmasi dari kami sebelum mengirimkan sampel.',
+                            description: 'Permohonan pengujian Anda telah berhasil dikirim.',
                             icon: 'fas fa-paper-plane',
-                            status: 'completed',
-                            timestamp: this.submittedDate
+                            status: 'pending',
+                            timestamp: null
                         },
                         {
-                            title: 'Menunggu Sampel',
-                            description: 'Permohonan telah disetujui. Silakan antar sampel ke Jurusan Fisika sesuai jadwal yang ditentukan.',
+                            step: 2,
+                            title: 'Menunggu Persetujuan Admin',
+                            description: 'Permohonan sedang ditinjau oleh admin. Harap tunggu persetujuan sebelum mengirim sampel.',
+                            icon: 'fas fa-clock',
+                            status: 'pending',
+                            timestamp: null
+                        },
+                        {
+                            step: 3,
+                            title: 'Permohonan Disetujui',
+                            description: 'Permohonan telah disetujui. Silakan kirim sampel sesuai jadwal yang ditentukan.',
                             icon: 'fas fa-check-circle',
                             status: 'pending',
                             timestamp: null
                         },
                         {
+                            step: 4,
+                            title: 'Menunggu Sampel',
+                            description: 'Kami menunggu sampel Anda tiba di laboratorium.',
+                            icon: 'fas fa-shipping-fast',
+                            status: 'pending',
+                            timestamp: null
+                        },
+                        {
+                            step: 5,
                             title: 'Sampel Diterima',
-                            description: 'Sampel telah diterima. Tim kami sedang meninjau sampel dan menyiapkan proses pengujian.',
+                            description: 'Sampel telah diterima. Tim kami sedang mempersiapkan proses pengujian.',
                             icon: 'fas fa-box',
                             status: 'pending',
                             timestamp: null
                         },
                         {
+                            step: 6,
                             title: 'Pengujian Berlangsung',
-                            description: 'Proses pengujian sampel sedang berlangsung di laboratorium.',
+                            description: 'Sampel sedang diuji di laboratorium.',
                             icon: 'fas fa-flask',
                             status: 'pending',
                             timestamp: null
                         },
                         {
+                            step: 7,
                             title: 'Hasil Siap',
-                            description: 'Hasil pengujian telah tersedia. Anda dapat melihat atau mengunduh laporannya.',
+                            description: 'Hasil pengujian tersedia. Anda dapat melihat atau mengunduh laporan.',
                             icon: 'fas fa-clipboard-check',
                             status: 'pending',
                             timestamp: null
                         }
                     ];
 
-                    // Update status based on current testing status
-                    switch(this.currentStatus) {
-                        case 'pending':
-                        case 'under_review':
-                            // Step 1: Permohonan Dikirim (current)
-                            baseSteps[1].status = 'current';
-                            break;
-                        case 'approved':
-                            // Step 2: Menunggu Sampel (current)
-                            baseSteps[1].status = 'completed';
-                            baseSteps[2].status = 'current';
-                            break;
-                        case 'sample_received':
-                            // Step 3: Sampel Diterima (current)
-                            baseSteps[1].status = 'completed';
-                            baseSteps[2].status = 'completed';
-                            baseSteps[3].status = 'current';
-                            break;
-                        case 'testing':
-                        case 'in_progress':
-                            // Step 4: Pengujian Berlangsung (current)
-                            baseSteps[1].status = 'completed';
-                            baseSteps[2].status = 'completed';
-                            baseSteps[3].status = 'completed';
-                            baseSteps[4].status = 'current';
-                            break;
-                        case 'completed':
-                            // Step 5: Hasil Siap (completed)
-                            baseSteps[1].status = 'completed';
-                            baseSteps[2].status = 'completed';
-                            baseSteps[3].status = 'completed';
-                            baseSteps[4].status = 'completed';
-                            break;
-                        case 'rejected':
-                            // For rejected, show rejection at review stage (Step 1)
-                            baseSteps[1].status = 'rejected';
-                            baseSteps[1].title = 'Permohonan Ditolak';
-                            baseSteps[1].description = 'Permohonan pengujian ditolak oleh admin. Silakan ajukan permohonan baru.';
-                            baseSteps[1].icon = 'fas fa-times-circle';
-                            baseSteps[1].timestamp = this.formatTimestamp(this.testingData.reviewed_at) || 'Ditolak pada ' + this.submittedDate;
-                            // Mark remaining steps as skipped
-                            for (let i = 2; i < baseSteps.length; i++) {
-                                baseSteps[i].status = 'skipped';
-                                baseSteps[i].description = 'Tahap ini tidak akan dilaksanakan karena permohonan ditolak.';
-                                baseSteps[i].icon = 'fas fa-ban';
-                            }
-                            break;
-                        case 'cancelled':
-                            // For cancelled, show cancellation at review stage (Step 1)
-                            baseSteps[1].status = 'cancelled';
-                            baseSteps[1].title = 'Permohonan Dibatalkan';
-                            baseSteps[1].description = 'Permohonan pengujian telah dibatalkan oleh pemohon.';
-                            baseSteps[1].icon = 'fas fa-ban';
-                            baseSteps[1].timestamp = this.formatTimestamp(this.testingData.reviewed_at) || 'Dibatalkan pada ' + this.submittedDate;
-                            // Mark remaining steps as skipped
-                            for (let i = 2; i < baseSteps.length; i++) {
-                                baseSteps[i].status = 'skipped';
-                                baseSteps[i].description = 'Tahap ini tidak akan dilaksanakan karena permohonan dibatalkan.';
-                                baseSteps[i].icon = 'fas fa-ban';
-                            }
-                            break;
-                        default:
-                            baseSteps[1].status = 'current';
-                    }
+                    // Get timeline state for current backend status
+                    const timelineState = this.getTimelineState(this.currentStatus);
+
+                    // Apply timeline state to steps
+                    baseSteps.forEach((step, index) => {
+                        const stepNumber = index + 1;
+
+                        // Set step status based on timeline state
+                        if (timelineState.done && timelineState.done.includes(stepNumber)) {
+                            step.status = 'completed';
+                            step.timestamp = stepNumber === 1 ? this.submittedDate : (stepNumber === timelineState.active ? this.lastUpdated : null);
+                        } else if (timelineState.active === stepNumber) {
+                            step.status = 'current';
+                            step.timestamp = this.lastUpdated;
+                        } else if (timelineState.rejected === stepNumber) {
+                            step.status = 'rejected';
+                            step.title = 'Permohonan Ditolak';
+                            step.description = this.getRejectionDescription();
+                            step.icon = 'fas fa-times-circle';
+                            step.timestamp = this.lastUpdated;
+                        } else if (timelineState.disabled && timelineState.disabled.includes(stepNumber)) {
+                            step.status = 'disabled';
+                            step.description = this.getDisabledDescription();
+                            step.icon = 'fas fa-ban';
+                            step.timestamp = null;
+                        } else {
+                            step.status = 'pending';
+                            step.timestamp = null;
+                        }
+                    });
+
+                    // Handle special case: Step 1 is always completed (submitted)
+                    baseSteps[0].status = 'completed';
+                    baseSteps[0].timestamp = this.submittedDate;
 
                     this.statusSteps = baseSteps;
+                },
+
+                // Get rejection description with reason if available
+                getRejectionDescription() {
+                    const rejectionReason = this.testingData?.rejection_reason || this.testingData?.approval_notes;
+                    if (rejectionReason) {
+                        return `Permohonan ditolak oleh admin. Alasan: ${rejectionReason}`;
+                    }
+                    return 'Permohonan pengujian ditolak oleh admin. Silakan ajukan permohonan baru.';
+                },
+
+                // Get description for disabled steps
+                getDisabledDescription() {
+                    if (this.currentStatus === 'rejected') {
+                        return 'Tahap ini tidak akan dilaksanakan karena permohonan ditolak.';
+                    } else if (this.currentStatus === 'cancelled') {
+                        return 'Tahap ini tidak akan dilaksanakan karena permohonan dibatalkan.';
+                    }
+                    return 'Tahap ini tidak berlaku.';
+                },
+
+                // Get last updated timestamp
+                get lastUpdated() {
+                    if (!this.testingData?.updated_at) return this.submittedDate;
+
+                    // Fix time display issue - Laravel returns UTC time, convert to Jakarta time
+                    const updatedAtUTC = this.testingData.updated_at.replace(' ', 'T') + 'Z';
+                    const updatedDate = new Date(updatedAtUTC);
+
+                    // Format in Indonesian locale with Jakarta timezone
+                    const dateString = updatedDate.toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'Asia/Jakarta'
+                    });
+
+                    const timeString = updatedDate.toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                        timeZone: 'Asia/Jakarta'
+                    });
+
+                    return `${dateString} pukul ${timeString}`;
                 },
 
                 // Status helper methods
@@ -943,6 +1114,7 @@
                     return purposes[purpose] || purpose;
                 },
 
+                // Progress calculation for 7-step timeline
                 getProgressHeight() {
                     // Guard against undefined or empty steps during initial render
                     if (!this.statusSteps || this.statusSteps.length === 0) {
@@ -954,15 +1126,25 @@
                     const rejectedStep = this.statusSteps.findIndex(step => step.status === 'rejected');
                     const cancelledStep = this.statusSteps.findIndex(step => step.status === 'cancelled');
 
-                    // If there's a rejected or cancelled step, progress goes to that step
+                    // For rejected or cancelled, freeze progress at completed steps
                     if (rejectedStep >= 0 || cancelledStep >= 0) {
-                        const finalStep = Math.max(rejectedStep, cancelledStep);
-                        return ((finalStep + 1) / this.statusSteps.length) * 100;
+                        return (completedSteps / 7) * 100;
                     }
 
-                    // Normal progress calculation
+                    // For completed status, show 100%
+                    if (this.currentStatus === 'completed') {
+                        return 100;
+                    }
+
+                    // Normal progress: completed steps + partial for current step
                     const totalProgress = completedSteps + (currentStep >= 0 ? 0.5 : 0);
-                    return (totalProgress / this.statusSteps.length) * 100;
+                    return (totalProgress / 7) * 100;
+                },
+
+                // Indonesian progress text
+                getProgressText() {
+                    const completedSteps = this.statusSteps ? this.statusSteps.filter(step => step.status === 'completed').length : 0;
+                    return `${completedSteps} dari 7 tahap selesai`;
                 },
 
                 getStepClass(status) {
@@ -975,7 +1157,7 @@
                             return 'bg-red-500 text-white';
                         case 'cancelled':
                             return 'bg-orange-500 text-white';
-                        case 'skipped':
+                        case 'disabled':
                             return 'bg-gray-400 text-gray-300';
                         case 'pending':
                             return 'bg-gray-300 text-gray-500';
@@ -994,7 +1176,7 @@
                             return 'bg-red-100 text-red-800';
                         case 'cancelled':
                             return 'bg-orange-100 text-orange-800';
-                        case 'skipped':
+                        case 'disabled':
                             return 'bg-gray-100 text-gray-500';
                         case 'pending':
                             return 'bg-gray-100 text-gray-600';
@@ -1003,6 +1185,7 @@
                     }
                 },
 
+                // Indonesian status badge text
                 getStatusText(status) {
                     switch(status) {
                         case 'completed':
@@ -1013,7 +1196,7 @@
                             return 'Ditolak';
                         case 'cancelled':
                             return 'Dibatalkan';
-                        case 'skipped':
+                        case 'disabled':
                             return 'Tidak Berlaku';
                         case 'pending':
                             return 'Menunggu';
@@ -1022,6 +1205,21 @@
                     }
                 },
 
+                // Indonesian status display for header badge
+                getStatusDisplayText(status) {
+                    const statusLabels = {
+                        'pending': '⏳ Menunggu Review Admin',
+                        'approved': '✅ Disetujui, Siap Pengujian',
+                        'sample_received': '📦 Sampel Diterima',
+                        'in_progress': '🔬 Pengujian Berlangsung',
+                        'completed': '✅ Pengujian Selesai',
+                        'rejected': '❌ Permohonan Ditolak',
+                        'cancelled': '🚫 Permohonan Dibatalkan'
+                    };
+                    return statusLabels[status] || 'Status Tidak Diketahui';
+                },
+
+                // Indonesian timestamp display for timeline steps
                 getStepTimestamp(step) {
                     switch(step.status) {
                         case 'completed':
@@ -1029,8 +1227,8 @@
                         case 'rejected':
                         case 'cancelled':
                             return step.timestamp || this.submittedDate;
-                        case 'skipped':
-                            return 'Tidak akan dilaksanakan';
+                        case 'disabled':
+                            return 'Tidak berlaku';
                         case 'pending':
                         default:
                             return 'Menunggu...';
@@ -1227,6 +1425,55 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                         // Always reset cancelling state
                         this.cancelling = false;
                     }
+                },
+
+                // Check if request status is approved or later (when admin sets estimates)
+                isApprovedOrLater() {
+                    const approvedStatuses = ['approved', 'sample_received', 'in_progress', 'completed'];
+                    return approvedStatuses.includes(this.currentStatus);
+                },
+
+                // Contact admin for cost/duration concerns
+                contactAdminForCostConcern() {
+                    // Check cooldown
+                    if (this.isInCooldown()) {
+                        const minutes = Math.ceil(this.remainingTime / 60000);
+                        alert(`Silakan tunggu ${minutes} menit sebelum mengirim pesan lagi.`);
+                        return;
+                    }
+
+                    const message = `Halo Admin Lab GOS,
+
+Saya ingin menanyakan tentang biaya dan waktu pengujian untuk permohonan berikut:
+
+📋 ID Pengujian: ${this.testingId}
+🧪 Jenis Pengujian: ${this.testingInfo.type_label}
+📊 Sampel: ${this.sampleInfo.name}
+💰 Biaya Pengujian: ${this.formatCurrency(this.costInfo.cost)}
+⏱️ Durasi Pengujian: ${this.getEstimatedDurationText()}
+
+Saya merasa biaya dan waktu ini ${this.costInfo.cost ? 'tidak sesuai dengan budget' : 'perlu diskusi lebih lanjut'} dan ingin menanyakan:
+1. Apakah biaya ini sudah final?
+2. Bisakah ada penyesuaian atau alternatif?
+3. Jika tidak memungkinkan, saya mungkin perlu membatalkan permohonan ini.
+
+Mohon informasi dan bantuannya. Terima kasih.
+
+---
+Link Tracking: ${window.location.href}
+
+Hormat saya,
+${this.clientInfo.name}
+${this.clientInfo.organization}`;
+
+                    // Get admin phone from environment
+                    const phoneNumber = '{{ str_replace("+", "", env("WHATSAPP_LAB_PHONE", "6285338573726")) }}';
+                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+                    // Start cooldown after successful message
+                    this.startCooldown();
+
+                    window.open(whatsappUrl, '_blank');
                 },
 
             }

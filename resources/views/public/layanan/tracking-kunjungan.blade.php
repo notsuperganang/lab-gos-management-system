@@ -773,7 +773,7 @@
                                             <h4 class="font-semibold text-green-800 mb-2">Kunjungan telah disetujui! Silakan lakukan langkah berikut:</h4>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="space-y-3 ml-11">
                                         <div class="flex items-start space-x-3">
                                             <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">1</span>
@@ -796,7 +796,7 @@
                                             <span class="text-gray-700"><strong>📞 Hubungi admin lab</strong> jika ada pertanyaan atau kendala</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                                         <div class="flex items-start space-x-2">
                                             <span class="text-amber-500 text-lg">⚠️</span>
@@ -821,7 +821,7 @@
                                             <h4 class="font-semibold text-blue-800 mb-2">Kunjungan siap dilaksanakan! Silakan lakukan langkah berikut:</h4>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="space-y-3 ml-11">
                                         <div class="flex items-start space-x-3">
                                             <span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">1</span>
@@ -844,7 +844,7 @@
                                             <span class="text-gray-700"><strong>📞 Hubungi admin lab</strong> jika ada pertanyaan atau kendala</span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                                         <div class="flex items-start space-x-2">
                                             <span class="text-amber-500 text-lg">⚠️</span>

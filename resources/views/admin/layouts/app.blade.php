@@ -14,8 +14,8 @@
     <!-- Chart.js for dashboard charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 
-    <!-- Load Alpine.js via CDN first so it's the primary instance -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Load Alpine.js via CDN first so it's the primary instance (prevent auto-start) -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" data-alpine-manual></script>
 
     <!-- Vite Assets (CSS and JS) - registers stores/directives and only starts Alpine if CDN is absent -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
