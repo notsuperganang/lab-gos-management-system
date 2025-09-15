@@ -27,7 +27,7 @@ class UserCreateRequest extends FormRequest
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'position' => 'nullable|string|max:255',
-            'role' => 'required|string|in:superadmin,admin,staff',
+            'role' => 'required|string|in:super_admin,admin',
             'is_active' => 'boolean',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];

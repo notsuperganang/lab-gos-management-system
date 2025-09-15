@@ -27,16 +27,11 @@ class UserResource extends JsonResource
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
             
-            // Spatie Permission integration
-            'roles' => $this->roles->pluck('name'),
-            'permissions' => $this->getAllPermissions()->pluck('name'),
-            
             // Computed attributes
             'status_label' => $this->is_active ? 'Active' : 'Inactive',
             'role_label' => match($this->role) {
-                'superadmin' => 'Super Administrator',
-                'admin' => 'Administrator', 
-                'staff' => 'Staff Member',
+                'super_admin' => 'Super Administrator',
+                'admin' => 'Administrator',
                 default => $this->role
             },
         ];

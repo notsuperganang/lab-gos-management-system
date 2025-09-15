@@ -24,17 +24,17 @@ class UserManagementController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = User::with(['roles', 'permissions']);
-            
+            $query = User::query();
+
             // Apply filters
             if ($request->filled('role')) {
                 $query->where('role', $request->get('role'));
             }
-            
+
             if ($request->filled('is_active')) {
                 $query->where('is_active', $request->boolean('is_active'));
             }
-            
+
             if ($request->filled('search')) {
                 $search = $request->get('search');
                 $query->where(function ($q) use ($search) {
@@ -43,15 +43,15 @@ class UserManagementController extends Controller
                       ->orWhere('position', 'like', "%{$search}%");
                 });
             }
-            
+
             // Sorting
             $sortBy = $request->get('sort_by', 'created_at');
             $sortOrder = $request->get('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
-            
+
             $perPage = min($request->get('per_page', 15), 100);
             $users = $query->paginate($perPage);
-            
+
             return ApiResponse::paginated(
                 $users,
                 UserResource::class,
@@ -62,16 +62,16 @@ class UserManagementController extends Controller
                         'is_active' => $request->get('is_active'),
                         'search' => $request->get('search'),
                     ],
-                    'available_roles' => ['superadmin', 'admin', 'staff'],
+                    'available_roles' => ['super_admin', 'admin'],
                 ]
             );
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to retrieve users', [
                 'error' => $e->getMessage(),
                 'superadmin_id' => $request->user()->id
             ]);
-            
+
             return ApiResponse::error(
                 'Failed to retrieve users',
                 500,
@@ -108,20 +108,17 @@ class UserManagementController extends Controller
                 'avatar_path' => $avatarPath,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
-            
-            // Assign role using Spatie Permission
-            $user->assignRole($validated['role']);
-            
+
             DB::commit();
-            
+
             Log::info('User created by SuperAdmin', [
                 'user_id' => $user->id,
                 'superadmin_id' => $request->user()->id,
                 'role' => $validated['role']
             ]);
-            
+
             return ApiResponse::success(
-                new UserResource($user->load(['roles', 'permissions'])),
+                new UserResource($user),
                 'User created successfully',
                 201
             );
@@ -153,19 +150,17 @@ class UserManagementController extends Controller
     public function show(User $user): JsonResponse
     {
         try {
-            $user->load(['roles', 'permissions']);
-            
             return ApiResponse::success(
                 new UserResource($user),
                 'User retrieved successfully'
             );
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to retrieve user details', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return ApiResponse::error(
                 'Failed to retrieve user details',
                 500,
@@ -223,22 +218,17 @@ class UserManagementController extends Controller
             
             // Update user
             $user->update($updateData);
-            
-            // Update role if changed
-            if ($user->role !== $validated['role']) {
-                $user->syncRoles([$validated['role']]);
-            }
-            
+
             DB::commit();
-            
+
             Log::info('User updated by SuperAdmin', [
                 'user_id' => $user->id,
                 'superadmin_id' => $request->user()->id,
                 'changes' => array_keys($updateData)
             ]);
-            
+
             return ApiResponse::success(
-                new UserResource($user->fresh()->load(['roles', 'permissions'])),
+                new UserResource($user->fresh()),
                 'User updated successfully'
             );
             
@@ -278,27 +268,23 @@ class UserManagementController extends Controller
             }
             
             // Prevent deletion of last superadmin
-            if ($user->hasRole('superadmin') && User::role('superadmin')->count() <= 1) {
+            if ($user->role === 'super_admin' && User::where('role', 'super_admin')->count() <= 1) {
                 return ApiResponse::error(
                     'Cannot delete the last superadmin user',
                     400
                 );
             }
-            
+
             DB::beginTransaction();
-            
+
             $userId = $user->id;
             $userName = $user->name;
-            
+
             // Delete avatar if exists
             if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
                 Storage::disk('public')->delete($user->avatar_path);
             }
-            
-            // Remove roles and permissions
-            $user->roles()->detach();
-            $user->permissions()->detach();
-            
+
             // Delete user
             $user->delete();
             
@@ -352,8 +338,8 @@ class UserManagementController extends Controller
             }
             
             // Prevent deactivating last active superadmin
-            if ($user->hasRole('superadmin') && !$validated['is_active']) {
-                $activeSuperadmins = User::role('superadmin')->where('is_active', true)->count();
+            if ($user->role === 'super_admin' && !$validated['is_active']) {
+                $activeSuperadmins = User::where('role', 'super_admin')->where('is_active', true)->count();
                 if ($activeSuperadmins <= 1) {
                     return ApiResponse::error(
                         'Cannot deactivate the last active superadmin',
@@ -361,17 +347,17 @@ class UserManagementController extends Controller
                     );
                 }
             }
-            
+
             $user->update(['is_active' => $validated['is_active']]);
-            
+
             Log::info('User status updated by SuperAdmin', [
                 'user_id' => $user->id,
                 'new_status' => $validated['is_active'] ? 'active' : 'inactive',
                 'superadmin_id' => $request->user()->id
             ]);
-            
+
             return ApiResponse::success(
-                new UserResource($user->load(['roles', 'permissions'])),
+                new UserResource($user),
                 'User status updated successfully'
             );
             

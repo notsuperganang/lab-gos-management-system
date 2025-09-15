@@ -241,14 +241,29 @@ document.addEventListener('alpine:init', () => {
             try {
                 const token = localStorage.getItem('admin_token');
                 const formData = new FormData();
-                
+
+                // Log current form data for debugging
+                console.log('Current form data:', {
+                    name: this.form.name,
+                    email: this.form.email,
+                    phone: this.form.phone,
+                    position: this.form.position,
+                    avatar: this.form.avatar
+                });
+
                 formData.append('name', this.form.name);
                 formData.append('email', this.form.email);
                 formData.append('phone', this.form.phone || '');
                 formData.append('position', this.form.position || '');
-                
+
                 if (this.form.avatar) {
                     formData.append('avatar', this.form.avatar);
+                }
+
+                // Log FormData contents for debugging
+                console.log('FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value);
                 }
 
                 const response = await fetch('/api/admin/profile', {
@@ -267,7 +282,25 @@ document.addEventListener('alpine:init', () => {
                     this.form.avatar = null; // Reset avatar file input
                     this.showNotification('Profil berhasil diperbarui!', 'success');
                 } else {
-                    throw new Error(data.message || 'Gagal memperbarui profil');
+                    // Enhanced error handling for detailed validation errors
+                    console.error('Profile update failed:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: data
+                    });
+
+                    let errorMessage = data.message || 'Gagal memperbarui profil';
+
+                    // If there are validation errors, show them
+                    if (data.errors) {
+                        console.error('Validation errors:', data.errors);
+                        const errorDetails = Object.keys(data.errors).map(field => {
+                            return `${field}: ${data.errors[field].join(', ')}`;
+                        }).join('\n');
+                        errorMessage = `Validasi gagal:\n${errorDetails}`;
+                    }
+
+                    throw new Error(errorMessage);
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);

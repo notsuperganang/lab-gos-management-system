@@ -195,16 +195,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
 // Super Admin routes group (views only - data comes from API)
 Route::prefix('superadmin')->name('superadmin.')->group(function () {
 
-    // User Management
+    // User Management (API-driven with modals)
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersIndex'])->name('index');
-        Route::get('/create', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersCreate'])->name('create');
-        Route::post('/', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersStore'])->name('store');
-        Route::get('/{user}', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersShow'])->name('show');
-        Route::get('/{user}/edit', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersEdit'])->name('edit');
-        Route::put('/{user}', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersUpdate'])->name('update');
-        Route::delete('/{user}', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersDestroy'])->name('destroy');
-        Route::put('/{user}/status', [App\Http\Controllers\SuperAdmin\SuperAdminController::class, 'usersUpdateStatus'])->name('update-status');
+        // All other operations (create, edit, update, delete) are handled via API endpoints
     });
 });
 

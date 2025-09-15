@@ -5,6 +5,12 @@
 @section('header-title', 'Manajemen Pengguna')
 @section('header-subtitle', 'Kelola pengguna sistem dan peran mereka')
 
+@push('styles')
+<style>
+    [x-cloak] { display: none !important; }
+</style>
+@endpush
+
 @section('breadcrumbs')
     <li class="flex items-center">
         <svg class="flex-shrink-0 h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
@@ -15,7 +21,7 @@
 @endsection
 
 @section('page-actions')
-    <button @click="showCreateUserModal = true"
+    <button onclick="window.userManagementController?.openCreateModal()"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -25,7 +31,7 @@
 @endsection
 
 @section('content')
-<div x-data="userManagement()" x-init="init()" class="space-y-6">
+<div x-data="userManagement()" x-init="init(); window.userManagementController = $data" class="space-y-6">
 
     <!-- Loading Overlay -->
     <div x-show="loading" class="admin-loading-overlay">
@@ -163,6 +169,238 @@
             </div>
         </div>
     </div>
+
+    <!-- Create User Modal -->
+    <div x-show="showCreateModal"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 @click="closeModals()"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form @submit.prevent="submitForm()">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Tambah Pengguna Baru</h3>
+                        </div>
+
+                        <!-- Name Field -->
+                        <div class="mb-4">
+                            <label for="create-name" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                            <input x-model="form.name"
+                                   id="create-name"
+                                   type="text"
+                                   required
+                                   :class="formErrors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Masukkan nama lengkap">
+                            <p x-show="formErrors.name" x-text="formErrors.name?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="mb-4">
+                            <label for="create-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input x-model="form.email"
+                                   id="create-email"
+                                   type="email"
+                                   required
+                                   :class="formErrors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Masukkan alamat email">
+                            <p x-show="formErrors.email" x-text="formErrors.email?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Role Field -->
+                        <div class="mb-4">
+                            <label for="create-role" class="block text-sm font-medium text-gray-700 mb-1">Peran</label>
+                            <select x-model="form.role"
+                                    id="create-role"
+                                    required
+                                    :class="formErrors.role ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200">
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                            <p x-show="formErrors.role" x-text="formErrors.role?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="mb-4">
+                            <label for="create-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input x-model="form.password"
+                                   id="create-password"
+                                   type="password"
+                                   required
+                                   :class="formErrors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Minimal 8 karakter">
+                            <p x-show="formErrors.password" x-text="formErrors.password?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Password Confirmation Field -->
+                        <div class="mb-4">
+                            <label for="create-password-confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
+                            <input x-model="form.password_confirmation"
+                                   id="create-password-confirmation"
+                                   type="password"
+                                   required
+                                   :class="formErrors.password_confirmation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Ulangi password">
+                            <p x-show="formErrors.password_confirmation" x-text="formErrors.password_confirmation?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                                :disabled="isLoading"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="!isLoading">Simpan</span>
+                            <span x-show="isLoading" class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Menyimpan...
+                            </span>
+                        </button>
+                        <button type="button"
+                                @click="closeModals()"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div x-show="showEditModal"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 @click="closeModals()"></div>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form @submit.prevent="submitForm()">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Edit Pengguna</h3>
+                        </div>
+
+                        <!-- Name Field -->
+                        <div class="mb-4">
+                            <label for="edit-name" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                            <input x-model="form.name"
+                                   id="edit-name"
+                                   type="text"
+                                   required
+                                   :class="formErrors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Masukkan nama lengkap">
+                            <p x-show="formErrors.name" x-text="formErrors.name?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Email Field -->
+                        <div class="mb-4">
+                            <label for="edit-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input x-model="form.email"
+                                   id="edit-email"
+                                   type="email"
+                                   required
+                                   :class="formErrors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Masukkan alamat email">
+                            <p x-show="formErrors.email" x-text="formErrors.email?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Role Field -->
+                        <div class="mb-4">
+                            <label for="edit-role" class="block text-sm font-medium text-gray-700 mb-1">Peran</label>
+                            <select x-model="form.role"
+                                    id="edit-role"
+                                    required
+                                    :class="formErrors.role ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200">
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                            <p x-show="formErrors.role" x-text="formErrors.role?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Password Field (Optional for edit) -->
+                        <div class="mb-4">
+                            <label for="edit-password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru (Opsional)</label>
+                            <input x-model="form.password"
+                                   id="edit-password"
+                                   type="password"
+                                   :class="formErrors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Kosongkan jika tidak ingin mengubah password">
+                            <p x-show="formErrors.password" x-text="formErrors.password?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Password Confirmation Field (Only if password is provided) -->
+                        <div class="mb-4" x-show="form.password">
+                            <label for="edit-password-confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+                            <input x-model="form.password_confirmation"
+                                   id="edit-password-confirmation"
+                                   type="password"
+                                   :class="formErrors.password_confirmation ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'"
+                                   class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                                   placeholder="Ulangi password baru">
+                            <p x-show="formErrors.password_confirmation" x-text="formErrors.password_confirmation?.[0]" class="text-red-500 text-xs mt-1"></p>
+                        </div>
+
+                        <!-- Status Field -->
+                        <div class="mb-4">
+                            <label class="flex items-center">
+                                <input x-model="form.is_active"
+                                       type="checkbox"
+                                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">Aktif</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                                :disabled="isLoading"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="!isLoading">Perbarui</span>
+                            <span x-show="isLoading" class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Memperbarui...
+                            </span>
+                        </button>
+                        <button type="button"
+                                @click="closeModals()"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -177,6 +415,20 @@
             selectedRole: '',
             searchTimeout: null,
             currentUser: null, // Track current user independently
+            // Modal state
+            showCreateModal: false,
+            showEditModal: false,
+            isLoading: false,
+            currentEditUser: null,
+            form: {
+                name: '',
+                email: '',
+                role: 'admin',
+                password: '',
+                password_confirmation: '',
+                is_active: true
+            },
+            formErrors: {},
 
             async init() {
                 // Load current user and users
@@ -313,9 +565,116 @@
                 }
             },
 
+            // Modal state
+            showCreateModal: false,
+            showEditModal: false,
+            isLoading: false,
+            currentEditUser: null,
+            form: {
+                name: '',
+                email: '',
+                role: 'admin',
+                password: '',
+                password_confirmation: '',
+                is_active: true
+            },
+            formErrors: {},
+
+            openCreateModal() {
+                this.resetForm();
+                this.showCreateModal = true;
+            },
+
             editUser(user) {
-                // Navigate to edit page or open modal
-                window.location.href = `/superadmin/users/${user.id}/edit`;
+                this.currentEditUser = user;
+                this.form = {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    password: '',
+                    password_confirmation: '',
+                    is_active: user.is_active
+                };
+                this.formErrors = {};
+                this.showEditModal = true;
+            },
+
+            closeModals() {
+                this.showCreateModal = false;
+                this.showEditModal = false;
+                this.currentEditUser = null;
+                this.resetForm();
+            },
+
+            resetForm() {
+                this.form = {
+                    name: '',
+                    email: '',
+                    role: 'admin',
+                    password: '',
+                    password_confirmation: '',
+                    is_active: true
+                };
+                this.formErrors = {};
+            },
+
+            async submitForm() {
+                this.isLoading = true;
+                this.formErrors = {};
+
+                try {
+                    const token = localStorage.getItem('admin_token');
+                    if (!token) {
+                        throw new Error('Token tidak ditemukan. Silakan login ulang.');
+                    }
+
+                    const isEdit = this.showEditModal;
+                    const url = isEdit
+                        ? `/api/superadmin/users/${this.currentEditUser.id}`
+                        : '/api/superadmin/users';
+                    const method = isEdit ? 'PUT' : 'POST';
+
+                    // Prepare form data
+                    const formData = { ...this.form };
+                    if (isEdit && !formData.password) {
+                        delete formData.password;
+                        delete formData.password_confirmation;
+                    }
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        const message = isEdit ? 'Pengguna berhasil diperbarui' : 'Pengguna berhasil ditambahkan';
+                        if (this.$root && typeof this.$root.showNotification === 'function') {
+                            this.$root.showNotification(message, 'success');
+                        } else {
+                            this.showNotification(message, 'success');
+                        }
+                        this.closeModals();
+                        await this.loadUsers();
+                    } else {
+                        if (response.status === 422 && data.errors) {
+                            this.formErrors = data.errors;
+                        } else {
+                            throw new Error(data.message || 'Terjadi kesalahan');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Submit form error:', error);
+                    this.handleError(error);
+                } finally {
+                    this.isLoading = false;
+                }
             },
 
             async deleteUser(user) {
