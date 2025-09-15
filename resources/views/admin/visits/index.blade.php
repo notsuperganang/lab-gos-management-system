@@ -336,26 +336,55 @@
                 <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
 
-            <div class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
+            <div class="inline-block w-full max-w-5xl p-0 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-2xl ring-1 ring-gray-200"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95">
+
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between pb-4 border-b">
-                    <h3 class="text-lg font-medium text-gray-900">Detail Kunjungan Lab</h3>
-                    <button @click="showDetailModalOpen = false" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-5 sm:px-8">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Detail Kunjungan Lab</h3>
+                                <p class="text-blue-100 text-sm">Laboratorium Gelombang, Optik dan Spektroskopi</p>
+                            </div>
+                        </div>
+                        <button @click="showDetailModalOpen = false"
+                                class="text-white hover:text-blue-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-10">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Modal Content -->
-                <div x-show="selectedRequest" class="mt-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div x-show="selectedRequest" class="px-6 py-6 sm:px-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <!-- Left Column -->
                         <div class="space-y-6">
                             <!-- Request Information -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Informasi Permohonan</h4>
-                                <dl class="space-y-2">
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-blue-900">Informasi Permohonan</h4>
+                                </div>
+                                <dl class="space-y-3">
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500">ID Kunjungan:</dt>
                                         <dd class="text-sm font-medium text-gray-900" x-text="selectedRequest?.request_id"></dd>
@@ -388,9 +417,16 @@
                             </div>
 
                             <!-- Visitor Information -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Informasi Pengunjung</h4>
-                                <dl class="space-y-2">
+                            <div class="bg-gradient-to-br from-amber-50 to-yellow-50 p-6 rounded-xl border border-amber-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-amber-900">Informasi Pengunjung</h4>
+                                </div>
+                                <dl class="space-y-3">
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500">Nama:</dt>
                                         <dd class="text-sm text-gray-900" x-text="selectedRequest?.visitor_name"></dd>
@@ -414,9 +450,16 @@
                         <!-- Right Column -->
                         <div class="space-y-6">
                             <!-- Visit Information -->
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Informasi Kunjungan</h4>
-                                <dl class="space-y-2">
+                            <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-green-900">Informasi Kunjungan</h4>
+                                </div>
+                                <dl class="space-y-3">
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500">Tanggal Kunjungan:</dt>
                                         <dd class="text-sm text-gray-900" x-text="formatDate(selectedRequest?.visit_date)"></dd>
@@ -437,68 +480,209 @@
                             </div>
 
                             <!-- Purpose Description -->
-                            <div class="bg-gray-50 p-4 rounded-lg" x-show="selectedRequest?.purpose_description">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Deskripsi Tujuan</h4>
-                                <p class="text-sm text-gray-700" x-text="selectedRequest?.purpose_description"></p>
+                            <div class="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-xl border border-purple-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.purpose_description">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-purple-900">Deskripsi Tujuan</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed" x-text="selectedRequest?.purpose_description"></p>
                             </div>
 
-                            <!-- Special Requirements -->
-                            <div class="bg-gray-50 p-4 rounded-lg" x-show="selectedRequest?.special_requirements">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Kebutuhan Khusus</h4>
-                                <p class="text-sm text-gray-700" x-text="selectedRequest?.special_requirements"></p>
-                            </div>
 
                             <!-- Equipment Needed -->
-                            <div class="bg-gray-50 p-4 rounded-lg" x-show="selectedRequest?.equipment_needed && selectedRequest?.equipment_needed.length > 0">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Alat yang Dibutuhkan</h4>
-                                <ul class="list-disc list-inside text-sm text-gray-700">
+                            <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl border border-orange-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.equipment_needed && selectedRequest?.equipment_needed.length > 0">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-orange-900">Alat yang Dibutuhkan</h4>
+                                </div>
+                                <ul class="space-y-2">
                                     <template x-for="equipment in selectedRequest?.equipment_needed" :key="equipment">
-                                        <li x-text="equipment"></li>
+                                        <li class="flex items-center text-sm text-gray-700">
+                                            <svg class="w-4 h-4 text-orange-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                            </svg>
+                                            <span x-text="equipment"></span>
+                                        </li>
                                     </template>
                                 </ul>
                             </div>
 
                             <!-- Approval Notes -->
-                            <div class="bg-gray-50 p-4 rounded-lg" x-show="selectedRequest?.approval_notes">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Catatan Persetujuan</h4>
-                                <p class="text-sm text-gray-700" x-text="selectedRequest?.approval_notes"></p>
+                            <div class="bg-gradient-to-br from-slate-50 to-gray-50 p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.approval_notes">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
+                                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-slate-900">Catatan Persetujuan</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed" x-text="selectedRequest?.approval_notes"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Letters Section -->
+                    <div class="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200 shadow-sm">
+                        <h4 class="text-lg font-semibold text-blue-900 mb-6 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Dokumen Kunjungan
+                        </h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Visitor's Submitted Letter -->
+                            <div class="bg-white p-5 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h5 class="font-medium text-gray-900 mb-1">Surat Permohonan</h5>
+                                        <p class="text-sm text-gray-600">Dokumen yang dikirim pengunjung</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <template x-if="selectedRequest?.request_letter_url">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Tersedia
+                                            </span>
+                                        </template>
+                                        <template x-if="!selectedRequest?.request_letter_url">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Tidak Tersedia
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <template x-if="selectedRequest?.request_letter_url">
+                                    <div class="space-y-3">
+                                        <p class="text-sm text-gray-700">Surat permohonan kunjungan yang dikirim oleh pengunjung untuk verifikasi admin.</p>
+                                        <button @click="viewVisitorLetter(selectedRequest.request_letter_url)"
+                                                class="w-full flex items-center justify-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                            </svg>
+                                            Lihat Surat Permohonan
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <template x-if="!selectedRequest?.request_letter_url">
+                                    <div class="text-center py-4">
+                                        <svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <p class="text-sm text-gray-500">Tidak ada surat permohonan yang dikirim</p>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Admin Generated Letter -->
+                            <div class="bg-white p-5 rounded-lg border border-purple-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <h5 class="font-medium text-gray-900 mb-1">Surat Persetujuan</h5>
+                                        <p class="text-sm text-gray-600">Dokumen yang dibuat sistem</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <template x-if="['approved', 'completed'].includes(selectedRequest?.status)">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Tersedia
+                                            </span>
+                                        </template>
+                                        <template x-if="!['approved', 'completed'].includes(selectedRequest?.status)">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Belum Tersedia
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <template x-if="['approved', 'completed'].includes(selectedRequest?.status)">
+                                    <div class="space-y-3">
+                                        <p class="text-sm text-gray-700">Surat persetujuan kunjungan lab yang dibuat otomatis setelah permohonan disetujui.</p>
+                                        <button @click="downloadLetter(selectedRequest.id)"
+                                                class="w-full flex items-center justify-center px-4 py-2 border border-purple-300 rounded-lg text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            Download Surat Persetujuan
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <template x-if="!['approved', 'completed'].includes(selectedRequest?.status)">
+                                    <div class="text-center py-4">
+                                        <svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <p class="text-sm text-gray-500">Surat akan dibuat setelah permohonan disetujui</p>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex justify-end space-x-3 mt-6 pt-6 border-t">
-                        <template x-if="selectedRequest?.status === 'pending'">
-                            <div class="flex space-x-2">
-                                <button @click="showRejectModal()"
-                                        class="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
-                                    Tolak Kunjungan
+                    <div class="bg-gray-50 -mx-6 -mb-6 px-6 py-6 mt-8 rounded-b-2xl border-t border-gray-200">
+                        <div class="flex flex-wrap justify-end gap-3">
+                            <template x-if="selectedRequest?.status === 'pending'">
+                                <div class="flex flex-wrap gap-3">
+                                    <button @click="showRejectModal()"
+                                            class="inline-flex items-center px-6 py-3 text-sm font-medium text-red-700 bg-white border-2 border-red-300 rounded-xl hover:bg-red-50 hover:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        Tolak Kunjungan
+                                    </button>
+                                    <button @click="showApproveModal(selectedRequest.id)"
+                                            class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 border border-transparent rounded-xl hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Setujui Kunjungan
+                                    </button>
+                                </div>
+                            </template>
+
+                            <template x-if="selectedRequest?.status === 'approved'">
+                                <button @click="statusForm.status = 'completed'; showUpdateStatusModalOpen = true;"
+                                        class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 border border-transparent rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                    </svg>
+                                    Tandai Selesai
                                 </button>
-                                <button @click="showApproveModal(selectedRequest.id)"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    Setujui Kunjungan
-                                </button>
-                            </div>
-                        </template>
+                            </template>
 
-                        <template x-if="selectedRequest?.status === 'approved'">
-                            <button @click="statusForm.status = 'completed'; showUpdateStatusModalOpen = true;"
-                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                Tandai Selesai
+                            <button @click="showDetailModalOpen = false"
+                                    class="inline-flex items-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Tutup
                             </button>
-                        </template>
-
-                        <template x-if="['approved', 'completed'].includes(selectedRequest?.status)">
-                            <button @click="downloadLetter(selectedRequest.id)"
-                                    class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                Download Surat
-                            </button>
-                        </template>
-
-                        <button @click="showDetailModalOpen = false"
-                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                            Tutup
-                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1052,6 +1236,22 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Failed to download letter:', error);
                 this.$dispatch('global-error', { message: 'Gagal mengunduh surat: ' + error.message });
+            }
+        },
+
+        async viewVisitorLetter(letterUrl) {
+            try {
+                if (!letterUrl) {
+                    throw new Error('URL surat tidak tersedia.');
+                }
+
+                // Open the letter in a new tab/window
+                window.open(letterUrl, '_blank', 'noopener,noreferrer');
+
+                this.$dispatch('global-success', { message: 'Surat permohonan dibuka di tab baru!' });
+            } catch (error) {
+                console.error('Failed to view visitor letter:', error);
+                this.$dispatch('global-error', { message: 'Gagal membuka surat: ' + error.message });
             }
         },
 

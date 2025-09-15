@@ -487,9 +487,17 @@ class RequestManagementController extends Controller
     /**
      * Get or generate visit request letter PDF
      */
-    public function getVisitRequestLetter(VisitRequest $visitRequest): JsonResponse
+    public function getVisitRequestLetter(VisitRequest $visitRequest)
     {
         try {
+            // Only allow letter download for approved/completed requests
+            if (! in_array($visitRequest->status, ['approved', 'completed'])) {
+                return ApiResponse::error(
+                    'Letter not available. Request must be approved to generate letter.',
+                    404
+                );
+            }
+
             $letterUrl = $this->visitLetterService->getOrGenerate($visitRequest);
 
             if (! $letterUrl) {
@@ -499,11 +507,28 @@ class RequestManagementController extends Controller
                 );
             }
 
-            return ApiResponse::success([
-                'letter_url' => $letterUrl,
-                'request_id' => $visitRequest->request_id,
-                'status' => $visitRequest->status,
-            ], 'Letter retrieved successfully');
+            // Extract the file path from the URL
+            $filePath = str_replace(asset('storage/'), '', $letterUrl);
+            $fullPath = storage_path('app/public/' . $filePath);
+
+            // Check if file exists
+            if (! file_exists($fullPath)) {
+                Log::warning('Visit request letter file not found', [
+                    'request_id' => $visitRequest->request_id,
+                    'file_path' => $fullPath,
+                ]);
+
+                return ApiResponse::error(
+                    'Letter file not found. Please regenerate the letter.',
+                    404
+                );
+            }
+
+            // Return the PDF file for direct download
+            return response()->file($fullPath, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="surat-kunjungan-' . $visitRequest->request_id . '.pdf"',
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to get visit request letter', [
