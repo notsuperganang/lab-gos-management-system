@@ -697,16 +697,22 @@ class RequestManagementController extends Controller
     public function visitRequests(Request $request): JsonResponse
     {
         try {
-            $query = VisitRequest::with('reviewer')
-                ->orderBy('created_at', 'desc');
+            // Handle summary request
+            if ($request->boolean('summary')) {
+                return $this->getVisitRequestSummary();
+            }
+
+            $query = VisitRequest::with(['reviewer' => function($query) {
+                $query->select('id', 'name', 'email');
+            }])->orderBy('created_at', 'desc');
 
             // Apply filters
             if ($request->filled('status')) {
                 $query->where('status', $request->get('status'));
             }
 
-            if ($request->filled('purpose')) {
-                $query->where('purpose', $request->get('purpose'));
+            if ($request->filled('visit_purpose')) {
+                $query->where('visit_purpose', $request->get('visit_purpose'));
             }
 
             if ($request->filled('date_from')) {
@@ -721,8 +727,8 @@ class RequestManagementController extends Controller
                 $search = $request->get('search');
                 $query->where(function ($q) use ($search) {
                     $q->where('request_id', 'like', "%{$search}%")
-                        ->orWhere('full_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('visitor_name', 'like', "%{$search}%")
+                        ->orWhere('visitor_email', 'like', "%{$search}%")
                         ->orWhere('institution', 'like', "%{$search}%");
                 });
             }
@@ -737,7 +743,7 @@ class RequestManagementController extends Controller
                 [
                     'filters' => [
                         'status' => $request->get('status'),
-                        'purpose' => $request->get('purpose'),
+                        'visit_purpose' => $request->get('visit_purpose'),
                         'date_from' => $request->get('date_from'),
                         'date_to' => $request->get('date_to'),
                         'search' => $request->get('search'),
@@ -755,6 +761,107 @@ class RequestManagementController extends Controller
 
             return ApiResponse::error(
                 'Failed to retrieve visit requests',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Update visit request
+     */
+    public function updateVisitRequest(Request $request, VisitRequest $visitRequest): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'status' => 'required|string|in:pending,approved,rejected,completed,cancelled',
+                'approval_notes' => 'nullable|string|max:1000',
+            ]);
+
+            // Check if status transition is valid
+            if (!$visitRequest->canTransitionTo($validated['status'])) {
+                return ApiResponse::error(
+                    'Invalid status transition',
+                    400,
+                    null,
+                    "Cannot transition from {$visitRequest->status} to {$validated['status']}"
+                );
+            }
+
+            $visitRequest->update([
+                'status' => $validated['status'],
+                'approval_notes' => $validated['approval_notes'] ?? $visitRequest->approval_notes,
+                'reviewed_at' => in_array($validated['status'], ['approved', 'rejected']) ? now() : $visitRequest->reviewed_at,
+                'reviewed_by' => in_array($validated['status'], ['approved', 'rejected']) ? $request->user()->id : $visitRequest->reviewed_by,
+            ]);
+
+            Log::info('Visit request updated', [
+                'request_id' => $visitRequest->request_id,
+                'status' => $validated['status'],
+                'admin_user_id' => $request->user()->id,
+            ]);
+
+            return ApiResponse::success(
+                new \App\Http\Resources\Public\VisitRequestTrackingResource($visitRequest->fresh()),
+                'Visit request updated successfully'
+            );
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors());
+
+        } catch (\Exception $e) {
+            Log::error('Failed to update visit request', [
+                'request_id' => $visitRequest->request_id,
+                'error' => $e->getMessage(),
+                'admin_user_id' => $request->user()->id,
+            ]);
+
+            return ApiResponse::error(
+                'Failed to update visit request',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Get visit requests summary statistics
+     */
+    private function getVisitRequestSummary(): JsonResponse
+    {
+        try {
+            $totalRequests = VisitRequest::count();
+            $pendingRequests = VisitRequest::where('status', 'pending')->count();
+            $approvedRequests = VisitRequest::where('status', 'approved')->count();
+            $completedRequests = VisitRequest::where('status', 'completed')->count();
+            $rejectedRequests = VisitRequest::where('status', 'rejected')->count();
+            $cancelledRequests = VisitRequest::where('status', 'cancelled')->count();
+
+            return ApiResponse::success([
+                'total_requests' => $totalRequests,
+                'pending_requests' => $pendingRequests,
+                'approved_requests' => $approvedRequests,
+                'completed_requests' => $completedRequests,
+                'rejected_requests' => $rejectedRequests,
+                'cancelled_requests' => $cancelledRequests,
+                'status_distribution' => [
+                    'pending' => $pendingRequests,
+                    'approved' => $approvedRequests,
+                    'completed' => $completedRequests,
+                    'rejected' => $rejectedRequests,
+                    'cancelled' => $cancelledRequests,
+                ],
+            ], 'Visit requests summary retrieved successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve visit requests summary', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to retrieve visit requests summary',
                 500,
                 null,
                 $e->getMessage()

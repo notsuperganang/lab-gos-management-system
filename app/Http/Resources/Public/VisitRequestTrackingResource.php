@@ -15,32 +15,50 @@ class VisitRequestTrackingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'request_id' => $this->request_id,
             'status' => $this->status,
             'status_label' => $this->status_label,
             'status_color' => $this->status_color,
-            'applicant' => [
-                'full_name' => $this->full_name,
-                'email' => $this->email,
-                'phone' => $this->phone,
-                'institution' => $this->institution,
-            ],
-            'purpose' => $this->purpose,
+            'visitor_name' => $this->visitor_name,
+            'visitor_email' => $this->visitor_email,
+            'visitor_phone' => $this->visitor_phone,
+            'institution' => $this->institution,
+            'visit_purpose' => $this->visit_purpose,
             'purpose_label' => $this->purpose_label,
-            'visit_date' => $this->visit_date->format('Y-m-d'),
-            'visit_time' => $this->visit_time,
-            'visit_time_label' => $this->visit_time_label,
-            'participants' => $this->participants,
-            'additional_notes' => $this->additional_notes,
+            'visit_date' => $this->visit_date?->format('Y-m-d'),
+            'start_time' => $this->start_time,
+            'end_time' => $this->end_time,
+            'group_size' => $this->group_size,
+            'purpose_description' => $this->purpose_description,
+            'special_requirements' => $this->special_requirements,
+            'equipment_needed' => $this->equipment_needed,
             'request_letter_url' => $this->request_letter_url,
             'approval_letter_url' => $this->approval_letter_url,
-            'submitted_at' => $this->submitted_at->format('Y-m-d H:i:s'),
+            'submitted_at' => $this->submitted_at?->format('Y-m-d H:i:s'),
             'reviewed_at' => $this->reviewed_at?->format('Y-m-d H:i:s'),
-            'reviewer' => $this->when($this->relationLoaded('reviewer') && $this->reviewer, [
-                'name' => $this->reviewer->name,
-            ]),
+            'reviewer' => $this->when($this->relationLoaded('reviewer') && $this->reviewer, function () {
+                return [
+                    'id' => $this->reviewer?->id,
+                    'name' => $this->reviewer?->name,
+                    'email' => $this->reviewer?->email,
+                ];
+            }),
             'approval_notes' => $this->approval_notes,
             'timeline' => $this->getTimeline(),
+
+            // Backward compatibility with old field names
+            'applicant' => [
+                'full_name' => $this->visitor_name,
+                'email' => $this->visitor_email,
+                'phone' => $this->visitor_phone,
+                'institution' => $this->institution,
+            ],
+            'purpose' => $this->visit_purpose,
+            'visit_time' => $this->start_time && $this->end_time ? $this->start_time . ' - ' . $this->end_time . ' WIB' : null,
+            'visit_time_label' => $this->start_time && $this->end_time ? $this->start_time . ' - ' . $this->end_time . ' WIB' : null,
+            'participants' => $this->group_size,
+            'additional_notes' => $this->purpose_description,
         ];
     }
 
