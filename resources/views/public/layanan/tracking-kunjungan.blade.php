@@ -139,7 +139,7 @@
                                                           :class="getStatusBadgeClass(step.status)"
                                                           x-text="getStatusText(step.status)"></span>
                                                 </div>
-                                                <p class="text-gray-600 text-sm mb-3" x-text="step.description"></p>
+                                                <p class="text-gray-600 text-sm mb-3" x-html="step.description"></p>
                                                 <div class="flex items-center text-xs text-gray-500">
                                                     <i class="fas fa-clock mr-1"></i>
                                                     <span x-text="getStepTimestamp(step)"></span>
@@ -248,7 +248,7 @@
                                             </h4>
                                             <div class="text-sm text-purple-700" x-text="getLetterDisplayText()"></div>
                                         </div>
-                                        <button x-show="hasRequestLetter()" 
+                                        <button x-show="hasRequestLetter()"
                                                 @click="previewRequestLetter()"
                                                 class="w-8 h-8 bg-purple-100 hover:bg-purple-200 text-purple-600 hover:text-purple-700 rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 group"
                                                 title="Lihat surat permohonan yang telah dikirim">
@@ -401,9 +401,9 @@
                             <button @click="openWhatsAppChat()"
                                     :disabled="currentStatus === 'cancelled' || !canSendMessage"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="currentStatus === 'cancelled' ? 
+                                    :class="currentStatus === 'cancelled' ?
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
-                                           !canSendMessage ? 
+                                           !canSendMessage ?
                                            'bg-orange-400 text-white cursor-not-allowed' :
                                            'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl'">
                                 <span x-show="currentStatus === 'cancelled'">Tidak Tersedia</span>
@@ -535,7 +535,7 @@
                 extractAdminPhone() {
                     // Use WhatsApp admin phone directly since it's the most accurate
                     const whatsappAdminPhones = this.siteSettings?.whatsapp_admin_phones;
-                    
+
                     if (whatsappAdminPhones && whatsappAdminPhones.length > 0) {
                         // Use first WhatsApp admin phone
                         let adminPhone = whatsappAdminPhones[0];
@@ -548,14 +548,41 @@
                         return;
                     }
 
-                    // Fallback to site settings if WhatsApp admin phones not available
-                    if (!this.siteSettings) return;
+                    // Get phone from site settings
+                    if (!this.siteSettings) {
+                        console.warn('No site settings available for phone extraction');
+                        return;
+                    }
                     const siteSettings = this.siteSettings.site_settings || {};
 
-                    // Try to get from technical_contact first, then lab_head
+                    console.log('=== PHONE EXTRACTION DEBUG ===');
+                    console.log('Site settings keys:', Object.keys(siteSettings));
+                    console.log('Phone field value:', siteSettings.phone);
+                    console.log('WhatsApp admin phone:', siteSettings.whatsapp_admin_phone);
+
+                    // Try to get phone in this priority order:
+                    // 1. Direct phone key from site settings
+                    // 2. WhatsApp admin phone if available
+                    // 3. Technical contact phone
+                    // 4. Lab head phone
                     let adminPhone = null;
 
-                    if (siteSettings.technical_contact) {
+                    // Check phone field (with content property for site settings structure)
+                    if (siteSettings.phone && siteSettings.phone.content) {
+                        adminPhone = siteSettings.phone.content;
+                        console.log('Found phone in phone.content:', adminPhone);
+                    } else if (siteSettings.phone && typeof siteSettings.phone === 'string') {
+                        adminPhone = siteSettings.phone;
+                        console.log('Found phone as string:', adminPhone);
+                    }
+
+                    // Fallback to whatsapp_admin_phone
+                    if (!adminPhone && siteSettings.whatsapp_admin_phone) {
+                        adminPhone = siteSettings.whatsapp_admin_phone.content || siteSettings.whatsapp_admin_phone;
+                        console.log('Using WhatsApp admin phone fallback:', adminPhone);
+                    }
+
+                    if (!adminPhone && siteSettings.technical_contact) {
                         try {
                             const technicalContact = JSON.parse(siteSettings.technical_contact);
                             adminPhone = technicalContact.phone;
@@ -575,12 +602,20 @@
 
                     // Format phone number for WhatsApp (remove +, spaces, dashes)
                     if (adminPhone) {
+                        console.log('Raw admin phone before formatting:', adminPhone);
                         this.adminPhone = adminPhone.replace(/[\s\-\+]/g, '');
+
                         // Ensure it starts with country code
                         if (!this.adminPhone.startsWith('62') && this.adminPhone.startsWith('08')) {
+                            console.log('Converting 08 to 62 format');
                             this.adminPhone = '62' + this.adminPhone.substring(1);
                         }
+
+                        console.log('Final formatted admin phone:', this.adminPhone);
+                    } else {
+                        console.warn('No admin phone found in site settings');
                     }
+                    console.log('=== PHONE EXTRACTION DEBUG END ===');
                 },
 
                 // Load visit data from API
@@ -705,6 +740,13 @@
                             icon: 'fas fa-building',
                             status: 'pending',
                             timestamp: null
+                        },
+                        {
+                            title: 'Selesai',
+                            description: 'Kunjungan laboratorium telah berhasil dilaksanakan.',
+                            icon: 'fas fa-flag-checkered',
+                            status: 'pending',
+                            timestamp: null
                         }
                     ];
 
@@ -720,16 +762,105 @@
                             baseSteps[1].status = 'completed';
                             baseSteps[2].status = 'completed';
                             baseSteps[3].status = 'current';
+                            // Add detailed instructions for approved status
+                            baseSteps[3].description = `
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-3">
+                                    <div class="flex items-start space-x-3 mb-3">
+                                        <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <span class="text-green-600 font-bold text-sm">📋</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-semibold text-green-800 mb-2">Kunjungan telah disetujui! Silakan lakukan langkah berikut:</h4>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-3 ml-11">
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">1</span>
+                                            <span class="text-gray-700"><strong>📥 Download surat izin</strong> kunjungan dengan tombol "Download Surat" di bawah</span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">2</span>
+                                            <span class="text-gray-700"><strong>✍️ Tanda tangani</strong> surat izin tersebut dengan tinta biru/hitam</span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">3</span>
+                                            <span class="text-gray-700"><strong>🏛️ Datang ke laboratorium</strong> pada tanggal <strong>${this.scheduleInfo.visitDate}</strong> pukul <strong>${this.scheduleInfo.visitTime}</strong></span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">4</span>
+                                            <span class="text-gray-700"><strong>📄 Bawa surat izin</strong> yang sudah ditandatangani beserta identitas diri</span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">5</span>
+                                            <span class="text-gray-700"><strong>📞 Hubungi admin lab</strong> jika ada pertanyaan atau kendala</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                        <div class="flex items-start space-x-2">
+                                            <span class="text-amber-500 text-lg">⚠️</span>
+                                            <span class="text-amber-800 text-sm font-medium">Penting: Kunjungan hanya dapat dilaksanakan dengan membawa surat izin yang sudah ditandatangani.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
                             break;
                         case 'ready':
                             baseSteps[1].status = 'completed';
                             baseSteps[2].status = 'completed';
                             baseSteps[3].status = 'current';
+                            // Add detailed instructions for ready status
+                            baseSteps[3].description = `
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-3">
+                                    <div class="flex items-start space-x-3 mb-3">
+                                        <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <span class="text-blue-600 font-bold text-sm">🎯</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="font-semibold text-blue-800 mb-2">Kunjungan siap dilaksanakan! Silakan lakukan langkah berikut:</h4>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-3 ml-11">
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">1</span>
+                                            <span class="text-gray-700"><strong>📥 Download surat izin</strong> kunjungan dengan tombol "Download Surat" di bawah</span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">2</span>
+                                            <span class="text-gray-700"><strong>✍️ Pastikan surat izin</strong> sudah ditandatangani dengan tinta biru/hitam</span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">3</span>
+                                            <span class="text-gray-700"><strong>🏛️ Datang ke laboratorium</strong> pada tanggal <strong>${this.scheduleInfo.visitDate}</strong> pukul <strong>${this.scheduleInfo.visitTime}</strong></span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">4</span>
+                                            <span class="text-gray-700"><strong>📄 Bawa surat izin</strong> yang sudah ditandatangani beserta identitas diri</span>
+                                        </div>
+                                        <div class="flex items-start space-x-3">
+                                            <span class="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">5</span>
+                                            <span class="text-gray-700"><strong>📞 Hubungi admin lab</strong> jika ada pertanyaan atau kendala</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                        <div class="flex items-start space-x-2">
+                                            <span class="text-amber-500 text-lg">⚠️</span>
+                                            <span class="text-amber-800 text-sm font-medium">Penting: Kunjungan hanya dapat dilaksanakan dengan membawa surat izin yang sudah ditandatangani.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
                             break;
                         case 'completed':
                             baseSteps[1].status = 'completed';
                             baseSteps[2].status = 'completed';
                             baseSteps[3].status = 'completed';
+                            baseSteps[4].status = 'completed';
+                            baseSteps[4].timestamp = this.formatTimestamp(this.visitData.reviewed_at) || 'Selesai';
+                            baseSteps[4].description = '✅ Kunjungan laboratorium telah berhasil dilaksanakan. Terima kasih atas kunjungan Anda ke Laboratorium GOS!';
                             break;
                         case 'rejected':
                             // For rejected, show rejection at review stage
@@ -749,6 +880,11 @@
                             baseSteps[3].description = 'Tahap ini tidak akan dilaksanakan karena permohonan ditolak.';
                             baseSteps[3].icon = 'fas fa-ban';
                             baseSteps[3].timestamp = null;
+                            baseSteps[4].status = 'skipped';
+                            baseSteps[4].title = 'Selesai';
+                            baseSteps[4].description = 'Tahap ini tidak akan dilaksanakan karena permohonan ditolak.';
+                            baseSteps[4].icon = 'fas fa-ban';
+                            baseSteps[4].timestamp = null;
                             break;
                         case 'cancelled':
                             // For cancelled, show cancellation at review stage
@@ -768,6 +904,11 @@
                             baseSteps[3].description = 'Tahap ini tidak akan dilaksanakan karena permohonan dibatalkan.';
                             baseSteps[3].icon = 'fas fa-ban';
                             baseSteps[3].timestamp = null;
+                            baseSteps[4].status = 'skipped';
+                            baseSteps[4].title = 'Selesai';
+                            baseSteps[4].description = 'Tahap ini tidak akan dilaksanakan karena permohonan dibatalkan.';
+                            baseSteps[4].icon = 'fas fa-ban';
+                            baseSteps[4].timestamp = null;
                             break;
                         default:
                             baseSteps[1].status = 'current';
@@ -1009,19 +1150,31 @@
                 },
 
                 // Actions
-                downloadLetter() {
+                async downloadLetter() {
                     if (this.currentStatus !== 'approved' && this.currentStatus !== 'ready') {
                         alert('Surat izin hanya dapat diunduh setelah permohonan disetujui.');
                         return;
                     }
 
-                    // Create download link (URL will be provided by backend)
-                    const link = document.createElement('a');
-                    link.href = '#'; // URL file akan diisi dari backend
-                    link.download = `Surat_Izin_Kunjungan_${this.visitId}.pdf`;
-                    link.click();
+                    try {
+                        // Create direct download URL to the API endpoint
+                        const downloadUrl = `/api/tracking/visit/${this.visitId}/letter`;
 
-                    alert('Surat izin kunjungan sedang diunduh...');
+                        // Create download link
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = `Surat_Izin_Kunjungan_${this.visitId}.pdf`;
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        // Show success message
+                        alert('Surat izin kunjungan sedang diunduh...');
+                    } catch (error) {
+                        console.error('Failed to download letter:', error);
+                        alert('Gagal mengunduh surat izin. Silakan coba lagi atau hubungi admin.');
+                    }
                 },
 
                 // Cooldown system methods
@@ -1049,7 +1202,7 @@
                 updateCooldownStatus() {
                     const now = Date.now();
                     this.remainingTime = Math.max(0, this.cooldownDuration - (now - this.lastMessageTime));
-                    
+
                     if (this.remainingTime > 0 && !this.cooldownTimer) {
                         this.cooldownTimer = setInterval(() => {
                             this.updateCooldownStatus();
@@ -1072,9 +1225,16 @@
                         alert(`Harap tunggu ${this.cooldownText.replace('Tunggu ', '')} sebelum mengirim pesan lagi.`);
                         return;
                     }
+
+                    // Check if admin phone is available
+                    if (!this.adminPhone) {
+                        alert('Nomor WhatsApp admin tidak tersedia. Silakan hubungi admin melalui email atau telepon.');
+                        return;
+                    }
+
                     // Generate tracking URL
                     const trackingUrl = `${window.location.origin}/layanan/kunjungan/confirmation/${this.visitId}`;
-                    
+
                     const message = `Kepada Yang Terhormat,
 Admin Laboratorium Gelombang, Optik dan Spektroskopi (GOS)
 Departemen Fisika FMIPA Universitas Syiah Kuala
@@ -1090,8 +1250,8 @@ Saya bermaksud untuk melakukan konsultasi terkait permohonan kunjungan laborator
 - Tanggal Kunjungan: ${this.scheduleInfo.visitDate}
 - Waktu Kunjungan: ${this.scheduleInfo.visitTime}
 - Jumlah Peserta: ${this.scheduleInfo.participants} orang
-- Status Permohonan: ${this.currentStatus === 'pending' ? 'Menunggu Persetujuan' : 
-                         this.currentStatus === 'approved' ? 'Disetujui' : 
+- Status Permohonan: ${this.currentStatus === 'pending' ? 'Menunggu Persetujuan' :
+                         this.currentStatus === 'approved' ? 'Disetujui' :
                          this.currentStatus === 'ready' ? 'Siap Dikunjungi' :
                          this.currentStatus === 'completed' ? 'Selesai' :
                          this.currentStatus === 'rejected' ? 'Ditolak' :
@@ -1114,16 +1274,15 @@ ${this.visitorInfo.institution}
 
 ---
 Laboratorium GOS - Departemen Fisika FMIPA USK
-Email: labgos@usu.ac.id
+Email: labgos@usk.ac.id
 Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
 
-                    // Get admin phone from environment or use fallback
-                    const phoneNumber = '{{ str_replace("+", "", env("WHATSAPP_LAB_PHONE", "6285338573726")) }}';
-                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    // Use the dynamically retrieved phone number
+                    const whatsappUrl = `https://wa.me/${this.adminPhone}?text=${encodeURIComponent(message)}`;
 
                     // Start cooldown after successful message
                     this.startCooldown();
-                    
+
                     window.open(whatsappUrl, '_blank');
                 },
 
@@ -1188,8 +1347,8 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                 },
 
                 getLetterDisplayText() {
-                    return this.hasRequestLetter() ? 
-                        'Surat permohonan telah diunggah' : 
+                    return this.hasRequestLetter() ?
+                        'Surat permohonan telah diunggah' :
                         'Tidak ada surat permohonan yang diunggah';
                 },
 

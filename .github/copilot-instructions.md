@@ -9,10 +9,19 @@ This Laravel-based laboratory management system serves Laboratorium Gelombang, O
 - **Admin API** (`/api/admin/`) - Request management, approvals, equipment CRUD (Sanctum auth)
 - **Super Admin API** (`/api/superadmin/`) - User management, system administration (role-based)
 
+### Request-Centric Domain Model
+The system centers around three core request types (`BorrowRequest`, `VisitRequest`, `TestingRequest`), each following identical patterns:
+- **Unique ID Generation**: Auto-generated with format `{TYPE}{YYYYMMDD}{001}` (e.g., `BR20250815001`)
+- **State Machine**: Controlled status transitions with validation via `canTransitionTo()` 
+- **Equipment Integration**: Real-time availability tracking and reservation system
+- **Activity Logging**: Complete audit trails via Spatie ActivityLog with automatic model observers
+
 ### Key Technology Stack
 - **Laravel 12.x** with PHP 8.2+, **Sanctum** for API auth, **Spatie** packages for permissions & activity logging
 - **Frontend**: Alpine.js 3.14.9 + Tailwind CSS with Vite hot reloading
 - **Manual WhatsApp Contact**: User-initiated messaging via tracking pages (no automated services)
+- **PDF Generation**: DomPDF for official letters and reports
+- **File Management**: Spatie MediaLibrary for equipment images and document handling
 
 ## Development Commands
 
@@ -30,6 +39,13 @@ php artisan storage:link
 php artisan migrate:fresh --seed
 ```
 
+### Concurrency Pattern
+The `composer dev` script uses npx concurrently to run multiple processes:
+- **Laravel Server** (`php artisan serve`) - Main application
+- **Queue Worker** (`php artisan queue:listen --tries=1`) - Background job processing
+- **Log Monitoring** (`php artisan pail --timeout=0`) - Real-time log streaming
+- **Asset Building** (`npm run dev`) - Vite hot module replacement
+
 ## Critical File Patterns
 
 ### Request Lifecycle Models
@@ -37,20 +53,24 @@ All request models (`BorrowRequest`, `VisitRequest`, `TestingRequest`) include:
 - Status workflow validation: `canTransitionTo()` and `getValidNextStatuses()` methods
 - Equipment stock management: `reserveQuantity()` and `releaseQuantity()` for real-time availability
 - Activity logging via Spatie traits for complete audit trails
+- Auto-generated unique IDs in boot() method with format prefix + date + sequence
 
 ### Service Classes Architecture
-- `DashboardService`: Cached analytics with 5-minute TTL, complex aggregations
+- `DashboardService`: Cached analytics with 5-minute TTL, complex aggregations using raw SQL
 - `BorrowLetterService`/`TestingLetterService`/`VisitLetterService`: PDF generation via DomPDF
 - `VisitSlotsService`: Time slot management with capacity validation
+- All services follow dependency injection pattern and are cached for performance
 
 ### File Storage Convention
 - **Structure**: `storage/app/public/{category}/` (equipment/, articles/, gallery/, staff/)
 - **Access**: Models use accessors like `getFeaturedImageUrlAttribute()` returning `asset('storage/path')`
 - **Cleanup**: Automatic file deletion in model observers
+- **Security**: File type validation and secure storage paths
 
 ### Configuration Pattern
 - Lab-specific config in `config/lab.php` for operational hours, services, SOP compliance
 - Environment variables: `WHATSAPP_LAB_PHONE` for manual contact, CORS settings for frontend integration
+- Multi-environment support with role-based access patterns
 
 ## Data Model Conventions
 
@@ -80,6 +100,17 @@ public function getActivitylogOptions(): LogOptions
 public function reserveQuantity(int $quantity): bool
 public function releaseQuantity(int $quantity): void
 public function getAvailableQuantityAttribute(): int
+```
+
+### Request ID Generation Pattern
+```php
+// Auto-generated in model boot() method
+public static function generateRequestId() {
+    $prefix = 'BR'; // BorrowRequest, VR=VisitRequest, TR=TestingRequest
+    $date = now()->format('Ymd');
+    $sequence = str_pad(self::whereDate('created_at', today())->count() + 1, 3, '0', STR_PAD_LEFT);
+    return $prefix . $date . $sequence; // Example: BR20250815001
+}
 ```
 
 ## Frontend Integration Patterns

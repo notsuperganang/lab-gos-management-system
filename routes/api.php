@@ -152,6 +152,10 @@ Route::prefix('tracking')->name('api.tracking.')->group(function () {
     Route::get('/testing/{requestId}', [TrackingController::class, 'trackTestingRequest'])
         ->name('testing');
 
+    // Letter downloads
+    Route::get('/visit/{requestId}/letter', [TrackingController::class, 'downloadVisitLetter'])
+        ->name('visit.letter');
+
     // Cancel requests
     Route::delete('/borrow/{requestId}/cancel', [TrackingController::class, 'cancelBorrowRequest'])
         ->name('borrow.cancel');

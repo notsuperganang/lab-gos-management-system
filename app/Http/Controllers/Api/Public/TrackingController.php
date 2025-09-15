@@ -558,4 +558,82 @@ class TrackingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Download visit request approval letter
+     *
+     * @param string $requestId
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadVisitLetter(string $requestId)
+    {
+        try {
+            $visitRequest = VisitRequest::where('request_id', $requestId)->first();
+
+            if (!$visitRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Request not found. Please check your request ID.'
+                ], 404);
+            }
+
+            // Check if request is approved or ready (letter should be available)
+            if (!in_array($visitRequest->status, ['approved', 'ready'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Surat izin belum tersedia. Permohonan harus disetujui terlebih dahulu.'
+                ], 400);
+            }
+
+            // Use VisitLetterService to generate or retrieve the letter
+            $visitLetterService = app(\App\Services\VisitLetterService::class);
+
+            try {
+                // Generate the letter PDF
+                $letterUrl = $visitLetterService->generate($visitRequest);
+
+                // Get the file path from the URL
+                $filePath = str_replace(asset('storage/'), '', $letterUrl);
+                $fullPath = storage_path('app/public/' . $filePath);
+
+                // Check if file exists
+                if (!file_exists($fullPath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Surat izin tidak dapat digenerate. Silakan hubungi admin.'
+                    ], 500);
+                }
+
+                // Return the file as download
+                return response()->download($fullPath, "Surat_Izin_Kunjungan_{$requestId}.pdf", [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="Surat_Izin_Kunjungan_' . $requestId . '.pdf"'
+                ]);
+
+            } catch (\Exception $letterError) {
+                \Log::error('Failed to generate visit letter', [
+                    'request_id' => $requestId,
+                    'error' => $letterError->getMessage()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menggenerate surat izin. Silakan coba lagi atau hubungi admin.',
+                    'error' => config('app.debug') ? $letterError->getMessage() : null
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to download visit letter', [
+                'request_id' => $requestId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengunduh surat izin',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }
