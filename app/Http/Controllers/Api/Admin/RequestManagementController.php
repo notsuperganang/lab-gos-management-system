@@ -827,6 +827,29 @@ class RequestManagementController extends Controller
     }
 
     /**
+     * Get single visit request details
+     */
+    public function showVisitRequest(VisitRequest $visitRequest): JsonResponse
+    {
+        try {
+            $visitRequest->load(['reviewer']);
+
+            return ApiResponse::success(
+                new \App\Http\Resources\Public\VisitRequestTrackingResource($visitRequest),
+                'Visit request retrieved successfully'
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get visit request details', [
+                'request_id' => $visitRequest->request_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error('Failed to get visit request details', 500);
+        }
+    }
+
+    /**
      * Get visit requests summary statistics
      */
     private function getVisitRequestSummary(): JsonResponse
@@ -927,14 +950,14 @@ class RequestManagementController extends Controller
             }
 
             $validated = $request->validate([
-                'approval_notes' => 'required|string|max:1000',
+                'rejection_reason' => 'required|string|max:1000',
             ]);
 
             $visitRequest->update([
                 'status' => 'rejected',
                 'reviewed_at' => now(),
                 'reviewed_by' => $request->user()->id,
-                'approval_notes' => $validated['approval_notes'],
+                'approval_notes' => $validated['rejection_reason'],
             ]);
 
             Log::info('Visit request rejected', [
