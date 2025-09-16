@@ -94,4 +94,28 @@ class SiteSetting extends Model
 
         return $this->content;
     }
+
+    /**
+     * Get rich text content as HTML (converts Markdown if needed).
+     */
+    public function getRichTextHtmlAttribute()
+    {
+        if ($this->type === 'rich_text' && $this->content) {
+            return app(\App\Services\RichTextParser::class)->parse($this->content);
+        }
+
+        return $this->content;
+    }
+
+    /**
+     * Get rich text content as plain text.
+     */
+    public function getPlainTextAttribute($limit = null)
+    {
+        if ($this->type === 'rich_text' && $this->content) {
+            return app(\App\Services\RichTextParser::class)->toPlainText($this->content, $limit);
+        }
+
+        return $this->content;
+    }
 }

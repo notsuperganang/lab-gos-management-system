@@ -1,7 +1,7 @@
 <x-public.layouts.main>
     {{-- Mendefinisikan judul halaman untuk layout --}}
     <x-slot:title>
-        Laboratorium Gelombang, Optik & Spektroskopi - Departemen Fisika USK
+        {{ ($siteSettings['lab_name'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi') . ' - ' . ($siteSettings['department_name'] ?? 'Departemen Fisika USK') }}
     </x-slot:title>
 
     <!-- Hero Section with Full Background -->
@@ -80,12 +80,14 @@
                 </p>
             </div>
             
-            <div class="grid md:grid-cols-2 gap-12 items-center">
-                <!-- Visi -->
-                <div x-data="{ animated: false }" 
+            <div class="grid md:grid-cols-2 gap-12">
+                <!-- Left Side: Visi & Misi -->
+                <div x-data="{ animated: false }"
                      x-scroll-animate="animated = true"
                      :class="animated ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'"
-                     class="transition-all duration-1200 ease-out">
+                     class="space-y-6 transition-all duration-1200 ease-out">
+
+                    <!-- Visi -->
                     <div class="bg-gradient-to-br from-primary to-blue-600 p-8 rounded-2xl text-white shadow-xl transform hover:scale-105 transition-all duration-500">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mr-4">
@@ -93,17 +95,16 @@
                             </div>
                             <h3 class="text-2xl font-bold">Visi Laboratorium</h3>
                         </div>
-                        <p class="text-blue-100 leading-relaxed text-lg">
-                            "Menjadi pusat unggulan dalam pendidikan dan penelitian di bidang Gelombang, Optik dan Spektroskopi untuk mendukung pengembangan ilmu pengetahuan, mitigasi bencana, pengelolaan lingkungan, dan pembangunan berkelanjutan pada tahun 2030."
-                        </p>
+                        <div class="text-blue-100 leading-relaxed text-lg rich-text">
+                            @if(isset($siteSettings['vision']) && $siteSettings['vision'])
+                                <span class="before:content-['"'] after:content-['"']">{!! app(\App\Services\RichTextParser::class)->parse($siteSettings['vision']) !!}</span>
+                            @else
+                                "Menjadi pusat unggulan dalam pendidikan dan penelitian di bidang Gelombang, Optik dan Spektroskopi untuk mendukung pengembangan ilmu pengetahuan, mitigasi bencana, pengelolaan lingkungan, dan pembangunan berkelanjutan pada tahun 2030."
+                            @endif
+                        </div>
                     </div>
-                </div>
 
-                <!-- Misi & Tentang -->
-                <div x-data="{ animated: false }" 
-                     x-scroll-animate="animated = true"
-                     :class="animated ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'"
-                     class="space-y-6 transition-all duration-1200 ease-out">
+                    <!-- Misi -->
                     <div class="bg-gradient-to-br from-secondary to-yellow-600 p-6 rounded-2xl text-white shadow-xl transform hover:scale-105 transition-all duration-500">
                         <div class="flex items-center mb-4">
                             <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-3">
@@ -111,21 +112,35 @@
                             </div>
                             <h3 class="text-xl font-bold">Misi</h3>
                         </div>
-                        <p class="text-yellow-100 leading-relaxed">
-                            Menyelenggarakan kegiatan-kegiatan praktikum dan riset yang berhubungan dengan Gelombang, Optik dan Spektroskopi serta kegiatan-kegiatan penunjang lainnya untuk memperkuat Departemen Fisika.
-                        </p>
-                    </div>
-                    
-                    <div class="bg-gray-50 p-6 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-500">
-                        <div class="flex items-center mb-4">
-                            <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-microscope text-white text-xl"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-800">Tentang Lab</h3>
+                        <div class="text-yellow-100 leading-relaxed rich-text">
+                            @if(isset($siteSettings['mission']) && $siteSettings['mission'])
+                                {!! app(\App\Services\RichTextParser::class)->parse($siteSettings['mission']) !!}
+                            @else
+                                Menyelenggarakan kegiatan-kegiatan praktikum dan riset yang berhubungan dengan Gelombang, Optik dan Spektroskopi serta kegiatan-kegiatan penunjang lainnya untuk memperkuat Departemen Fisika.
+                            @endif
                         </div>
-                        <p class="text-gray-700 leading-relaxed">
-                            Laboratorium Gelombang, Optik dan Spektroskopi adalah laboratorium di lingkungan Departemen Fisika, Fakultas MIPA, Universitas Syiah Kuala yang menyelenggarakan kegiatan-kegiatan praktikum dan riset yang berhubungan dengan Gelombang, Optik dan Spektroskopi.
-                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Tentang Lab -->
+                <div x-data="{ animated: false }"
+                     x-scroll-animate="animated = true"
+                     :class="animated ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'"
+                     class="transition-all duration-1200 ease-out flex">
+                    <div class="bg-gray-50 p-8 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-500 flex flex-col w-full">
+                        <div class="flex items-center mb-6">
+                            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-microscope text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800">Tentang Lab</h3>
+                        </div>
+                        <div class="text-gray-700 leading-relaxed rich-text flex-1">
+                            @if(isset($siteSettings['about']) && $siteSettings['about'])
+                                {!! app(\App\Services\RichTextParser::class)->parse($siteSettings['about']) !!}
+                            @else
+                                Laboratorium Gelombang, Optik dan Spektroskopi adalah laboratorium di lingkungan Departemen Fisika, Fakultas MIPA, Universitas Syiah Kuala yang menyelenggarakan kegiatan-kegiatan praktikum dan riset yang berhubungan dengan Gelombang, Optik dan Spektroskopi.
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>

@@ -33,7 +33,7 @@ class SiteSettingsRequest extends FormRequest
             'settings.*.key' => 'required|string|max:100|regex:/^[a-z0-9_\-\.]+$/',
             'settings.*.title' => 'nullable|string|max:255',
             'settings.*.content' => 'nullable|string|max:10000',
-            'settings.*.type' => 'required|in:text,textarea,json,boolean,number',
+            'settings.*.type' => 'required|in:text,textarea,rich_text,json,boolean,number',
             'settings.*.is_active' => 'boolean',
         ];
     }
@@ -55,7 +55,7 @@ class SiteSettingsRequest extends FormRequest
             'settings.*.title.max' => 'Setting title must not exceed 255 characters.',
             'settings.*.content.max' => 'Setting content must not exceed 10,000 characters.',
             'settings.*.type.required' => 'Setting type is required.',
-            'settings.*.type.in' => 'Setting type must be one of: text, textarea, json, boolean, number.',
+            'settings.*.type.in' => 'Setting type must be one of: text, textarea, rich_text, json, boolean, number.',
         ];
     }
 

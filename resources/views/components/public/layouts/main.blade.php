@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Judul halaman akan dinamis -->
-    <title>{{ $title ?? 'Laboratorium GOS USK' }}</title>
+    <title>{{ $title ?? ($siteSettings['lab_name'] ?? 'Laboratorium GOS USK') }}</title>
     
     <!-- Laravel Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

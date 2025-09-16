@@ -23,13 +23,8 @@
                     </div>
                 </div>
                 <p class="text-blue-100 mb-6 max-w-md leading-relaxed">
-                    {{ $labConfig['department'] ?? 'Departemen Fisika FMIPA Universitas Syiah Kuala' }}, {{ $labConfig['address'] ?? 'Darussalam-Banda Aceh, Indonesia' }}. Advancing science through waves, optics, and spectroscopy.
+                    Pusat keunggulan penelitian dan pendidikan di bidang gelombang, optik, dan spektroskopi. Melayani kebutuhan analisis ilmiah dengan teknologi canggih dan standar internasional untuk kemajuan sains Indonesia.
                 </p>
-                @if(isset($labConfig['vision']))
-                <p class="text-blue-100 text-sm italic">
-                    "{{ Str::limit($labConfig['vision'], 120) }}"
-                </p>
-                @endif
             </div>
 
             <!-- Quick Links - Services -->
@@ -96,6 +91,10 @@
                         <i class="fas fa-map-marker-alt mr-2 group-hover:animate-pulse"></i>
                         Track Kunjungan
                     </a>
+                    <a href="{{ route('tracking.pengujian') }}" class="block text-blue-200 hover:text-secondary transition-colors duration-300 text-sm group">
+                        <i class="fas fa-vial mr-2 group-hover:animate-pulse"></i>
+                        Track Pengujian
+                    </a>
                 </div>
             </div>
 
@@ -119,10 +118,15 @@
                     <div class="flex items-center space-x-3 group">
                         <i class="fas fa-envelope text-secondary group-hover:animate-pulse"></i>
                         <span class="text-blue-200 text-sm">
-                            {{ $labConfig['contact']['email'] ?? 'lab-gos@usk.ac.id' }}
+                            {{ $siteSettings['contact_email'] ?? $labConfig['contact']['email'] ?? 'lab-gos@usk.ac.id' }}
                         </span>
                     </div>
-                    @if(isset($labConfig['contact']['phone']) && $labConfig['contact']['phone'])
+                    @if(isset($siteSettings['contact_phone']) && $siteSettings['contact_phone'])
+                    <div class="flex items-center space-x-3 group">
+                        <i class="fas fa-phone text-secondary group-hover:animate-pulse"></i>
+                        <span class="text-blue-200 text-sm">{{ $siteSettings['contact_phone'] }}</span>
+                    </div>
+                    @elseif(isset($labConfig['contact']['phone']) && $labConfig['contact']['phone'])
                     <div class="flex items-center space-x-3 group">
                         <i class="fas fa-phone text-secondary group-hover:animate-pulse"></i>
                         <span class="text-blue-200 text-sm">{{ $labConfig['contact']['phone'] }}</span>
@@ -146,7 +150,7 @@
 
         <div class="border-t border-blue-600 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p class="text-blue-200 text-sm">
-                © {{ date('Y') }} {{ $labConfig['name'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}. All rights reserved.
+                © {{ date('Y') }} {{ $labConfig['name'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}. Hak cipta dilindungi.
             </p>
             <p class="text-blue-200 text-sm mt-4 md:mt-0 flex items-center">
                 <i class="fas fa-heart text-red-400 mr-2 animate-pulse"></i>
