@@ -10,7 +10,6 @@ use App\Models\TestingRequest;
 use App\Models\VisitRequest;
 use App\Services\BorrowLetterService;
 use App\Services\VisitLetterService;
-use App\Services\TestingLetterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +19,11 @@ class RequestManagementController extends Controller
 {
     protected BorrowLetterService $borrowLetterService;
     protected VisitLetterService $visitLetterService;
-    protected TestingLetterService $testingLetterService;
 
-    public function __construct(BorrowLetterService $borrowLetterService, VisitLetterService $visitLetterService, TestingLetterService $testingLetterService)
+    public function __construct(BorrowLetterService $borrowLetterService, VisitLetterService $visitLetterService)
     {
         $this->borrowLetterService = $borrowLetterService;
         $this->visitLetterService = $visitLetterService;
-        $this->testingLetterService = $testingLetterService;
     }
 
     /**
@@ -582,78 +579,6 @@ class RequestManagementController extends Controller
         }
     }
 
-    /**
-     * Get or generate testing request authorization letter PDF
-     */
-    public function getTestingRequestLetter(TestingRequest $testingRequest): JsonResponse
-    {
-        try {
-            $letterUrl = $this->testingLetterService->getOrGenerate($testingRequest);
-
-            if (! $letterUrl) {
-                return ApiResponse::error(
-                    'Letter not available. Request must be approved to generate letter.',
-                    404
-                );
-            }
-
-            return ApiResponse::success([
-                'letter_url' => $letterUrl,
-                'request_id' => $testingRequest->request_id,
-                'status' => $testingRequest->status,
-            ], 'Letter retrieved successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Failed to get testing request letter', [
-                'request_id' => $testingRequest->request_id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error(
-                'Failed to retrieve letter',
-                500,
-                null,
-                $e->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Regenerate testing request authorization letter PDF
-     */
-    public function regenerateTestingRequestLetter(TestingRequest $testingRequest): JsonResponse
-    {
-        try {
-            // Only allow regeneration for approved+ status requests
-            if (! in_array($testingRequest->status, ['approved', 'sample_received', 'in_progress', 'completed'])) {
-                return ApiResponse::error(
-                    'Letter can only be regenerated for approved requests',
-                    400
-                );
-            }
-
-            $letterUrl = $this->testingLetterService->regenerate($testingRequest);
-
-            return ApiResponse::success([
-                'letter_url' => $letterUrl,
-                'request_id' => $testingRequest->request_id,
-                'regenerated_at' => now()->toISOString(),
-            ], 'Letter regenerated successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Failed to regenerate testing request letter', [
-                'request_id' => $testingRequest->request_id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::error(
-                'Failed to regenerate letter',
-                500,
-                null,
-                $e->getMessage()
-            );
-        }
-    }
 
     /**
      * Handle equipment return and stock release
@@ -1224,12 +1149,6 @@ class RequestManagementController extends Controller
     public function updateTestingRequest(Request $request, TestingRequest $testingRequest): JsonResponse
     {
         try {
-            Log::info('=== TESTING REQUEST UPDATE START ===', [
-                'request_id' => $testingRequest->request_id,
-                'current_status' => $testingRequest->status,
-                'all_request_data' => $request->all(),
-                'user_id' => $request->user()->id,
-            ]);
 
             $validated = $request->validate([
                 'status' => 'sometimes|string|in:pending,approved,sample_received,in_progress,completed,rejected,cancelled',
@@ -1241,38 +1160,65 @@ class RequestManagementController extends Controller
                 'assigned_to' => 'sometimes|nullable|exists:users,id',
                 'approval_notes' => 'sometimes|nullable|string|max:1000',
                 'result_summary' => 'sometimes|nullable|string',
-            ]);
-
-            Log::info('Validation passed', [
-                'validated_data' => $validated,
+                'result_files' => 'sometimes|array|max:10',
+                'result_files.*' => 'file|mimes:pdf,doc,docx,xlsx,xls,png,jpg,jpeg|max:10240', // 10MB max per file
             ]);
 
             // If status is being changed, add timestamp and user info
             if (isset($validated['status']) && $validated['status'] !== $testingRequest->status) {
-                Log::info('Status change detected', [
-                    'old_status' => $testingRequest->status,
-                    'new_status' => $validated['status'],
-                ]);
                 $validated['reviewed_at'] = now();
                 $validated['reviewed_by'] = $request->user()->id;
+
+                // Auto-set completion date when status changes to completed
+                if ($validated['status'] === 'completed') {
+                    $validated['completion_date'] = now();
+                }
             }
 
-            Log::info('About to update with data', [
-                'update_data' => $validated,
-            ]);
+            // Handle result file uploads for completed status
+            if ($request->hasFile('result_files')) {
+                $uploadedFiles = [];
+                $files = $request->file('result_files');
 
-            $updated = $testingRequest->update($validated);
+                foreach ($files as $index => $file) {
+                    if ($file && $file->isValid()) {
+                        // Generate unique filename: {request_id}_result_{timestamp}_{index}_{original_name}
+                        $timestamp = now()->format('YmdHis');
+                        $originalName = $file->getClientOriginalName();
+                        $extension = $file->getClientOriginalExtension();
+                        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+                        $fileName = "{$testingRequest->request_id}_result_{$timestamp}_{$index}_{$baseName}.{$extension}";
 
-            Log::info('Update result', [
-                'update_successful' => $updated,
-                'new_status_in_db' => $testingRequest->fresh()->status,
-                'model_after_update' => $testingRequest->toArray(),
-            ]);
+                        // Store file in testing-requests directory
+                        $filePath = $file->storeAs('testing-requests', $fileName, 'public');
+
+                        $uploadedFiles[] = [
+                            'original_name' => $originalName,
+                            'stored_name' => $fileName,
+                            'path' => $filePath,
+                            'size' => $file->getSize(),
+                            'mime_type' => $file->getMimeType(),
+                            'uploaded_at' => now()->toISOString(),
+                            'uploaded_by' => $request->user()->id,
+                        ];
+                    }
+                }
+
+                if (!empty($uploadedFiles)) {
+                    // Merge with existing files if any
+                    $existingFiles = $testingRequest->result_files_path ? json_decode($testingRequest->result_files_path, true) : [];
+                    $allFiles = array_merge($existingFiles, $uploadedFiles);
+                    $validated['result_files_path'] = json_encode($allFiles);
+                }
+            }
+
+            $testingRequest->update($validated);
 
             Log::info('Testing request updated', [
                 'request_id' => $testingRequest->request_id,
                 'admin_user_id' => $request->user()->id,
                 'changes' => array_keys($validated),
+                'files_uploaded' => $request->hasFile('result_files') ? count($request->file('result_files')) : 0,
             ]);
 
             return ApiResponse::success(
@@ -1417,6 +1363,85 @@ class RequestManagementController extends Controller
 
             return ApiResponse::error(
                 'Failed to reject testing request',
+                500,
+                null,
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * View testing results PDF in browser
+     */
+    public function downloadTestingResults(TestingRequest $testingRequest)
+    {
+        try {
+            // Only allow viewing for completed requests with files
+            if ($testingRequest->status !== 'completed') {
+                return ApiResponse::error(
+                    'Testing must be completed before viewing results',
+                    400
+                );
+            }
+
+            if (!$testingRequest->result_files_path) {
+                return ApiResponse::error(
+                    'No result files available',
+                    404
+                );
+            }
+
+            $files = json_decode($testingRequest->result_files_path, true);
+            if (!is_array($files) || empty($files)) {
+                return ApiResponse::error(
+                    'No valid result files found',
+                    404
+                );
+            }
+
+            // Get the first file (should be the PDF result)
+            $file = $files[0];
+            $filePath = storage_path('app/public/' . $file['path']);
+
+            if (!file_exists($filePath)) {
+                Log::warning('Testing result file not found', [
+                    'request_id' => $testingRequest->request_id,
+                    'file_path' => $filePath,
+                ]);
+
+                return ApiResponse::error(
+                    'Result file not found. Please contact administrator.',
+                    404
+                );
+            }
+
+            // Ensure it's a PDF file
+            if (!str_ends_with(strtolower($file['original_name']), '.pdf')) {
+                return ApiResponse::error(
+                    'Result file is not a PDF document',
+                    400
+                );
+            }
+
+            Log::info('Testing results PDF viewed', [
+                'request_id' => $testingRequest->request_id,
+                'file_name' => $file['original_name'],
+            ]);
+
+            // Return the PDF file for viewing in browser (inline display)
+            return response()->file($filePath, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $file['original_name'] . '"',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to view testing results', [
+                'request_id' => $testingRequest->request_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error(
+                'Failed to view results',
                 500,
                 null,
                 $e->getMessage()

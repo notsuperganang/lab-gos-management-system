@@ -248,11 +248,10 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
         Route::put('/testing/{testingRequest}/reject', [RequestManagementController::class, 'rejectTestingRequest'])
             ->name('testing.reject');
 
-        // Testing request letter management
-        Route::get('/testing/{testingRequest}/letter', [RequestManagementController::class, 'getTestingRequestLetter'])
-            ->name('testing.letter');
-        Route::post('/testing/{testingRequest}/letter/regenerate', [RequestManagementController::class, 'regenerateTestingRequestLetter'])
-            ->name('testing.letter.regenerate');
+
+        // Testing request results download
+        Route::get('/testing/{testingRequest}/results', [RequestManagementController::class, 'downloadTestingResults'])
+            ->name('testing.results');
     });
 
     // Equipment management

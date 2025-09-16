@@ -455,7 +455,7 @@
                                             <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                                                 <div class="flex items-center">
                                                     <i class="fas fa-file-pdf text-green-600 mr-3"></i>
-                                                    <span class="text-sm font-medium text-green-800" x-text="file.name || `Hasil_${index + 1}.pdf`"></span>
+                                                    <span class="text-sm font-medium text-green-800" x-text="file.original_name || `Hasil_${index + 1}.pdf`"></span>
                                                 </div>
                                                 <button @click="downloadResultFile(file)"
                                                         class="text-green-600 hover:text-green-800 transition-colors">
@@ -488,35 +488,28 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                        <!-- Download Hasil Pengujian -->
+                        <!-- Download Surat -->
                         <div class="bg-gray-50 rounded-2xl p-6 text-center hover:bg-gray-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="currentStatus === 'completed' ? 'bg-green-100' :
-                                         currentStatus === 'cancelled' ? 'bg-gray-200' : 'bg-gray-200'">
+                                 :class="currentStatus === 'completed' ? 'bg-green-100' : 'bg-gray-200'">
                                 <i class="fas fa-download text-2xl"
-                                   :class="currentStatus === 'completed' ? 'text-green-600' :
-                                           currentStatus === 'cancelled' ? 'text-gray-400' : 'text-gray-400'"></i>
+                                   :class="currentStatus === 'completed' ? 'text-green-600' : 'text-gray-400'"></i>
                             </div>
-                            <h4 class="font-bold text-gray-800 mb-2">Unduh Hasil Pengujian</h4>
+                            <h4 class="font-bold text-gray-800 mb-2">Download Surat</h4>
                             <p class="text-sm text-gray-600 mb-4">
-                                <span x-show="currentStatus === 'completed'">Hasil pengujian siap diunduh</span>
-                                <span x-show="currentStatus === 'pending'">Menunggu persetujuan admin</span>
-                                <span x-show="currentStatus === 'approved'">Pengujian disetujui, menunggu sampel</span>
-                                <span x-show="currentStatus === 'sample_received'">Sampel diterima, siap diuji</span>
-                                <span x-show="currentStatus === 'in_progress'">Pengujian sedang berlangsung</span>
-                                <span x-show="currentStatus === 'cancelled'" class="text-orange-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
+                                <span x-show="currentStatus === 'completed'">Surat hasil pengujian siap diunduh</span>
+                                <span x-show="currentStatus !== 'completed' && !['cancelled', 'rejected'].includes(currentStatus)">Menunggu penyelesaian pengujian</span>
+                                <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Tidak tersedia - permohonan dibatalkan</span>
                                 <span x-show="currentStatus === 'rejected'" class="text-red-600 font-semibold">Tidak tersedia - permohonan ditolak</span>
                             </p>
-                            <button @click="downloadResults()"
+                            <button @click="downloadLetter()"
                                     :disabled="currentStatus !== 'completed'"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
                                     :class="currentStatus === 'completed' ?
                                            'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl' :
                                            'bg-gray-300 text-gray-500 cursor-not-allowed'">
-                                <span x-show="currentStatus === 'completed'">
-                                    <i class="fas fa-download mr-2"></i>Unduh Hasil
-                                </span>
-                                <span x-show="currentStatus !== 'completed'">Belum Tersedia</span>
+                                <span x-show="currentStatus === 'completed'">Download</span>
+                                <span x-show="currentStatus !== 'completed'">Tidak Tersedia</span>
                             </button>
                         </div>
 
@@ -553,30 +546,32 @@
                         <!-- Cancel Pengujian -->
                         <div class="bg-red-50 rounded-2xl p-6 text-center hover:bg-red-100 transition-all duration-300">
                             <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                                 :class="['completed', 'cancelled', 'rejected'].includes(currentStatus) ? 'bg-gray-200' : 'bg-red-100'">
+                                 :class="['approved', 'in_progress', 'completed', 'cancelled', 'rejected'].includes(currentStatus) ? 'bg-gray-200' : 'bg-red-100'">
                                 <i class="fas fa-times text-2xl"
-                                   :class="['completed', 'cancelled', 'rejected'].includes(currentStatus) ? 'text-gray-400' : 'text-red-600'"></i>
+                                   :class="['approved', 'in_progress', 'completed', 'cancelled', 'rejected'].includes(currentStatus) ? 'text-gray-400' : 'text-red-600'"></i>
                             </div>
                             <h4 class="font-bold text-gray-800 mb-2">Batalkan Pengujian</h4>
                             <p class="text-sm text-gray-600 mb-4">
                                 <span x-show="currentStatus === 'pending'">Dapat dibatalkan sebelum disetujui</span>
-                                <span x-show="currentStatus === 'approved'">Dapat dibatalkan sebelum testing dimulai</span>
-                                <span x-show="currentStatus === 'in_progress'">Dapat dibatalkan dengan konsultasi admin</span>
+                                <span x-show="currentStatus === 'approved'">Tidak dapat dibatalkan - hubungi admin</span>
+                                <span x-show="currentStatus === 'in_progress'">Tidak dapat dibatalkan - hubungi admin</span>
                                 <span x-show="currentStatus === 'completed'">Tidak dapat dibatalkan - testing selesai</span>
                                 <span x-show="currentStatus === 'cancelled'" class="text-red-600 font-semibold">Sudah dibatalkan</span>
                                 <span x-show="currentStatus === 'rejected'" class="text-red-600 font-semibold">Sudah ditolak</span>
                             </p>
                             <button @click="cancelTesting()"
-                                    :disabled="['completed', 'cancelled', 'rejected'].includes(currentStatus) || cancelling"
+                                    :disabled="['approved', 'in_progress', 'completed', 'cancelled', 'rejected'].includes(currentStatus) || cancelling"
                                     class="w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
-                                    :class="['completed', 'cancelled', 'rejected'].includes(currentStatus) || cancelling ?
+                                    :class="['approved', 'in_progress', 'completed', 'cancelled', 'rejected'].includes(currentStatus) || cancelling ?
                                            'bg-gray-300 text-gray-500 cursor-not-allowed' :
                                            'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl'">
-                                <span x-show="['pending', 'approved', 'in_progress'].includes(currentStatus) && !cancelling">Batalkan</span>
+                                <span x-show="currentStatus === 'pending' && !cancelling">Batalkan</span>
                                 <span x-show="cancelling" class="flex items-center justify-center">
                                     <i class="fas fa-spinner fa-spin mr-2"></i>
                                     Membatalkan...
                                 </span>
+                                <span x-show="currentStatus === 'approved'">Hubungi Admin</span>
+                                <span x-show="currentStatus === 'in_progress'">Hubungi Admin</span>
                                 <span x-show="currentStatus === 'completed'">Tidak Tersedia</span>
                                 <span x-show="currentStatus === 'cancelled'">Sudah Dibatalkan</span>
                                 <span x-show="currentStatus === 'rejected'">Sudah Ditolak</span>
@@ -705,6 +700,92 @@
                         return;
                     }
 
+                    // Get phone from site settings
+                    if (!this.siteSettings) {
+                        console.warn('No site settings available for phone extraction');
+                        return;
+                    }
+                    const siteSettings = this.siteSettings.site_settings || {};
+
+                    console.log('=== PHONE EXTRACTION DEBUG ===');
+                    console.log('Site settings keys:', Object.keys(siteSettings));
+                    console.log('Phone field value:', siteSettings.phone);
+                    console.log('WhatsApp admin phone:', siteSettings.whatsapp_admin_phone);
+
+                    // Try to get phone in this priority order:
+                    // 1. Direct phone key from site settings
+                    // 2. WhatsApp admin phone if available
+                    // 3. Technical contact phone
+                    // 4. Lab head phone
+                    let adminPhone = null;
+
+                    if (siteSettings.phone) {
+                        adminPhone = siteSettings.phone;
+                    } else if (siteSettings.whatsapp_admin_phone) {
+                        adminPhone = siteSettings.whatsapp_admin_phone;
+                    } else if (siteSettings.technical_contact_phone) {
+                        adminPhone = siteSettings.technical_contact_phone;
+                    } else if (siteSettings.lab_head_phone) {
+                        adminPhone = siteSettings.lab_head_phone;
+                    } else {
+                        // Check all settings for any phone-like pattern
+                        const settingsEntries = Object.entries(siteSettings);
+                        for (const [key, value] of settingsEntries) {
+                            if (key.toLowerCase().includes('phone') && value && typeof value === 'string') {
+                                adminPhone = value;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Format phone number for WhatsApp (remove +, spaces, dashes)
+                    if (adminPhone) {
+                        console.log('Raw admin phone before formatting:', adminPhone);
+                        this.adminPhone = adminPhone.replace(/[\s\-\+]/g, '');
+
+                        // Ensure it starts with country code
+                        if (!this.adminPhone.startsWith('62') && this.adminPhone.startsWith('08')) {
+                            console.log('Converting 08 to 62 format');
+                            this.adminPhone = '62' + this.adminPhone.substring(1);
+                        }
+
+                        console.log('Final formatted admin phone:', this.adminPhone);
+                    } else {
+                        console.warn('No admin phone found in site settings');
+                    }
+                    console.log('=== PHONE EXTRACTION DEBUG END ===');
+                },
+
+                // Load site settings for admin contact info
+                async loadSiteSettings() {
+                    try {
+                        const response = await window.LabGOS.getSiteSettings();
+                        if (response.success) {
+                            this.siteSettings = response.data;
+                            this.extractAdminPhone();
+                        }
+                    } catch (error) {
+                        console.error('Failed to load site settings:', error);
+                    }
+                },
+
+                // Extract admin phone from site settings
+                extractAdminPhone() {
+                    // Use WhatsApp admin phone directly since it's the most accurate
+                    const whatsappAdminPhones = this.siteSettings?.whatsapp_admin_phones;
+
+                    if (whatsappAdminPhones && whatsappAdminPhones.length > 0) {
+                        // Use first WhatsApp admin phone
+                        let adminPhone = whatsappAdminPhones[0];
+                        // Format phone number for WhatsApp (remove +, spaces, dashes)
+                        this.adminPhone = adminPhone.replace(/[\s\-\+]/g, '');
+                        // Ensure it starts with country code
+                        if (!this.adminPhone.startsWith('62') && this.adminPhone.startsWith('08')) {
+                            this.adminPhone = '62' + this.adminPhone.substring(1);
+                        }
+                        return;
+                    }
+
                     // Fallback to site settings if WhatsApp admin phones not available
                     if (!this.siteSettings) return;
                     const siteSettings = this.siteSettings.site_settings || {};
@@ -738,6 +819,40 @@
                             this.adminPhone = '62' + this.adminPhone.substring(1);
                         }
                     }
+                },
+
+                // Download letter functionality
+                downloadLetter() {
+                    if (this.currentStatus !== 'completed') {
+                        alert('Surat hasil pengujian belum tersedia. Pengujian harus selesai terlebih dahulu.');
+                        return;
+                    }
+
+                    // Debug: Log file extraction result
+                    console.log('Download Letter - Files found:', {
+                        currentStatus: this.currentStatus,
+                        'resultsInfo.files.length': this.resultsInfo.files?.length,
+                        'files': this.resultsInfo.files
+                    });
+
+                    // Check if testing has result files
+                    if (!this.resultsInfo.files || this.resultsInfo.files.length === 0) {
+                        // Try to construct URL directly using the pattern from your database
+                        const requestId = this.testingData?.request_id;
+                        if (requestId) {
+                            // Generate likely file URL based on the pattern you showed
+                            const fileName = `${requestId}_result_*_dokumentasi-resmi.pdf`;
+                            alert(`Files not found in API response. Request ID: ${requestId}\n\nPlease check browser console for detailed logs and contact admin.`);
+                            console.error('No files found. Expected data structure not available.');
+                            return;
+                        }
+                        alert('Surat hasil pengujian tidak tersedia. Hubungi admin untuk informasi lebih lanjut.');
+                        return;
+                    }
+
+                    // Download the first result file (which should be the main letter/report)
+                    const mainFile = this.resultsInfo.files[0];
+                    this.downloadResultFile(mainFile);
                 },
 
                 // Load testing data from API
@@ -855,9 +970,73 @@
 
                 get resultsInfo() {
                     if (!this.testingData) return {};
+
+                    // Handle multiple possible data structures and avoid duplicates
+                    let files = [];
+
+                    // Try to get files from different possible locations
+                    if (this.testingData.results?.files) {
+                        // Check if files is a string (JSON) or already an array
+                        if (typeof this.testingData.results.files === 'string') {
+                            try {
+                                const parsedFiles = JSON.parse(this.testingData.results.files);
+                                if (Array.isArray(parsedFiles)) {
+                                    files = parsedFiles.map(file => ({
+                                        original_name: file.original_name,
+                                        download_url: `${window.location.origin}/storage/${file.path.replace(/\\\//g, '/')}`,
+                                        size: file.size,
+                                        mime_type: file.mime_type,
+                                        uploaded_at: file.uploaded_at
+                                    }));
+                                }
+                            } catch (e) {
+                                console.error('Failed to parse results.files JSON:', e);
+                                files = [];
+                            }
+                        } else if (Array.isArray(this.testingData.results.files)) {
+                            files = this.testingData.results.files;
+                        }
+                    } else if (this.testingData.result_files) {
+                        files = this.testingData.result_files;
+                    } else if (this.testingData.result_files_path) {
+                        // Fallback: parse the raw JSON string from database
+                        try {
+                            const rawFiles = JSON.parse(this.testingData.result_files_path);
+                            if (Array.isArray(rawFiles)) {
+                                files = rawFiles.map(file => ({
+                                    original_name: file.original_name,
+                                    download_url: `${window.location.origin}/storage/${file.path.replace(/\\\//g, '/')}`,
+                                    size: file.size,
+                                    mime_type: file.mime_type,
+                                    uploaded_at: file.uploaded_at
+                                }));
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse result_files_path:', e);
+                            files = [];
+                        }
+                    }
+
+                    // Ensure files is an array and filter out any invalid entries
+                    if (!Array.isArray(files)) {
+                        files = [];
+                    }
+
+                    // Remove duplicates based on original_name or download_url
+                    const uniqueFiles = files.filter((file, index, self) => {
+                        if (!file || typeof file !== 'object') return false;
+
+                        const identifier = file.original_name || file.download_url || file.name;
+                        if (!identifier) return false;
+
+                        return index === self.findIndex(f =>
+                            (f.original_name || f.download_url || f.name) === identifier
+                        );
+                    });
+
                     return {
-                        summary: this.testingData.results?.summary || '',
-                        files: this.testingData.results?.files || []
+                        summary: this.testingData.results?.summary || this.testingData.result_summary || '',
+                        files: uniqueFiles
                     };
                 },
 
@@ -1254,15 +1433,22 @@
                 },
 
                 downloadResultFile(file) {
-                    if (!file || !file.url) {
-                        alert('File tidak tersedia atau rusak.');
+                    if (!file) {
+                        alert('File tidak tersedia.');
+                        return;
+                    }
+
+                    // Get the download URL from various possible properties
+                    const downloadUrl = file.download_url || file.url;
+                    if (!downloadUrl) {
+                        alert('URL file tidak tersedia atau rusak.');
                         return;
                     }
 
                     // Create download link
                     const link = document.createElement('a');
-                    link.href = file.url;
-                    link.download = file.name || `Hasil_Pengujian_${this.testingId}.pdf`;
+                    link.href = downloadUrl;
+                    link.download = file.original_name || file.name || `Hasil_Pengujian_${this.testingId}.pdf`;
                     link.click();
 
                     alert('File hasil pengujian sedang diunduh...');
@@ -1316,6 +1502,12 @@
                         alert(`Harap tunggu ${this.cooldownText.replace('Tunggu ', '')} sebelum mengirim pesan lagi.`);
                         return;
                     }
+
+                    // Check if admin phone is available
+                    if (!this.adminPhone) {
+                        alert('Nomor WhatsApp admin tidak tersedia. Silakan hubungi admin melalui email atau telepon.');
+                        return;
+                    }
                     // Generate tracking URL
                     const trackingUrl = `${window.location.origin}/layanan/testing/confirmation/${this.testingId}`;
 
@@ -1366,9 +1558,8 @@ Laboratorium GOS - Departemen Fisika FMIPA USK
 Email: labgos@usu.ac.id
 Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
 
-                    // Get admin phone from environment or use fallback
-                    const phoneNumber = '{{ str_replace("+", "", env("WHATSAPP_LAB_PHONE", "6285338573726")) }}';
-                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    // Use admin phone from site settings
+                    const whatsappUrl = `https://wa.me/${this.adminPhone}?text=${encodeURIComponent(message)}`;
 
                     // Start cooldown after successful message
                     this.startCooldown();
@@ -1436,6 +1627,17 @@ Jam Operasional: Senin-Jumat, 08:00-16:00 WIB`;
                 // Contact admin for cost/duration concerns
                 contactAdminForCostConcern() {
                     // Check cooldown
+                    if (!this.canSendMessage) {
+                        alert(`Harap tunggu ${this.cooldownText.replace('Tunggu ', '')} sebelum mengirim pesan lagi.`);
+                        return;
+                    }
+
+                    // Check if admin phone is available
+                    if (!this.adminPhone) {
+                        alert('Nomor WhatsApp admin tidak tersedia. Silakan hubungi admin melalui email atau telepon.');
+                        return;
+                    }
+
                     if (this.isInCooldown()) {
                         const minutes = Math.ceil(this.remainingTime / 60000);
                         alert(`Silakan tunggu ${minutes} menit sebelum mengirim pesan lagi.`);
@@ -1466,9 +1668,8 @@ Hormat saya,
 ${this.clientInfo.name}
 ${this.clientInfo.organization}`;
 
-                    // Get admin phone from environment
-                    const phoneNumber = '{{ str_replace("+", "", env("WHATSAPP_LAB_PHONE", "6285338573726")) }}';
-                    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    // Use admin phone from site settings
+                    const whatsappUrl = `https://wa.me/${this.adminPhone}?text=${encodeURIComponent(message)}`;
 
                     // Start cooldown after successful message
                     this.startCooldown();

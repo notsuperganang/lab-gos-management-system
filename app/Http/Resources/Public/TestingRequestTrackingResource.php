@@ -52,7 +52,7 @@ class TestingRequestTrackingResource extends JsonResource
             ],
             'results' => [
                 'summary' => $this->result_summary,
-                'files' => $this->result_files_path,
+                'files' => $this->getResultFilesWithUrls(),
             ],
 
             // Flat format for admin interface compatibility
@@ -73,6 +73,7 @@ class TestingRequestTrackingResource extends JsonResource
             'completion_date' => $this->completion_date?->format('Y-m-d'),
             'result_summary' => $this->result_summary,
             'result_files_path' => $this->result_files_path,
+            'result_files' => $this->getResultFilesWithUrls(),
             'cost' => $this->cost,
 
             'submitted_at' => $this->submitted_at->format('Y-m-d H:i:s'),
@@ -87,6 +88,31 @@ class TestingRequestTrackingResource extends JsonResource
             'is_overdue' => $this->isOverdue(),
             'timeline' => $this->getTimeline(),
         ];
+    }
+
+    /**
+     * Get result files with downloadable URLs
+     */
+    private function getResultFilesWithUrls(): ?array
+    {
+        if (!$this->result_files_path) {
+            return null;
+        }
+
+        $files = json_decode($this->result_files_path, true);
+        if (!is_array($files)) {
+            return null;
+        }
+
+        return array_map(function ($file) {
+            return [
+                'original_name' => $file['original_name'] ?? 'Unknown',
+                'size' => $file['size'] ?? 0,
+                'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
+                'uploaded_at' => $file['uploaded_at'] ?? null,
+                'download_url' => asset('storage/' . $file['path']),
+            ];
+        }, $files);
     }
 
     /**

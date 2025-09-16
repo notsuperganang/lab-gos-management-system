@@ -303,19 +303,11 @@
                                         </button>
                                     </template>
 
-                                    <!-- PDF Letter for approved/sample_received/completed -->
-                                    <template x-if="['approved', 'sample_received', 'completed'].includes(request.status)">
-                                        <button @click="downloadLetter(request.id)"
-                                                class="text-purple-600 hover:text-purple-900 text-xs px-2 py-1 rounded border border-purple-200 hover:bg-purple-50">
-                                            Surat
-                                        </button>
-                                    </template>
-
-                                    <!-- Results Download for completed -->
+                                    <!-- Letter Download for completed tests with uploaded files -->
                                     <template x-if="request.status === 'completed' && request.result_files_path">
                                         <button @click="downloadResults(request.id)"
-                                                class="text-indigo-600 hover:text-indigo-900 text-xs px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-50">
-                                            Hasil
+                                                class="text-purple-600 hover:text-purple-900 text-xs px-2 py-1 rounded border border-purple-200 hover:bg-purple-50">
+                                            Surat
                                         </button>
                                     </template>
                                 </div>
@@ -575,40 +567,66 @@
                                 </dl>
                             </div>
 
-                            <!-- Approval Notes -->
-                            <div class="bg-gradient-to-br from-slate-50 to-gray-50 p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.approval_notes">
-                                <div class="flex items-center mb-4">
-                                    <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-                                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                    </div>
-                                    <h4 class="text-lg font-semibold text-slate-900">Catatan Persetujuan</h4>
+                        </div>
+                    </div>
+
+                    <!-- Full Width Sections -->
+                    <div class="mt-8 space-y-6">
+                        <!-- Approval Notes - Full Width -->
+                        <div class="bg-gradient-to-br from-slate-50 to-gray-50 p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.approval_notes">
+                            <div class="flex items-center mb-4">
+                                <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
                                 </div>
+                                <h4 class="text-lg font-semibold text-slate-900">Catatan Persetujuan</h4>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-100">
                                 <p class="text-sm text-gray-700 leading-relaxed" x-text="selectedRequest?.approval_notes"></p>
                             </div>
+                        </div>
 
-                            <!-- Results Section -->
-                            <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-6 rounded-xl border border-indigo-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.status === 'completed'">
-                                <div class="flex items-center mb-4">
-                                    <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                    </div>
-                                    <h4 class="text-lg font-semibold text-indigo-900">Hasil Pengujian</h4>
+                        <!-- Results Section - Full Width -->
+                        <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-6 rounded-xl border border-indigo-200 shadow-sm hover:shadow-md transition-all duration-200" x-show="selectedRequest?.status === 'completed'">
+                            <div class="flex items-center mb-4">
+                                <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
                                 </div>
+                                <h4 class="text-lg font-semibold text-indigo-900">Hasil Pengujian</h4>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-lg border border-indigo-100 space-y-4">
                                 <div x-show="selectedRequest?.result_summary">
-                                    <p class="text-sm text-gray-700 leading-relaxed mb-4" x-text="selectedRequest?.result_summary"></p>
+                                    <h5 class="text-sm font-medium text-gray-900 mb-2">Ringkasan Hasil:</h5>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-700 leading-relaxed" x-text="selectedRequest?.result_summary"></p>
+                                    </div>
                                 </div>
+
                                 <div x-show="selectedRequest?.result_files_path">
+                                    <h5 class="text-sm font-medium text-gray-900 mb-3">Dokumen Hasil:</h5>
                                     <button @click="downloadResults(selectedRequest.id)"
-                                            class="inline-flex items-center px-4 py-2 border border-indigo-300 rounded-lg text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            class="inline-flex items-center px-6 py-3 border border-indigo-300 rounded-lg text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 shadow-sm hover:shadow-md">
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                         </svg>
-                                        Download Hasil Pengujian
+                                        <span class="mr-2">📄</span>
+                                        Lihat Surat Hasil Pengujian
                                     </button>
+                                </div>
+
+                                <div x-show="selectedRequest?.completion_date" class="mt-4 pt-4 border-t border-indigo-200">
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span class="font-medium">Pengujian selesai pada:</span>
+                                        <span class="ml-2 text-green-600 font-medium" x-text="formatDate(selectedRequest?.completion_date)"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1239,9 +1257,14 @@ document.addEventListener('alpine:init', () => {
 
                 // Add result files if any
                 if (this.statusForm.result_files && this.statusForm.result_files.length > 0) {
+                    console.log('Adding files to FormData:', this.statusForm.result_files);
                     this.statusForm.result_files.forEach((file, index) => {
-                        formData.append(`result_files[${index}]`, file);
+                        console.log(`Adding file ${index}:`, file.name, file.size, file.type);
+                        // Use the same key name for all files, Laravel will automatically create an array
+                        formData.append('result_files[]', file);
                     });
+                } else {
+                    console.log('No files to upload - result_files:', this.statusForm.result_files);
                 }
 
                 const apiUrl = `/api/admin/requests/testing/${this.selectedRequest.id}`;
@@ -1274,8 +1297,20 @@ document.addEventListener('alpine:init', () => {
 
                 if (data.success) {
                     this.showUpdateStatusModalOpen = false;
-                    this.showDetailModalOpen = false;
                     this.$dispatch('global-success', { message: 'Status pengujian berhasil diupdate!' });
+
+                    // Refresh the selected request data with updated information
+                    this.selectedRequest = data.data;
+
+                    // Reset status form
+                    this.statusForm = {
+                        status: '',
+                        notes: '',
+                        result_summary: '',
+                        result_files: []
+                    };
+
+                    // Reload the requests list and summary
                     await this.loadRequests();
                     await this.loadSummary();
                 } else {
@@ -1298,7 +1333,9 @@ document.addEventListener('alpine:init', () => {
 
         handleResultsFile(event) {
             const files = Array.from(event.target.files);
+            console.log('Files selected:', files);
             this.statusForm.result_files = files;
+            console.log('statusForm.result_files updated:', this.statusForm.result_files);
         },
 
         async downloadLetter(requestId) {
@@ -1346,7 +1383,7 @@ document.addEventListener('alpine:init', () => {
                 const response = await fetch(`/api/admin/requests/testing/${requestId}/results`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/octet-stream'
+                        'Accept': 'application/pdf'
                     }
                 });
 
@@ -1354,20 +1391,22 @@ document.addEventListener('alpine:init', () => {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
+                // Get the PDF blob and create a URL
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `hasil-pengujian-${requestId}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
 
-                this.$dispatch('global-success', { message: 'Hasil pengujian berhasil diunduh!' });
+                // Open PDF in new tab
+                window.open(url, '_blank');
+
+                // Clean up the URL after a delay
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+
+                this.$dispatch('global-success', { message: 'Surat hasil pengujian dibuka di tab baru!' });
             } catch (error) {
-                console.error('Failed to download results:', error);
-                this.$dispatch('global-error', { message: 'Gagal mengunduh hasil: ' + error.message });
+                console.error('Failed to open results:', error);
+                this.$dispatch('global-error', { message: 'Gagal membuka surat: ' + error.message });
             }
         },
 
