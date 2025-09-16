@@ -490,11 +490,9 @@ document.addEventListener('alpine:init', () => {
         slotErrors: [],
 
         async init() {
-            console.log('Initializing gallery component...');
-            
             // Try to wait for AdminAPI briefly, but don't block on it
             await this.waitForAdminAPI();
-            
+
             // Load data regardless of AdminAPI availability (fallback will handle it)
             await this.fetchItems();
             await this.loadFeaturedSlots();
@@ -503,21 +501,17 @@ document.addEventListener('alpine:init', () => {
         async waitForAdminAPI() {
             return new Promise((resolve) => {
                 if (typeof window.AdminAPI !== 'undefined') {
-                    console.log('AdminAPI already available');
                     resolve();
                 } else {
-                    console.log('Waiting for AdminAPI to load...');
                     let attempts = 0;
                     const maxAttempts = 20; // 1 second max wait
-                    
+
                     const checkInterval = setInterval(() => {
                         attempts++;
                         if (typeof window.AdminAPI !== 'undefined') {
-                            console.log('AdminAPI became available');
                             clearInterval(checkInterval);
                             resolve();
                         } else if (attempts >= maxAttempts) {
-                            console.warn('AdminAPI not loaded yet, continuing with fallback');
                             clearInterval(checkInterval);
                             resolve();
                         }
@@ -577,9 +571,6 @@ document.addEventListener('alpine:init', () => {
                 Object.entries(this.filters).forEach(([k,v]) => { 
                     if (v !== '' && v !== null) params.append(k, v); 
                 });
-
-                console.log('Fetching gallery items with token:', token ? 'present' : 'missing');
-                console.log('Fetch params:', params.toString());
 
                 const res = await fetch(`/api/admin/content/gallery?${params.toString()}`, {
                     headers: { 
@@ -641,9 +632,6 @@ document.addEventListener('alpine:init', () => {
                 const response = await res.json();
                 
                 if (response.success) {
-                    // Debug logging
-                    console.log('Featured slots response:', response.data);
-                    
                     // Handle both array and object formats from API
                     let slots = response.data.slots || { '1': null, '2': null, '3': null, '4': null };
                     
@@ -669,12 +657,7 @@ document.addEventListener('alpine:init', () => {
                     }
                     
                     this.availableGalleries = response.data.available_galleries || [];
-                    
-                    // Additional debug logging
-                    console.log('Processed featured slots:', this.featuredSlots);
-                    console.log('Available galleries:', this.availableGalleries.length);
                 } else {
-                    console.warn('Featured slots API returned non-success:', response.message);
                     this.setDefaultSlots();
                 }
                 
@@ -737,8 +720,6 @@ document.addEventListener('alpine:init', () => {
                     throw new Error('Token tidak ditemukan. Silakan login ulang.');
                 }
                 
-                console.log('Saving featured slots with token:', token ? 'present' : 'missing');
-                console.log('Saving slots data:', this.featuredSlots);
                 
                 // Prepare data for API - convert object keys to individual fields
                 const apiData = {
@@ -748,7 +729,6 @@ document.addEventListener('alpine:init', () => {
                     '4': this.featuredSlots['4'] || null
                 };
                 
-                console.log('API data format:', apiData);
                 
                 const res = await fetch('/api/admin/content/gallery/featured-slots', {
                     method: 'PUT',
@@ -811,8 +791,6 @@ document.addEventListener('alpine:init', () => {
                     throw new Error('Token tidak ditemukan. Silakan login ulang.');
                 }
                 
-                console.log('Reordering gallery item with token:', token ? 'present' : 'missing');
-                console.log('Reordering item:', item.id, 'to order:', newOrder);
 
                 const res = await fetch('/api/admin/content/gallery/reorder', {
                     method: 'PUT',
@@ -961,8 +939,6 @@ document.addEventListener('alpine:init', () => {
                     throw new Error('Token tidak ditemukan. Silakan login ulang.');
                 }
                 
-                console.log('Submitting gallery form with token:', token ? 'present' : 'missing');
-                console.log('Is edit operation:', isEdit);
                 
                 const url = isEdit ? `/api/admin/content/gallery/${this.form.id}` : '/api/admin/content/gallery';
                 
@@ -1041,8 +1017,6 @@ document.addEventListener('alpine:init', () => {
                     throw new Error('Token tidak ditemukan. Silakan login ulang.');
                 }
                 
-                console.log('Deleting gallery item with token:', token ? 'present' : 'missing');
-                console.log('Deleting item ID:', this.selectedItem.id);
                 
                 const res = await fetch(`/api/admin/content/gallery/${this.selectedItem.id}`, {
                     method: 'DELETE',

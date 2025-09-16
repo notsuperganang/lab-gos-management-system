@@ -698,10 +698,7 @@ window.staffData = () => ({
 
     // Initialize component
     async init() {
-        console.log('Staff management initializing...');
-
         if (!this.apiToken) {
-            console.error('No admin token found, redirecting to login');
             window.location.href = '/admin/login';
             return;
         }
@@ -751,7 +748,6 @@ window.staffData = () => ({
             if (data.success) {
                 this.staffList = data.data;
                 this.pagination = data.meta?.pagination || this.pagination;
-                console.log('Staff data loaded:', this.staffList.length, 'items');
             } else {
                 throw new Error(data.message || 'Failed to fetch staff');
             }

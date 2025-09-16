@@ -1231,11 +1231,6 @@ document.addEventListener('alpine:init', () => {
         async updateStatus() {
             if (!this.selectedRequest || !this.statusForm.status) return;
 
-            console.log('updateStatus called with:', {
-                selectedRequestId: this.selectedRequest.id,
-                statusFormStatus: this.statusForm.status,
-                selectedRequest: this.selectedRequest
-            });
 
             this.submitting = true;
             try {
@@ -1257,22 +1252,14 @@ document.addEventListener('alpine:init', () => {
 
                 // Add result files if any
                 if (this.statusForm.result_files && this.statusForm.result_files.length > 0) {
-                    console.log('Adding files to FormData:', this.statusForm.result_files);
                     this.statusForm.result_files.forEach((file, index) => {
-                        console.log(`Adding file ${index}:`, file.name, file.size, file.type);
                         // Use the same key name for all files, Laravel will automatically create an array
                         formData.append('result_files[]', file);
                     });
                 } else {
-                    console.log('No files to upload - result_files:', this.statusForm.result_files);
                 }
 
                 const apiUrl = `/api/admin/requests/testing/${this.selectedRequest.id}`;
-                console.log('Making API request to:', apiUrl);
-                console.log('FormData contents:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(key, value);
-                }
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -1283,17 +1270,13 @@ document.addEventListener('alpine:init', () => {
                     body: formData
                 });
 
-                console.log('API Response status:', response.status);
-                console.log('API Response headers:', response.headers);
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.log('API Error response text:', errorText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                console.log('API Response data:', data);
 
                 if (data.success) {
                     this.showUpdateStatusModalOpen = false;
@@ -1333,9 +1316,7 @@ document.addEventListener('alpine:init', () => {
 
         handleResultsFile(event) {
             const files = Array.from(event.target.files);
-            console.log('Files selected:', files);
             this.statusForm.result_files = files;
-            console.log('statusForm.result_files updated:', this.statusForm.result_files);
         },
 
         async downloadLetter(requestId) {

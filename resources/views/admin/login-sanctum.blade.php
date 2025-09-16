@@ -124,8 +124,7 @@
                         if (response.ok && data.success) {
                             // Store token in localStorage
                             localStorage.setItem('admin_token', data.data.token);
-                            console.log('Login successful, redirecting...');
-                            
+
                             // Redirect to dashboard
                             window.location.href = '/admin/dashboard';
                         } else {
