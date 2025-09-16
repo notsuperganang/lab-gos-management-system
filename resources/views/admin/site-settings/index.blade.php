@@ -650,14 +650,15 @@ function siteSettingsManager() {
         },
 
         getContentSettings() {
-            return Object.keys(this.settings).filter(key => 
-                ['vision', 'mission', 'about', 'footer_text', 'safety_policy', 'equipment_usage_policy'].includes(key) &&
+            return Object.keys(this.settings).filter(key =>
+                ['vision', 'mission', 'about'].includes(key) &&
                 this.settings[key]?.type !== 'json'
             );
         },
 
         getJsonSettings() {
-            return Object.keys(this.settings).filter(key => 
+            return Object.keys(this.settings).filter(key =>
+                ['social_media', 'lab_head', 'technical_contact'].includes(key) &&
                 this.settings[key]?.type === 'json'
             );
         },

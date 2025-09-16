@@ -104,23 +104,6 @@ Banda Aceh, Aceh 23111',
                 'is_active' => true,
             ],
 
-            // Operating Hours
-            [
-                'key' => 'operating_hours',
-                'title' => 'Jam Operasional',
-                'content' => json_encode([
-                    'senin' => '08:00 - 16:00',
-                    'selasa' => '08:00 - 16:00',
-                    'rabu' => '08:00 - 16:00',
-                    'kamis' => '08:00 - 16:00',
-                    'jumat' => '08:00 - 11:30, 13:30 - 16:00',
-                    'sabtu' => 'Tutup',
-                    'minggu' => 'Tutup',
-                    'catatan' => 'Jam operasional dapat berubah pada hari libur nasional'
-                ]),
-                'type' => 'json',
-                'is_active' => true,
-            ],
 
             // About Laboratory
             [
@@ -135,53 +118,6 @@ Banda Aceh, Aceh 23111',
                 'is_active' => true,
             ],
 
-            // Services
-            [
-                'key' => 'services',
-                'title' => 'Layanan Laboratorium',
-                'content' => json_encode([
-                    'praktikum' => [
-                        'title' => 'Praktikum Mahasiswa',
-                        'description' => 'Praktikum untuk mata kuliah Fisika Instrumentasi, Getaran dan Gelombang, Optik, dan Spektroskopi'
-                    ],
-                    'penelitian' => [
-                        'title' => 'Penelitian',
-                        'description' => 'Fasilitas penelitian untuk mahasiswa S1, S2, S3 dan dosen'
-                    ],
-                    'testing' => [
-                        'title' => 'Layanan Testing',
-                        'description' => 'Layanan analisis dan karakterisasi material menggunakan spektroskopi UV-Vis dan FTIR'
-                    ],
-                    'pelatihan' => [
-                        'title' => 'Pelatihan',
-                        'description' => 'Pelatihan penggunaan peralatan instrumentasi untuk mahasiswa dan peneliti'
-                    ],
-                    'konsultasi' => [
-                        'title' => 'Konsultasi',
-                        'description' => 'Konsultasi teknis dalam bidang instrumentasi dan analisis data'
-                    ]
-                ]),
-                'type' => 'json',
-                'is_active' => true,
-            ],
-
-            // Research Areas
-            [
-                'key' => 'research_areas',
-                'title' => 'Bidang Penelitian',
-                'content' => json_encode([
-                    'Material Characterization',
-                    'Optical Properties of Materials',
-                    'Vibrational Spectroscopy',
-                    'Laser Applications',
-                    'Sensor Development',
-                    'Nondestructive Testing',
-                    'Biomedical Optics',
-                    'Environmental Monitoring'
-                ]),
-                'type' => 'json',
-                'is_active' => true,
-            ],
 
             // Social Media
             [
@@ -197,62 +133,6 @@ Banda Aceh, Aceh 23111',
                 'is_active' => true,
             ],
 
-            // Policies and Procedures
-            [
-                'key' => 'safety_policy',
-                'title' => 'Kebijakan Keselamatan',
-                'content' => '<h3>Kebijakan Keselamatan Laboratorium</h3>
-<ol>
-    <li><strong>Alat Pelindung Diri (APD)</strong>: Wajib menggunakan APD yang sesuai saat bekerja di laboratorium</li>
-    <li><strong>Pelatihan Keselamatan</strong>: Semua pengguna harus mengikuti pelatihan keselamatan sebelum menggunakan peralatan</li>
-    <li><strong>Prosedur Darurat</strong>: Setiap pengguna harus memahami prosedur darurat dan lokasi peralatan keselamatan</li>
-    <li><strong>Penggunaan Laser</strong>: Khusus untuk peralatan laser, wajib menggunakan kacamata pengaman laser</li>
-    <li><strong>Pelaporan Insiden</strong>: Setiap insiden atau kecelakaan harus dilaporkan segera kepada penanggung jawab laboratorium</li>
-</ol>',
-                'type' => 'rich_text',
-                'is_active' => true,
-            ],
-
-            // Equipment Usage Policy
-            [
-                'key' => 'equipment_usage_policy',
-                'title' => 'Kebijakan Penggunaan Peralatan',
-                'content' => '<h3>Aturan Penggunaan Peralatan</h3>
-<ol>
-    <li><strong>Reservasi</strong>: Peralatan harus direservasi terlebih dahulu melalui sistem online</li>
-    <li><strong>Pelatihan</strong>: Pengguna harus telah mengikuti pelatihan penggunaan peralatan yang bersangkutan</li>
-    <li><strong>Supervisi</strong>: Mahasiswa S1 harus didampingi oleh asisten atau pembimbing</li>
-    <li><strong>Maintenance</strong>: Laporkan segera jika terdapat kerusakan atau masalah pada peralatan</li>
-    <li><strong>Dokumentasi</strong>: Catat setiap penggunaan peralatan dalam logbook yang tersedia</li>
-</ol>',
-                'type' => 'rich_text',
-                'is_active' => true,
-            ],
-
-            // Footer Information
-            [
-                'key' => 'footer_text',
-                'title' => 'Teks Footer',
-                'content' => '© 2024 Laboratorium Getaran, Optik, dan Spektroskopi - Departemen Fisika FMIPA Universitas Syiah Kuala. All rights reserved.',
-                'type' => 'text',
-                'is_active' => true,
-            ],
-
-            // Logo and Branding
-            [
-                'key' => 'lab_logo',
-                'title' => 'Logo Laboratorium',
-                'content' => 'images/lab-logo.png',
-                'type' => 'image',
-                'is_active' => true,
-            ],
-            [
-                'key' => 'institution_logo',
-                'title' => 'Logo Institusi',
-                'content' => 'images/Unsyiah-logo.png',
-                'type' => 'image',
-                'is_active' => true,
-            ],
 
             // Contact Person
             [
