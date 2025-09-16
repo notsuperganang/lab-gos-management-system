@@ -190,7 +190,25 @@ Route::middleware(['auth:sanctum', 'role:admin,super_admin'])->prefix('admin')->
 
     // Profile management
     Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', function (Request $request) {
+            $user = $request->user();
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'position' => $user->position,
+                    'role' => $user->role,
+                    'avatar_path' => $user->avatar_path,
+                    'avatar_url' => $user->avatar_path ? asset('storage/' . $user->avatar_path) : null,
+                ],
+            ]);
+        })->name('show');
         Route::post('/', [App\Http\Controllers\Admin\ProfileController::class, 'update'])
+            ->name('update');
+        Route::put('/', [App\Http\Controllers\Admin\ProfileController::class, 'update'])
             ->name('update');
         Route::put('/password', [App\Http\Controllers\Admin\ProfileController::class, 'updatePassword'])
             ->name('update-password');
