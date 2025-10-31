@@ -17,17 +17,21 @@
                     <img src="/assets/images/logo-fisika-putih.png"
                         alt="Logo Fisika FMIPA USK"
                         class="h-12 w-auto transform">
-                    <div>
-                        <h3 class="text-xl font-bold">{{ $labConfig['name'] ?? 'Lab GOS' }}</h3>
-                        <p class="text-blue-200">{{ $labConfig['code'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}</p>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-xl font-bold truncate" title="{{ $siteSettings['lab_name'] ?? $labConfig['name'] ?? 'Lab GOS' }}">
+                            {{ $siteSettings['lab_name'] ?? $labConfig['name'] ?? 'Lab GOS' }}
+                        </h3>
+                        <p class="text-blue-200 text-sm truncate" title="{{ $siteSettings['lab_acronym'] ?? $labConfig['code'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}">
+                            {{ $siteSettings['lab_acronym'] ?? $labConfig['code'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}
+                        </p>
                     </div>
                 </div>
-                <p class="text-blue-100 mb-6 max-w-md leading-relaxed">
-                    Pusat keunggulan penelitian dan pendidikan di bidang gelombang, optik, dan spektroskopi. Melayani kebutuhan analisis ilmiah dengan teknologi canggih dan standar internasional untuk kemajuan sains Indonesia.
+                <p class="text-blue-100 mb-6 max-w-md leading-relaxed text-sm">
+                    Pusat keunggulan penelitian dan inovasi dalam bidang gelombang, optik, dan spektroskopi.
+                    Kami menyediakan layanan pengujian, peminjaman alat, dan akses laboratorium dengan
+                    teknologi terkini untuk mendukung kemajuan pendidikan dan riset sains di Indonesia.
                 </p>
-            </div>
-
-            <!-- Quick Links - Services -->
+            </div>            <!-- Quick Links - Services -->
             <div x-data="{ animated: false }"
                 x-scroll-animate="animated = true"
                 :class="animated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
@@ -109,31 +113,35 @@
                     Kontak
                 </h4>
                 <div class="space-y-4">
+                    @php
+                        $address = $siteSettings['address'] ?? $labConfig['address'] ?? 'Darussalam-Banda Aceh, Indonesia 23111';
+                        $email = $siteSettings['email'] ?? $labConfig['contact']['email'] ?? 'laboratorium-gos@usk.ac.id';
+                        $phone = $siteSettings['phone'] ?? $labConfig['contact']['phone'] ?? null;
+                    @endphp
+
                     <div class="flex items-start space-x-3 group">
-                        <i class="fas fa-map-marker-alt text-secondary mt-1 group-hover:animate-bounce"></i>
-                        <span class="text-blue-200 text-sm leading-relaxed">
-                            {{ $labConfig['address'] ?? 'Darussalam-Banda Aceh, Indonesia 23111' }}
+                        <i class="fas fa-map-marker-alt text-secondary mt-1 group-hover:animate-bounce flex-shrink-0"></i>
+                        <span class="text-blue-200 text-sm leading-relaxed break-words" title="{{ $address }}">
+                            {{ Str::limit($address, 80, '...') }}
                         </span>
                     </div>
+
                     <div class="flex items-center space-x-3 group">
-                        <i class="fas fa-envelope text-secondary group-hover:animate-pulse"></i>
-                        <span class="text-blue-200 text-sm">
-                            {{ $siteSettings['contact_email'] ?? $labConfig['contact']['email'] ?? 'lab-gos@usk.ac.id' }}
+                        <i class="fas fa-envelope text-secondary group-hover:animate-pulse flex-shrink-0"></i>
+                        <span class="text-blue-200 text-sm truncate" title="{{ $email }}">
+                            {{ $email }}
                         </span>
                     </div>
-                    @if(isset($siteSettings['contact_phone']) && $siteSettings['contact_phone'])
+
+                    @if($phone)
                     <div class="flex items-center space-x-3 group">
-                        <i class="fas fa-phone text-secondary group-hover:animate-pulse"></i>
-                        <span class="text-blue-200 text-sm">{{ $siteSettings['contact_phone'] }}</span>
-                    </div>
-                    @elseif(isset($labConfig['contact']['phone']) && $labConfig['contact']['phone'])
-                    <div class="flex items-center space-x-3 group">
-                        <i class="fas fa-phone text-secondary group-hover:animate-pulse"></i>
-                        <span class="text-blue-200 text-sm">{{ $labConfig['contact']['phone'] }}</span>
+                        <i class="fas fa-phone text-secondary group-hover:animate-pulse flex-shrink-0"></i>
+                        <span class="text-blue-200 text-sm">{{ $phone }}</span>
                     </div>
                     @endif
+
                     <div class="flex items-start space-x-3 group">
-                        <i class="fas fa-clock text-secondary mt-1 group-hover:animate-pulse"></i>
+                        <i class="fas fa-clock text-secondary mt-1 group-hover:animate-pulse flex-shrink-0"></i>
                         <div class="text-blue-200 text-sm">
                             @if(isset($labConfig['operational_hours']))
                                 <p>{{ $labConfig['operational_hours']['monday'] ?? 'Senin - Jumat: 08:00 - 16:00' }}</p>
@@ -149,12 +157,16 @@
         </div>
 
         <div class="border-t border-blue-600 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            @php
+                $labName = $siteSettings['lab_name'] ?? $labConfig['name'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi';
+                $department = $siteSettings['department_name'] ?? $labConfig['department'] ?? 'Departemen Fisika FMIPA Universitas Syiah Kuala';
+            @endphp
             <p class="text-blue-200 text-sm">
-                © {{ date('Y') }} {{ $labConfig['name'] ?? 'Laboratorium Gelombang, Optik & Spektroskopi' }}. Hak cipta dilindungi.
+                © {{ date('Y') }} {{ $labName }}. Hak cipta dilindungi.
             </p>
             <p class="text-blue-200 text-sm mt-4 md:mt-0 flex items-center">
                 <i class="fas fa-heart text-red-400 mr-2 animate-pulse"></i>
-                {{ $labConfig['department'] ?? 'Departemen Fisika FMIPA Universitas Syiah Kuala' }}
+                <span class="truncate max-w-md" title="{{ $department }}">{{ $department }}</span>
             </p>
         </div>
     </div>
