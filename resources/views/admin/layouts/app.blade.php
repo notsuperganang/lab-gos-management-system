@@ -21,9 +21,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Console Override for Production -->
-    <script>
+    <script data-debug="{{ config('app.debug') ? 'true' : 'false' }}">
         // Set to false for production to disable all console output
-        var DEBUG = {{ config('app.debug') ? 'true' : 'false' }};
+        var DEBUG = document.currentScript.getAttribute('data-debug') === 'true';
 
         if (!DEBUG) {
             // Override console methods if they exist

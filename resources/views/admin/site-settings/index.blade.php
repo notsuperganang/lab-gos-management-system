@@ -19,8 +19,8 @@
             </div>
             <div class="flex items-center space-x-3">
                 <!-- Save All Button -->
-                <button @click="saveAllSettings()" 
-                        :disabled="loading || !hasChanges" 
+                <button @click="saveAllSettings()"
+                        :disabled="loading || !hasChanges"
                         :class="hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'"
                         class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                     <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -59,12 +59,12 @@
 
     <!-- Settings Content -->
     <div x-show="!initialLoading" class="space-y-6">
-        
+
 
         <!-- Settings Form -->
         <form @submit.prevent="saveAllSettings()">
             <div class="space-y-6">
-                
+
                 <!-- Basic Information Section -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200" x-data="{ collapsed: false }">
                     <div class="p-6 border-b border-gray-200">
@@ -86,15 +86,15 @@
                             <template x-for="key in getBasicInfoSettings()" :key="key">
                                 <div class="space-y-2">
                                     <label :for="key" class="text-sm font-medium text-gray-700" x-text="settings[key]?.title || key"></label>
-                                    <input :id="key" 
+                                    <input :id="key"
                                            :type="getInputType(settings[key]?.type)"
                                            x-model="settings[key].content"
                                            @input="markAsChanged(key)"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                            :placeholder="'Masukkan ' + (settings[key]?.title || key).toLowerCase()">
                                     <div class="flex items-center mt-2">
-                                        <input :id="key + '_active'" 
-                                               type="checkbox" 
+                                        <input :id="key + '_active'"
+                                               type="checkbox"
                                                x-model="settings[key].is_active"
                                                @change="markAsChanged(key)"
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -126,23 +126,23 @@
                             <template x-for="key in getContactSettings()" :key="key">
                                 <div class="space-y-2">
                                     <label :for="key" class="text-sm font-medium text-gray-700" x-text="settings[key]?.title || key"></label>
-                                    <textarea x-show="key === 'address'" 
+                                    <textarea x-show="key === 'address'"
                                              :id="key"
                                              x-model="settings[key].content"
                                              @input="markAsChanged(key)"
                                              rows="4"
                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                              :placeholder="'Masukkan ' + (settings[key]?.title || key).toLowerCase()"></textarea>
-                                    <input x-show="key !== 'address'" 
-                                           :id="key" 
+                                    <input x-show="key !== 'address'"
+                                           :id="key"
                                            :type="getInputType(settings[key]?.type)"
                                            x-model="settings[key].content"
                                            @input="markAsChanged(key)"
                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                            :placeholder="'Masukkan ' + (settings[key]?.title || key).toLowerCase()">
                                     <div class="flex items-center mt-2">
-                                        <input :id="key + '_active'" 
-                                               type="checkbox" 
+                                        <input :id="key + '_active'"
+                                               type="checkbox"
                                                x-model="settings[key].is_active"
                                                @change="markAsChanged(key)"
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -177,13 +177,13 @@
                                         <label :for="key" class="text-sm font-medium text-gray-700" x-text="settings[key]?.title || key"></label>
                                         <!-- Preview Toggle for Rich Text -->
                                         <div x-show="settings[key]?.type === 'rich_text'" class="flex items-center space-x-2">
-                                            <button type="button" 
+                                            <button type="button"
                                                     @click="previewMode = false"
                                                     :class="!previewMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
                                                     class="px-3 py-1 text-xs rounded-md transition-colors duration-200">
                                                 Edit
                                             </button>
-                                            <button type="button" 
+                                            <button type="button"
                                                     @click="previewMode = true"
                                                     :class="previewMode ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
                                                     class="px-3 py-1 text-xs rounded-md transition-colors duration-200">
@@ -191,7 +191,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Edit Mode (Textarea) -->
                                     <textarea x-show="settings[key]?.type !== 'rich_text' || !previewMode"
                                              :id="key"
@@ -200,17 +200,17 @@
                                              rows="6"
                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                              :placeholder="'Masukkan ' + (settings[key]?.title || key).toLowerCase()"></textarea>
-                                    
+
                                     <!-- Preview Mode (Rendered HTML) -->
                                     <div x-show="settings[key]?.type === 'rich_text' && previewMode"
                                          class="w-full min-h-[150px] px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
                                         <div class="prose prose-sm max-w-none" x-html="settings[key]?.content || '<p class=&quot;text-gray-500 italic&quot;>No content to preview</p>'"></div>
                                     </div>
-                                    
+
                                     <div class="flex items-center justify-between mt-2">
                                         <div class="flex items-center">
-                                            <input :id="key + '_active'" 
-                                                   type="checkbox" 
+                                            <input :id="key + '_active'"
+                                                   type="checkbox"
                                                    x-model="settings[key].is_active"
                                                    @change="markAsChanged(key)"
                                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -263,8 +263,8 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center mt-2">
-                                        <input :id="key + '_active'" 
-                                               type="checkbox" 
+                                        <input :id="key + '_active'"
+                                               type="checkbox"
                                                x-model="settings[key].is_active"
                                                @change="markAsChanged(key)"
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -297,15 +297,15 @@
                             <template x-for="key in getOtherSettings()" :key="key">
                                 <div class="space-y-2">
                                     <label :for="key" class="text-sm font-medium text-gray-700" x-text="settings[key]?.title || key"></label>
-                                    <textarea x-show="['textarea', 'rich_text'].includes(settings[key]?.type)" 
+                                    <textarea x-show="['textarea', 'rich_text'].includes(settings[key]?.type)"
                                              :id="key"
                                              x-model="settings[key].content"
                                              @input="markAsChanged(key)"
                                              rows="4"
                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                              :placeholder="'Masukkan ' + (settings[key]?.title || key).toLowerCase()"></textarea>
-                                    <input x-show="!['textarea', 'rich_text'].includes(settings[key]?.type)" 
-                                           :id="key" 
+                                    <input x-show="!['textarea', 'rich_text'].includes(settings[key]?.type)"
+                                           :id="key"
                                            :type="getInputType(settings[key]?.type)"
                                            x-model="settings[key].content"
                                            @input="markAsChanged(key)"
@@ -313,8 +313,8 @@
                                            :placeholder="'Masukkan ' + (settings[key]?.title || key).toLowerCase()">
                                     <div class="flex items-center justify-between mt-2">
                                         <div class="flex items-center">
-                                            <input :id="key + '_active'" 
-                                                   type="checkbox" 
+                                            <input :id="key + '_active'"
+                                                   type="checkbox"
                                                    x-model="settings[key].is_active"
                                                    @change="markAsChanged(key)"
                                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
@@ -342,15 +342,15 @@
                         </span>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <button type="button" 
-                                @click="resetChanges()" 
+                        <button type="button"
+                                @click="resetChanges()"
                                 :disabled="Object.keys(changedSettings).length === 0"
                                 :class="Object.keys(changedSettings).length > 0 ? 'text-red-600 hover:text-red-800' : 'text-gray-400 cursor-not-allowed'"
                                 class="text-sm font-medium transition-colors duration-200">
                             Reset Perubahan
                         </button>
-                        <button type="submit" 
-                                :disabled="loading || !hasChanges" 
+                        <button type="submit"
+                                :disabled="loading || !hasChanges"
                                 :class="hasChanges ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'"
                                 class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                             <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -367,19 +367,19 @@
 </div>
 
 <!-- JSON Preview Modal (Outside Component) -->
-<div x-data="jsonPreviewModal()" 
-     x-show="visible" 
+<div x-data="jsonPreviewModal()"
+     x-show="visible"
      @preview-json.window="showPreview($event.detail)"
      @close-preview.window="visible = false"
-     x-transition:enter="transition ease-out duration-300" 
-     x-transition:enter-start="opacity-0" 
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-200" 
-     x-transition:leave-start="opacity-100" 
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     class="fixed inset-0 z-50 overflow-y-auto" 
-     aria-labelledby="modal-title" 
-     role="dialog" 
+     class="fixed inset-0 z-50 overflow-y-auto"
+     aria-labelledby="modal-title"
+     role="dialog"
      aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="visible = false"></div>
@@ -411,12 +411,12 @@
 
 @push('scripts')
 <script>
-console.log('Site settings script loading...');
-console.log('AdminAPI at script load time:', typeof window.AdminAPI);
+// console.log('Site settings script loading...');
+// console.log('AdminAPI at script load time:', typeof window.AdminAPI);
 
 function siteSettingsManager() {
-    console.log('siteSettingsManager function called, AdminAPI:', typeof window.AdminAPI);
-    
+    // console.log('siteSettingsManager function called, AdminAPI:', typeof window.AdminAPI);
+
     // Check for admin authentication token
     const adminToken = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
     if (!adminToken) {
@@ -424,7 +424,7 @@ function siteSettingsManager() {
         window.location.href = '/admin/login';
         return {};
     }
-    
+
     return {
         // State
         settings: {},
@@ -441,34 +441,34 @@ function siteSettingsManager() {
 
         // Initialize
         async init() {
-            console.log('Initializing site settings manager...');
-            console.log('AdminAPI availability check:', typeof window.AdminAPI);
-            console.log('Window object keys:', Object.keys(window).filter(k => k.includes('Admin') || k.includes('API')));
-            
+            // console.log('Initializing site settings manager...');
+            // console.log('AdminAPI availability check:', typeof window.AdminAPI);
+            // console.log('Window object keys:', Object.keys(window).filter(k => k.includes('Admin') || k.includes('API')));
+
             // Wait for AdminAPI to be available
             if (typeof window.AdminAPI === 'undefined') {
-                console.log('AdminAPI not available, waiting...');
+                // console.log('AdminAPI not available, waiting...');
                 const maxWait = 5000; // 5 seconds max wait
                 const startTime = Date.now();
-                
+
                 while (typeof window.AdminAPI === 'undefined' && (Date.now() - startTime) < maxWait) {
                     await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms
-                    console.log('Still waiting for AdminAPI...', Date.now() - startTime, 'ms');
+                    // console.log('Still waiting for AdminAPI...', Date.now() - startTime, 'ms');
                 }
-                
+
                 if (typeof window.AdminAPI === 'undefined') {
                     console.error('AdminAPI failed to load after 5 seconds');
-                    this.$dispatch('toast', { 
-                        message: 'System initialization failed. Please refresh the page.', 
-                        type: 'error' 
+                    this.$dispatch('toast', {
+                        message: 'System initialization failed. Please refresh the page.',
+                        type: 'error'
                     });
                     return;
                 }
             }
-            
-            console.log('AdminAPI available:', typeof window.AdminAPI);
-            console.log('AdminAPI methods:', Object.keys(window.AdminAPI));
-            
+
+            // console.log('AdminAPI available:', typeof window.AdminAPI);
+            // console.log('AdminAPI methods:', Object.keys(window.AdminAPI));
+
             // Check authentication
             const token = localStorage.getItem('admin_token');
             if (!token) {
@@ -476,7 +476,7 @@ function siteSettingsManager() {
                 window.location.href = '/admin/login';
                 return;
             }
-            
+
             await this.loadSettings();
             this.initialLoading = false;
         },
@@ -484,7 +484,7 @@ function siteSettingsManager() {
         // Load settings from API
         async loadSettings() {
             try {
-                console.log('loadSettings: AdminAPI check:', typeof window.AdminAPI);
+                // console.log('loadSettings: AdminAPI check:', typeof window.AdminAPI);
                 if (typeof AdminAPI === 'undefined') {
                     throw new Error('AdminAPI is not defined in loadSettings');
                 }
@@ -493,12 +493,12 @@ function siteSettingsManager() {
                     // Process settings to handle different field types properly
                     this.settings = this.processSettingsForDisplay(response.data.settings);
                     this.originalSettings = JSON.parse(JSON.stringify(this.settings));
-                    console.log('Settings loaded:', Object.keys(this.settings).length, 'items');
+                    // console.log('Settings loaded:', Object.keys(this.settings).length, 'items');
                 } else {
                     console.error('Invalid response format:', response);
-                    this.$dispatch('toast', { 
-                        message: 'Gagal memuat pengaturan: Format response tidak valid', 
-                        type: 'error' 
+                    this.$dispatch('toast', {
+                        message: 'Gagal memuat pengaturan: Format response tidak valid',
+                        type: 'error'
                     });
                 }
             } catch (error) {
@@ -510,10 +510,10 @@ function siteSettingsManager() {
                     window.location.href = '/admin/login';
                     return;
                 }
-                
-                this.$dispatch('toast', { 
-                    message: 'Gagal memuat pengaturan: ' + (error.message || 'Terjadi kesalahan'), 
-                    type: 'error' 
+
+                this.$dispatch('toast', {
+                    message: 'Gagal memuat pengaturan: ' + (error.message || 'Terjadi kesalahan'),
+                    type: 'error'
                 });
             }
         },
@@ -521,10 +521,10 @@ function siteSettingsManager() {
         // Process settings for proper display based on field type
         processSettingsForDisplay(rawSettings) {
             const processedSettings = {};
-            
+
             for (const [key, setting] of Object.entries(rawSettings)) {
                 processedSettings[key] = { ...setting };
-                
+
                 if (setting.type === 'json') {
                     try {
                         // If content is a string, try to parse it first to validate
@@ -545,7 +545,7 @@ function siteSettingsManager() {
                     }
                 }
             }
-            
+
             return processedSettings;
         },
 
@@ -553,7 +553,7 @@ function siteSettingsManager() {
         markAsChanged(key) {
             const original = this.originalSettings[key];
             const current = this.settings[key];
-            
+
             if (JSON.stringify(original) !== JSON.stringify(current)) {
                 this.changedSettings[key] = current;
             } else {
@@ -575,9 +575,9 @@ function siteSettingsManager() {
             // Check for JSON validation errors
             const hasErrors = Object.keys(this.jsonErrors).some(key => this.jsonErrors[key]);
             if (hasErrors) {
-                this.$dispatch('toast', { 
-                    message: 'Tidak dapat menyimpan: Ada kesalahan format JSON', 
-                    type: 'error' 
+                this.$dispatch('toast', {
+                    message: 'Tidak dapat menyimpan: Ada kesalahan format JSON',
+                    type: 'error'
                 });
                 return;
             }
@@ -594,13 +594,13 @@ function siteSettingsManager() {
                 }));
 
                 const response = await AdminAPI.updateSiteSettings(settingsArray);
-                
+
                 if (response.success) {
                     this.originalSettings = JSON.parse(JSON.stringify(this.settings));
                     this.changedSettings = {};
-                    this.$dispatch('toast', { 
-                        message: 'Pengaturan berhasil disimpan', 
-                        type: 'success' 
+                    this.$dispatch('toast', {
+                        message: 'Pengaturan berhasil disimpan',
+                        type: 'success'
                     });
                 } else {
                     throw new Error(response.message || 'Gagal menyimpan pengaturan');
@@ -614,10 +614,10 @@ function siteSettingsManager() {
                     window.location.href = '/admin/login';
                     return;
                 }
-                
-                this.$dispatch('toast', { 
-                    message: 'Gagal menyimpan pengaturan: ' + (error.message || 'Terjadi kesalahan'), 
-                    type: 'error' 
+
+                this.$dispatch('toast', {
+                    message: 'Gagal menyimpan pengaturan: ' + (error.message || 'Terjadi kesalahan'),
+                    type: 'error'
                 });
             } finally {
                 this.loading = false;
@@ -638,13 +638,13 @@ function siteSettingsManager() {
 
         // Category functions
         getBasicInfoSettings() {
-            return Object.keys(this.settings).filter(key => 
+            return Object.keys(this.settings).filter(key =>
                 ['lab_name', 'lab_acronym', 'institution_name', 'department_name', 'faculty_name'].includes(key)
             );
         },
 
         getContactSettings() {
-            return Object.keys(this.settings).filter(key => 
+            return Object.keys(this.settings).filter(key =>
                 ['address', 'phone', 'email', 'website'].includes(key)
             );
         },
@@ -666,7 +666,7 @@ function siteSettingsManager() {
         getOtherSettings() {
             const categorized = [
                 ...this.getBasicInfoSettings(),
-                ...this.getContactSettings(), 
+                ...this.getContactSettings(),
                 ...this.getContentSettings(),
                 ...this.getJsonSettings()
             ];
@@ -715,9 +715,9 @@ function siteSettingsManager() {
                 };
                 this.$dispatch('preview-json', previewData);
             } catch (error) {
-                this.$dispatch('toast', { 
-                    message: 'Tidak dapat menampilkan preview: ' + error.message, 
-                    type: 'error' 
+                this.$dispatch('toast', {
+                    message: 'Tidak dapat menampilkan preview: ' + error.message,
+                    type: 'error'
                 });
             }
         }
@@ -730,7 +730,7 @@ function jsonPreviewModal() {
         visible: false,
         previewContent: '',
         previewKey: '',
-        
+
         showPreview(data) {
             this.previewContent = data.content;
             this.previewKey = data.key;
@@ -739,6 +739,6 @@ function jsonPreviewModal() {
     };
 }
 
-console.log('JSON preview modal component registered');
+// console.log('JSON preview modal component registered');
 </script>
 @endpush

@@ -326,7 +326,7 @@ class ContentManagementController extends Controller
             Log::info('Article deleted', [
                 'article_id' => $articleId,
                 'article_title' => $articleTitle,
-                'admin_user_id' => auth()->id()
+                'admin_user_id' => auth('sanctum')->id()
             ]);
 
             return ApiResponse::success(
@@ -616,7 +616,7 @@ class ContentManagementController extends Controller
             Log::info('Staff member deleted', [
                 'staff_id' => $staffId,
                 'staff_name' => $staffName,
-                'admin_user_id' => auth()->id()
+                'admin_user_id' => auth('sanctum')->id()
             ]);
 
             return ApiResponse::success(
@@ -828,7 +828,7 @@ class ContentManagementController extends Controller
     {
         try {
             $query = Gallery::query();
-            
+
             // Handle sorting
             $sortBy = $request->get('sort', 'sort_order');
             if ($sortBy === 'created_at') {
@@ -1055,7 +1055,7 @@ class ContentManagementController extends Controller
 
             Log::info('Gallery item deleted', [
                 'gallery_id' => $galleryId,
-                'admin_user_id' => auth()->id()
+                'admin_user_id' => auth('sanctum')->id()
             ]);
 
             return ApiResponse::success(
@@ -1085,12 +1085,12 @@ class ContentManagementController extends Controller
         try {
             // Support both single item and bulk reorder
             $requestData = $request->all();
-            
+
             if (isset($requestData['id']) && isset($requestData['sort_order'])) {
                 // Single item reorder
                 $requestData = ['order' => [$requestData]];
             }
-            
+
             $validator = validator($requestData, [
                 'order' => 'required|array|min:1',
                 'order.*.id' => 'required|integer|exists:galleries,id',
@@ -1098,7 +1098,7 @@ class ContentManagementController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return ApiResponse::validationError($validator->errors());
+                return ApiResponse::validationError($validator->errors()->toArray());
             }
 
             DB::beginTransaction();
@@ -1149,7 +1149,7 @@ class ContentManagementController extends Controller
     {
         try {
             $setting = \App\Models\SiteSetting::where('key', 'homepage_gallery_slots')->first();
-            
+
             // Safe JSON decode with fallback - ensure string keys for slots
             $slots = ['1' => null, '2' => null, '3' => null, '4' => null];
             if ($setting && $setting->content) {
@@ -1167,7 +1167,7 @@ class ContentManagementController extends Controller
             // Get gallery items for the slots
             $galleryIds = array_filter($slots);
             $galleries = [];
-            
+
             if (!empty($galleryIds)) {
                 $galleryItems = Gallery::whereIn('id', $galleryIds)->active()->get();
                 foreach ($galleryItems as $gallery) {
