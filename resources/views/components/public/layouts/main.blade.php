@@ -5,10 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- Judul halaman akan dinamis -->
     <title>{{ $title ?? ($siteSettings['lab_name'] ?? 'Laboratorium GOS USK') }}</title>
-    
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/Unsyiah-logo.png') }}">
+    <link rel="shortcut icon" href="{{ asset('assets/images/Unsyiah-logo.png') }}">
+
     <!-- Console Override for Production -->
     <script>
         // Set to false for production to disable all console output
