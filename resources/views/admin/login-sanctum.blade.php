@@ -21,8 +21,8 @@
     <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <div class="flex justify-center">
-                <img class="h-16 w-16 bg-blue-600 p-3 rounded-lg" 
-                     src="{{ asset('assets/images/logo-fisika-putih.png') }}" 
+                <img class="h-16 w-16 bg-blue-600 p-3 rounded-lg"
+                     src="{{ asset('assets/images/logo-fisika-putih.png') }}"
                      alt="Lab GOS">
             </div>
             <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
@@ -36,7 +36,7 @@
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
             <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                 <form x-data="adminLogin()" @submit.prevent="login()" class="space-y-6">
-                    <div x-show="error" x-cloak 
+                    <div x-show="error" x-cloak
                          class="rounded-md bg-red-50 p-4 border border-red-200">
                         <div class="flex">
                             <div class="flex-shrink-0">
@@ -56,7 +56,7 @@
                             Email Address
                         </label>
                         <div class="mt-1">
-                            <input id="email" name="email" type="email" x-model="form.email" 
+                            <input id="email" name="email" type="email" x-model="form.email"
                                    autocomplete="email" required
                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
@@ -67,7 +67,7 @@
                             Password
                         </label>
                         <div class="mt-1">
-                            <input id="password" name="password" type="password" x-model="form.password" 
+                            <input id="password" name="password" type="password" x-model="form.password"
                                    autocomplete="current-password" required
                                    class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
@@ -90,7 +90,7 @@
                     </div>
                 </form>
             </div>
-            
+
             <div class="mt-6 text-center text-xs text-gray-500">
                 <p>© {{ date('Y') }} Laboratorium GOS - Departemen Fisika FMIPA Universitas Syiah Kuala</p>
             </div>
