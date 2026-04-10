@@ -451,6 +451,36 @@
                             </div>
                         </div>
 
+                        <!-- Specifications -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Spesifikasi</label>
+                            <div class="space-y-2">
+                                <template x-for="(spec, index) in form.specifications" :key="index">
+                                    <div class="flex gap-2">
+                                        <input type="text" x-model="spec.key"
+                                               class="w-1/3 rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                                               placeholder="Parameter (contoh: Panjang Gelombang)">
+                                        <input type="text" x-model="spec.value"
+                                               class="flex-1 rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                                               placeholder="Nilai (contoh: 400-700 nm)">
+                                        <button type="button" @click="form.specifications.splice(index, 1)"
+                                                class="px-2 py-1 text-red-600 hover:text-red-800 text-sm">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <button type="button" @click="form.specifications.push({key: '', value: ''})"
+                                        class="text-sm text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Tambah Spesifikasi
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Notes -->
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
@@ -578,6 +608,7 @@ document.addEventListener('alpine:init', () => {
             purchase_price: '',
             location: '',
             notes: '',
+            specifications: [],
             image: null,
             image_url: '',
             remove_image: false,
@@ -806,6 +837,9 @@ document.addEventListener('alpine:init', () => {
                 purchase_price: item.purchase_price || '',
                 location: item.location || '',
                 notes: item.notes || '',
+                specifications: item.specifications
+                    ? Object.entries(item.specifications).map(([key, value]) => ({ key, value }))
+                    : [],
                 image: null,
                 image_url: item.image_url || '',
                 remove_image: false,
@@ -830,6 +864,7 @@ document.addEventListener('alpine:init', () => {
                 purchase_price: '',
                 location: '',
                 notes: '',
+                specifications: [],
                 image: null,
                 image_url: '',
                 remove_image: false,
@@ -898,9 +933,23 @@ document.addEventListener('alpine:init', () => {
 
                 // Add form fields
                 Object.keys(this.form).forEach(key => {
-                    // Skip special fields
-                    if (key === 'id' || key === 'image' || key === 'image_url') {
-                        console.log(`Skipped field: ${key} = ${this.form[key]} (reason: is ${key})`);
+                    if (key === 'id' || key === 'image' || key === 'image_url') return;
+
+                    if (key === 'specifications') {
+                        // Send as array fields so Laravel parses it as array
+                        let hasSpecifications = false;
+                        this.form.specifications.forEach(spec => {
+                            const specKey = (spec.key || '').trim();
+                            if (specKey) {
+                                formData.append(`specifications[${specKey}]`, (spec.value || '').trim());
+                                hasSpecifications = true;
+                            }
+                        });
+                        if (!hasSpecifications) {
+                            console.log('Skipped specifications field (empty)');
+                        } else {
+                            console.log('Added specifications as array fields');
+                        }
                         return;
                     }
 
